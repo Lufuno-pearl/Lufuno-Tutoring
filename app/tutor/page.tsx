@@ -1,6 +1,7 @@
 import { createClient } from '../../lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { confirmPayment, setDownloadUrl, sendTutorMessage } from './actions'
+import TutorMaterials from './TutorMaterials'
 
 const TUTOR_EMAIL = 'pearllufunomoyo@gmail.com'
 
@@ -99,6 +100,7 @@ export default async function TutorDashboard() {
             <input name="body" placeholder="Reply..." required style={{ flex: 1, padding: 8, border: '1px solid var(--line)' }} />
             <button className="btn btn-primary">Send</button>
           </form>
+          <TutorMaterials studentId={studentId} studentName={thread.name} />
         </div>
       ))}
     </div>
