@@ -1,6 +1,7 @@
 import { createClient } from '../../lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { createBooking, createHsSub, buyPack, markAwaiting, sendMessage, signOut } from './actions'
+import MaterialsSection from './MaterialsSection'
 
 const UNI_SUBJECTS = ['Basic Analysis', 'Multi-Variable Calculus', 'Mathematical Modelling & Methods', 'Scientific Computing', 'Abstract Mathematics', 'Statistics']
 const PACKS = [
@@ -152,6 +153,8 @@ export default async function Portal() {
           <button className="btn btn-primary">Send</button>
         </form>
       </section>
+
+      <MaterialsSection userId={user.id} />
     </div>
   )
 }
