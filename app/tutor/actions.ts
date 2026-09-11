@@ -13,3 +13,15 @@ export async function setDownloadUrl(id: string, url: string) {
   await supabase.from('pack_orders').update({ download_url: url }).eq('id', id)
   revalidatePath('/tutor')
 }
+
+export async function sendTutorMessage(studentId: string, formData: FormData) {
+  const supabase = createClient()
+  const body = formData.get('body') as string
+  if (!body?.trim()) return
+  await supabase.from('messages').insert({
+    student_id: studentId,
+    sender: 'tutor',
+    body: body.trim(),
+  })
+  revalidatePath('/tutor')
+}
