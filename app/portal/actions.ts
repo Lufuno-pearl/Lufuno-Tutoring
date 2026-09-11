@@ -16,19 +16,31 @@ export async function createBooking(formData: FormData) {
     subject: formData.get('subject') as string,
     day: formData.get('day') as string,
     time: formData.get('time') as string,
+    format: formData.get('format') as string,
     price,
   })
   await supabase.from('profiles').update({ uni_bookings_count: (profile?.uni_bookings_count || 0) + 1 }).eq('id', user.id)
   revalidatePath('/portal')
 }
 
+const PHYSICAL_MONTHS = ['june', 'december', 'february']
+
 export async function createHsSub(formData: FormData) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return
+
+  const month = formData.get('month') as string
+  const format = formData.get('format') as string
+
+  if (format === 'physical' && !PHYSICAL_MONTHS.some(m => month.toLowerCase().includes(m))) {
+    return { error: 'Physical sessions for high school are only available in June, December or February.' }
+  }
+
   await supabase.from('hs_subscriptions').insert({
     student_id: user.id,
-    month: formData.get('month') as string,
+    month,
+    format,
     price: 600,
   })
   revalidatePath('/portal')
@@ -50,6 +62,20 @@ export async function buyPack(packId: string, packName: string) {
 export async function markAwaiting(table: 'bookings' | 'hs_subscriptions' | 'pack_orders', id: string) {
   const supabase = createClient()
   await supabase.from(table).update({ status: 'awaiting' }).eq('id', id)
+  revalidatePath('/portal')
+}
+
+export async function sendMessage(formData: FormData) {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
+  const body = formData.get('body') as string
+  if (!body?.trim()) return
+  await supabase.from('messages').insert({
+    student_id: user.id,
+    sender: 'student',
+    body: body.trim(),
+  })
   revalidatePath('/portal')
 }
 
