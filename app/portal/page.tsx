@@ -126,3 +126,32 @@ export default async function Portal() {
         ))}
         {(orders || []).map(o => (
           <div className="panel" key={o.id}>
+            <h4>{o.pack_name}</h4>
+            <div className="meta">Study pack · R{o.price}</div>
+            <StatusPill status={o.status} />
+            {o.status === 'pending' && <div style={{ marginTop: 12 }}><PayBlock kind="pack_orders" id={o.id} label={o.pack_name} price={o.price} /></div>}
+            {o.status === 'confirmed' && o.download_url && <p style={{ marginTop: 8 }}><a href={o.download_url} target="_blank">Download your pack &rarr;</a></p>}
+            {o.status === 'confirmed' && !o.download_url && <p className="meta" style={{ marginTop: 8 }}>Confirmed — Lufuno will send your pack shortly.</p>}
+          </div>
+        ))}
+      </section>
+
+      <section>
+        <h3>Message Lufuno</h3>
+        <div className="panel">
+          {(messages || []).length === 0 && <p className="meta">No messages yet — say hello.</p>}
+          {(messages || []).map(m => (
+            <div key={m.id} style={{ marginBottom: 10, textAlign: m.sender === 'student' ? 'right' : 'left' }}>
+              <div className="meta" style={{ marginBottom: 2 }}>{m.sender === 'student' ? 'You' : 'Lufuno'}</div>
+              <div style={{ display: 'inline-block', background: m.sender === 'student' ? '#DCEEE0' : '#F3EFE4', padding: '8px 12px', borderRadius: 6 }}>{m.body}</div>
+            </div>
+          ))}
+        </div>
+        <form action={sendMessage}>
+          <div className="field"><input name="body" placeholder="Type a message..." required /></div>
+          <button className="btn btn-primary">Send</button>
+        </form>
+      </section>
+    </div>
+  )
+}
