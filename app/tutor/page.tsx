@@ -1,6 +1,6 @@
 import { createClient } from '../../lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { confirmPayment, setDownloadUrl } from './actions'
+import { confirmPayment, setDownloadUrl, sendTutorMessage } from './actions'
 
 const TUTOR_EMAIL = 'pearllufunomoyo@gmail.com'
 
@@ -15,11 +15,19 @@ export default async function TutorDashboard() {
   if (!user) redirect('/login')
   if (user.email !== TUTOR_EMAIL) redirect('/portal')
 
-  const [{ data: bookings }, { data: subs }, { data: orders }] = await Promise.all([
+  const [{ data: bookings }, { data: subs }, { data: orders }, { data: messages }] = await Promise.all([
     supabase.from('bookings').select('*, profiles(full_name, email)').order('created_at', { ascending: false }),
     supabase.from('hs_subscriptions').select('*, profiles(full_name, email)').order('created_at', { ascending: false }),
     supabase.from('pack_orders').select('*, profiles(full_name, email)').order('created_at', { ascending: false }),
+    supabase.from('messages').select('*, profiles(full_name, email)').order('created_at', { ascending: true }),
   ])
+
+  const threadsByStudent: Record<string, { name: string; email: string; msgs: typeof messages }> = {}
+  ;(messages || []).forEach(m => {
+    const sid = m.student_id
+    if (!threadsByStudent[sid]) threadsByStudent[sid] = { name: m.profiles?.full_name || 'Student', email: m.profiles?.email || '', msgs: [] as any }
+    threadsByStudent[sid].msgs!.push(m)
+  })
 
   return (
     <div>
@@ -29,7 +37,7 @@ export default async function TutorDashboard() {
       {(bookings || []).map(b => (
         <div className="panel" key={b.id}>
           <h4>{b.subject} — {b.day} {b.time}</h4>
-          <div className="meta">{b.profiles?.full_name} · {b.profiles?.email} · R{b.price}</div>
+          <div className="meta">{b.profiles?.full_name} · {b.profiles?.email} · {b.format === 'physical' ? 'Physical' : 'Online'} · R{b.price}</div>
           <StatusPill status={b.status} />
           {b.status !== 'confirmed' && (
             <form action={async () => { 'use server'; await confirmPayment('bookings', b.id) }} style={{ marginTop: 8 }}>
@@ -43,7 +51,7 @@ export default async function TutorDashboard() {
       {(subs || []).map(s => (
         <div className="panel" key={s.id}>
           <h4>{s.month}</h4>
-          <div className="meta">{s.profiles?.full_name} · {s.profiles?.email} · R{s.price}</div>
+          <div className="meta">{s.profiles?.full_name} · {s.profiles?.email} · {s.format === 'physical' ? 'Physical' : 'Online'} · R{s.price}</div>
           <StatusPill status={s.status} />
           {s.status !== 'confirmed' && (
             <form action={async () => { 'use server'; await confirmPayment('hs_subscriptions', s.id) }} style={{ marginTop: 8 }}>
@@ -70,6 +78,27 @@ export default async function TutorDashboard() {
               <button className="btn btn-primary">Save link</button>
             </form>
           )}
+        </div>
+      ))}
+
+      <h3>Messages</h3>
+      {Object.keys(threadsByStudent).length === 0 && <p className="meta">No messages yet.</p>}
+      {Object.entries(threadsByStudent).map(([studentId, thread]) => (
+        <div className="panel" key={studentId}>
+          <h4>{thread.name}</h4>
+          <div className="meta">{thread.email}</div>
+          <div style={{ margin: '10px 0' }}>
+            {thread.msgs!.map((m: any) => (
+              <div key={m.id} style={{ marginBottom: 8, textAlign: m.sender === 'tutor' ? 'right' : 'left' }}>
+                <div className="meta" style={{ marginBottom: 2 }}>{m.sender === 'tutor' ? 'You' : thread.name}</div>
+                <div style={{ display: 'inline-block', background: m.sender === 'tutor' ? '#DCEEE0' : '#F3EFE4', padding: '8px 12px', borderRadius: 6 }}>{m.body}</div>
+              </div>
+            ))}
+          </div>
+          <form action={async (formData: FormData) => { 'use server'; await sendTutorMessage(studentId, formData) }} style={{ display: 'flex', gap: 8 }}>
+            <input name="body" placeholder="Reply..." required style={{ flex: 1, padding: 8, border: '1px solid var(--line)' }} />
+            <button className="btn btn-primary">Send</button>
+          </form>
         </div>
       ))}
     </div>
