@@ -1,6 +1,6 @@
 import { createClient } from '../../lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { createBooking, createHsSub, buyPack, markAwaiting, signOut } from './actions'
+import { createBooking, createHsSub, buyPack, markAwaiting, sendMessage, signOut } from './actions'
 
 const UNI_SUBJECTS = ['Basic Analysis', 'Multi-Variable Calculus', 'Mathematical Modelling & Methods', 'Scientific Computing', 'Abstract Mathematics', 'Statistics']
 const PACKS = [
@@ -41,10 +41,11 @@ export default async function Portal() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const [{ data: bookings }, { data: subs }, { data: orders }] = await Promise.all([
+  const [{ data: bookings }, { data: subs }, { data: orders }, { data: messages }] = await Promise.all([
     supabase.from('bookings').select('*').eq('student_id', user.id).order('created_at', { ascending: false }),
     supabase.from('hs_subscriptions').select('*').eq('student_id', user.id).order('created_at', { ascending: false }),
     supabase.from('pack_orders').select('*').eq('student_id', user.id).order('created_at', { ascending: false }),
+    supabase.from('messages').select('*').eq('student_id', user.id).order('created_at', { ascending: true }),
   ])
 
   return (
@@ -65,6 +66,13 @@ export default async function Portal() {
           </div>
           <div className="field"><label>Preferred day</label><input name="day" required placeholder="e.g. Thursday 18 Sept" /></div>
           <div className="field"><label>Preferred time</label><input name="time" required placeholder="e.g. 18:00" /></div>
+          <div className="field">
+            <label>Online or physical?</label>
+            <select name="format" required defaultValue="online">
+              <option value="online">Online</option>
+              <option value="physical">Physical</option>
+            </select>
+          </div>
           <p className="meta">R150/hour — your first session ever is R100.</p>
           <button className="btn btn-primary">Book & get payment details</button>
         </form>
@@ -74,6 +82,14 @@ export default async function Portal() {
         <h3>Subscribe — high school (Gr 10–12)</h3>
         <form action={createHsSub}>
           <div className="field"><label>Which month?</label><input name="month" required placeholder="e.g. September 2026" /></div>
+          <div className="field">
+            <label>Online or physical?</label>
+            <select name="format" required defaultValue="online">
+              <option value="online">Online</option>
+              <option value="physical">Physical</option>
+            </select>
+            <p className="meta" style={{ marginTop: 6 }}>Physical sessions for high school only run in June, December and February.</p>
+          </div>
           <p className="meta">R600/month covers both Maths and Physical Sciences.</p>
           <button className="btn btn-primary">Subscribe & get payment details</button>
         </form>
@@ -95,7 +111,7 @@ export default async function Portal() {
         {(bookings || []).map(b => (
           <div className="panel" key={b.id}>
             <h4>{b.subject}</h4>
-            <div className="meta">{b.day} at {b.time} · R{b.price}</div>
+            <div className="meta">{b.day} at {b.time} · {b.format === 'physical' ? 'Physical' : 'Online'} · R{b.price}</div>
             <StatusPill status={b.status} />
             {b.status === 'pending' && <div style={{ marginTop: 12 }}><PayBlock kind="bookings" id={b.id} label={b.subject} price={b.price} /></div>}
           </div>
@@ -103,22 +119,10 @@ export default async function Portal() {
         {(subs || []).map(s => (
           <div className="panel" key={s.id}>
             <h4>Monthly subscription — {s.month}</h4>
-            <div className="meta">Maths + Physical Sciences · R{s.price}</div>
+            <div className="meta">Maths + Physical Sciences · {s.format === 'physical' ? 'Physical' : 'Online'} · R{s.price}</div>
             <StatusPill status={s.status} />
             {s.status === 'pending' && <div style={{ marginTop: 12 }}><PayBlock kind="hs_subscriptions" id={s.id} label={`Subscription — ${s.month}`} price={s.price} /></div>}
           </div>
         ))}
         {(orders || []).map(o => (
           <div className="panel" key={o.id}>
-            <h4>{o.pack_name}</h4>
-            <div className="meta">Study pack · R{o.price}</div>
-            <StatusPill status={o.status} />
-            {o.status === 'pending' && <div style={{ marginTop: 12 }}><PayBlock kind="pack_orders" id={o.id} label={o.pack_name} price={o.price} /></div>}
-            {o.status === 'confirmed' && o.download_url && <p style={{ marginTop: 8 }}><a href={o.download_url} target="_blank">Download your pack &rarr;</a></p>}
-            {o.status === 'confirmed' && !o.download_url && <p className="meta" style={{ marginTop: 8 }}>Confirmed — Lufuno will send your pack shortly.</p>}
-          </div>
-        ))}
-      </section>
-    </div>
-  )
-}
