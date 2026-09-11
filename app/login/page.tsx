@@ -1,33 +1,47 @@
 'use client'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '../../lib/supabase/client'
 
 export default function Login() {
   const [email, setEmail] = useState('')
   const [name, setName] = useState('')
-  const [sent, setSent] = useState(false)
+  const [code, setCode] = useState('')
+  const [step, setStep] = useState<'form' | 'code'>('form')
   const [error, setError] = useState('')
+  const router = useRouter()
 
-  async function sendLink() {
+  async function sendCode() {
     setError('')
     if (!email || !name) { setError('Please fill in both fields.'); return }
     const supabase = createClient()
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: {
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
-        data: { full_name: name },
-      },
+      options: { data: { full_name: name } },
     })
     if (error) setError(error.message)
-    else setSent(true)
+    else setStep('code')
   }
 
-  if (sent) {
+  async function verifyCode() {
+    setError('')
+    if (!code) { setError('Please enter the code from your email.'); return }
+    const supabase = createClient()
+    const { error } = await supabase.auth.verifyOtp({ email, token: code, type: 'email' })
+    if (error) setError(error.message)
+    else router.push('/portal')
+  }
+
+  if (step === 'code') {
     return (
       <section>
-        <h2>Check your email</h2>
-        <p>We sent a sign-in link to {email}. Open it on this device to continue.</p>
+        <h2>Enter your code</h2>
+        <p style={{ color: '#6b6b6b', fontSize: '0.9rem', marginTop: '-10px' }}>
+          Check {email} for a 6-digit code.
+        </p>
+        <div className="field"><label>Code</label><input value={code} onChange={e => setCode(e.target.value)} placeholder="123456" /></div>
+        {error && <p style={{ color: '#A6443A', fontSize: '0.85rem' }}>{error}</p>}
+        <button className="btn btn-primary" onClick={verifyCode}>Confirm & sign in</button>
       </section>
     )
   }
@@ -36,12 +50,12 @@ export default function Login() {
     <section>
       <h2>Sign in</h2>
       <p style={{ color: '#6b6b6b', fontSize: '0.9rem', marginTop: '-10px' }}>
-        We'll email you a link — no password needed.
+        We'll email you a 6-digit code — no password needed.
       </p>
       <div className="field"><label>Full name</label><input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Thandi Nkosi" /></div>
       <div className="field"><label>Email</label><input value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" /></div>
       {error && <p style={{ color: '#A6443A', fontSize: '0.85rem' }}>{error}</p>}
-      <button className="btn btn-primary" onClick={sendLink}>Send sign-in link</button>
+      <button className="btn btn-primary" onClick={sendCode}>Send code</button>
     </section>
   )
 }
