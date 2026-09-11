@@ -34,7 +34,7 @@ export async function createHsSub(formData: FormData) {
   const format = formData.get('format') as string
 
   if (format === 'physical' && !PHYSICAL_MONTHS.some(m => month.toLowerCase().includes(m))) {
-    return { error: 'Physical sessions for high school are only available in June, December or February.' }
+    return
   }
 
   await supabase.from('hs_subscriptions').insert({
