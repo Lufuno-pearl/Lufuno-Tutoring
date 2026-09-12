@@ -2,6 +2,7 @@ import { createClient } from '../../lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { createBooking, createHsSub, buyPack, markAwaiting, sendMessage, signOut, setTier } from './actions'
 import PortalHome from './PortalHome'
+import NotificationBell from '../NotificationBell'
 
 const UNI_SUBJECTS = ['Basic Analysis', 'Multi-Variable Calculus', 'Mathematical Modelling & Methods', 'Scientific Computing', 'Abstract Mathematics', 'Statistics']
 const PACKS = [
@@ -53,7 +54,10 @@ export default async function Portal() {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <h2 style={{ margin: 0 }}>My portal</h2>
-        <form action={signOut}><button className="btn" style={{ background: 'none', border: '1px solid var(--ink)' }}>Sign out</button></form>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <NotificationBell forRole="student" />
+          <form action={signOut}><button className="btn" style={{ background: 'none', border: '1px solid var(--ink)' }}>Sign out</button></form>
+        </div>
       </div>
 
       <PortalHome
