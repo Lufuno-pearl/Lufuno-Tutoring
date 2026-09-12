@@ -20,7 +20,7 @@ export default async function Portal() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase.from('profiles').select('tier').eq('id', user.id).single()
+  const { data: profile } = await supabase.from('profiles').select('tier, full_name').eq('id', user.id).single()
 
   if (!profile?.tier) {
     return (
@@ -57,6 +57,7 @@ export default async function Portal() {
       </div>
 
       <PortalHome
+        name={profile.full_name}
         tier={tier}
         uniSubjects={UNI_SUBJECTS}
         visiblePacks={visiblePacks}
