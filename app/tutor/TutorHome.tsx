@@ -103,7 +103,7 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
       ...(subs || []).map((s: any) => ({ ...s, kind: 'hs_subscriptions', label: `${s.month} — High School` })),
     ]
     return (
-      <div>
+            <div>
         <Back />
         <h3>Assign a tutor to each request</h3>
         {all.length === 0 && <p className="meta">Nothing to assign yet.</p>}
@@ -139,7 +139,7 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
                 <button className="btn btn-gold">Mark paid</button>
               </form>
             )}
-            {o.status === 'confirmed' && <PackUpload orderId={o.id} />}
+            {o.status === 'confirmed' && <PackUpload orderId={o.id} studentId={o.student_id} />}
           </div>
         ))}
       </div>
