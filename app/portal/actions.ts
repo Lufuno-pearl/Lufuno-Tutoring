@@ -84,3 +84,11 @@ export async function signOut() {
   await supabase.auth.signOut()
   revalidatePath('/')
 }
+
+export async function setTier(tier: 'university' | 'highschool') {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
+  await supabase.from('profiles').update({ tier }).eq('id', user.id)
+  revalidatePath('/portal')
+}
