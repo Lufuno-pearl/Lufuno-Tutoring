@@ -25,7 +25,7 @@ export default async function PartnerDashboard() {
   if (myStudentIds.length > 0) {
     const { data: messages } = await supabase
       .from('messages')
-      .select('*, profiles(full_name)')
+      .select('*, profiles:profiles!messages_student_id_fkey(full_name)')
       .in('student_id', myStudentIds)
       .order('created_at', { ascending: true })
     ;(messages || []).forEach(m => {
