@@ -12,7 +12,27 @@ function StatusPill({ status }: { status: string }) {
 }
 
 function PayBlock({ kind, id, label, price, markAwaiting }: { kind: 'bookings' | 'hs_subscriptions' | 'pack_orders'; id: string; label: string; price: number; markAwaiting: any }) {
+  const [done, setDone] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
   const ref = `${kind.slice(0, 4).toUpperCase()}-${id.slice(0, 8).toUpperCase()}`
+
+  async function handleClick() {
+    if (submitting || done) return
+    setSubmitting(true)
+    await markAwaiting(kind, id)
+    setSubmitting(false)
+    setDone(true)
+  }
+
+  if (done) {
+    return (
+      <div className="pay-box" style={{ textAlign: 'center' }}>
+        <p style={{ fontWeight: 600, marginBottom: 4 }}>Thank you!</p>
+        <p className="meta">We've received your payment confirmation for {label} — Lufuno will confirm it shortly.</p>
+      </div>
+    )
+  }
+
   return (
     <div className="pay-box">
       <div className="meta">Pay for: {label}</div>
@@ -21,15 +41,52 @@ function PayBlock({ kind, id, label, price, markAwaiting }: { kind: 'bookings' |
       <div className="pay-line"><span>Account holder</span><span>LP Moyo</span></div>
       <div className="pay-line"><span>Account number</span><span>9383837426</span></div>
       <div className="pay-line"><span>Reference</span><span>{ref}</span></div>
-      <form action={async () => { await markAwaiting(kind, id) }} style={{ marginTop: 14 }}>
-        <button className="btn btn-gold">I've made the payment</button>
-      </form>
+      <button className="btn btn-gold" style={{ marginTop: 14, opacity: submitting ? 0.6 : 1 }} onClick={handleClick} disabled={submitting}>
+        {submitting ? 'Submitting...' : "I've made the payment"}
+      </button>
+    </div>
+  )
+}
+
+function PackButton({ id, name, buyPack }: { id: string; name: string; buyPack: any }) {
+  const [clicked, setClicked] = useState(false)
+  async function handleClick() {
+    if (clicked) return
+    setClicked(true)
+    await buyPack(id, name)
+  }
+  return (
+    <button className="btn" style={{ background: 'none', border: '1px solid var(--line)', marginRight: 8, marginBottom: 8, opacity: clicked ? 0.6 : 1 }} onClick={handleClick} disabled={clicked}>
+      {clicked ? 'Requested...' : name}
+    </button>
+  )
+}
+
+function ChatBox({ sendMessage }: { sendMessage: any }) {
+  const [text, setText] = useState('')
+  const [sending, setSending] = useState(false)
+
+  async function handleSend() {
+    if (!text.trim() || sending) return
+    setSending(true)
+    const fd = new FormData()
+    fd.set('body', text)
+    await sendMessage(fd)
+    setText('')
+    setSending(false)
+  }
+
+  return (
+    <div>
+      <div className="field"><input value={text} onChange={e => setText(e.target.value)} placeholder="Type a message..." /></div>
+      <button className="btn btn-primary" onClick={handleSend} disabled={sending}>{sending ? 'Sending...' : 'Send'}</button>
     </div>
   )
 }
 
 export default function PortalHome({ name, tier, uniSubjects, visiblePacks, bookings, subs, orders, messages, attendance, actions }: any) {
   const [section, setSection] = useState<Section>('menu')
+  const [bookingSubmitting, setBookingSubmitting] = useState(false)
   const { createBooking, createHsSub, buyPack, markAwaiting, sendMessage } = actions
 
   if (section === 'menu') {
@@ -72,38 +129,56 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
   const Back = () => <div className="meta" style={{ cursor: 'pointer', marginBottom: 16, color: 'var(--purple-dark)', fontWeight: 600 }} onClick={() => setSection('menu')}>&larr; Back</div>
 
   if (section === 'book') {
+    async function handleBookingSubmit(e: React.FormEvent<HTMLFormElement>) {
+      e.preventDefault()
+      if (bookingSubmitting) return
+      setBookingSubmitting(true)
+      const fd = new FormData(e.currentTarget)
+      await createBooking(fd)
+      setBookingSubmitting(false)
+    }
+    async function handleHsSubmit(e: React.FormEvent<HTMLFormElement>) {
+            e.preventDefault()
+      if (bookingSubmitting) return
+      setBookingSubmitting(true)
+      const fd = new FormData(e.currentTarget)
+      await createHsSub(fd)
+      setBookingSubmitting(false)
+    }
     return (
       <div>
         <Back />
         {tier === 'university' && (
           <section>
             <h3>Book a university session</h3>
-            <form action={createBooking}>
+            <form onSubmit={handleBookingSubmit}>
               <div className="field">
                 <label>Subject</label>
                 <select name="subject" required>
                   {uniSubjects.map((s: string) => <option key={s}>{s}</option>)}
                 </select>
               </div>
-              <div className="field"><label>Preferred day</label><input name="day" required placeholder="e.g. Thursday 18 Sept" /></div>
-              <div className="field"><label>Preferred time</label><input name="time" required placeholder="e.g. 18:00" /></div>
+              <div className="field"><label>Preferred day</label><input type="date" name="day" required /></div>
+              <div className="field"><label>Preferred time</label><input type="time" name="time" required /></div>
               <div className="field">
                 <label>Online or physical?</label>
                 <select name="format" required defaultValue="online">
                   <option value="online">Online</option>
                   <option value="physical">Physical</option>
                 </select>
-                            </div>
+              </div>
               <p className="meta">R150/hour — your first session ever is R100.</p>
-              <button className="btn btn-primary">Book & get payment details</button>
+              <button className="btn btn-primary" disabled={bookingSubmitting} style={{ opacity: bookingSubmitting ? 0.6 : 1 }}>
+                {bookingSubmitting ? 'Booking...' : 'Book & get payment details'}
+              </button>
             </form>
           </section>
         )}
         {tier === 'highschool' && (
           <section>
             <h3>Subscribe — high school (Gr 10–12)</h3>
-            <form action={createHsSub}>
-              <div className="field"><label>Which month?</label><input name="month" required placeholder="e.g. September 2026" /></div>
+            <form onSubmit={handleHsSubmit}>
+              <div className="field"><label>Which month?</label><input type="month" name="month" required /></div>
               <div className="field">
                 <label>Online or physical?</label>
                 <select name="format" required defaultValue="online">
@@ -113,7 +188,9 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
                 <p className="meta" style={{ marginTop: 6 }}>Physical sessions for high school only run in June, December and February.</p>
               </div>
               <p className="meta">R600/month covers both Maths and Physical Sciences.</p>
-              <button className="btn btn-primary">Subscribe & get payment details</button>
+              <button className="btn btn-primary" disabled={bookingSubmitting} style={{ opacity: bookingSubmitting ? 0.6 : 1 }}>
+                {bookingSubmitting ? 'Submitting...' : 'Subscribe & get payment details'}
+              </button>
             </form>
           </section>
         )}
@@ -133,9 +210,7 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
         <Back />
         <h3>Study packs — R100 each</h3>
         {visiblePacks.map((p: any) => (
-          <form key={p.id} action={async () => { await buyPack(p.id, p.name) }} style={{ display: 'inline-block', marginRight: 8, marginBottom: 8 }}>
-            <button className="btn" style={{ background: 'none', border: '1px solid var(--line)' }}>{p.name}</button>
-          </form>
+          <PackButton key={p.id} id={p.id} name={p.name} buyPack={buyPack} />
         ))}
         {(orders || []).map((o: any) => (
           <div className="panel" key={o.id} style={{ marginTop: 12 }}>
@@ -163,10 +238,7 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
             </div>
           ))}
         </div>
-        <form action={sendMessage}>
-          <div className="field"><input name="body" placeholder="Type a message..." required /></div>
-          <button className="btn btn-primary">Send</button>
-        </form>
+        <ChatBox sendMessage={sendMessage} />
         {actions.userId && <MaterialsSection userId={actions.userId} />}
       </div>
     )
@@ -221,4 +293,4 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
   }
 
   return null
-}  
+}
