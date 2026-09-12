@@ -66,7 +66,7 @@ export default async function PartnerDashboard() {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2>Partner dashboard</h2>
+        <h2>Tutor dashboard</h2>
         <NotificationBell forRole="staff" />
       </div>
       <p className="meta">Signed in as {profile.full_name}</p>
