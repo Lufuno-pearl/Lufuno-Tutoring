@@ -14,13 +14,27 @@ export async function claim(table: 'bookings' | 'hs_subscriptions', id: string) 
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return
-  await supabase.from(table).update({ tutor_id: user.id }).eq('id', id)
+  const { data } = await supabase.from(table).update({ tutor_id: user.id }).eq('id', id).select('student_id').single()
+  if (data) {
+    await supabase.from('notifications').insert({
+      student_id: data.student_id,
+      for_role: 'student',
+      message: 'A tutor has been assigned to your request.',
+    })
+  }
   revalidatePath('/partner')
 }
 
 export async function setMeetingLink(table: 'bookings' | 'hs_subscriptions', id: string, url: string) {
   const supabase = createClient()
-  await supabase.from(table).update({ meeting_link: url }).eq('id', id)
+  const { data } = await supabase.from(table).update({ meeting_link: url }).eq('id', id).select('student_id').single()
+  if (data) {
+    await supabase.from('notifications').insert({
+      student_id: data.student_id,
+      for_role: 'student',
+      message: 'Your session meeting link is ready.',
+    })
+  }
   revalidatePath('/partner')
 }
 
@@ -42,6 +56,11 @@ export async function sendPartnerMessage(studentId: string, formData: FormData) 
     sender: 'tutor',
     sender_id: user.id,
     body: body.trim(),
+  })
+  await supabase.from('notifications').insert({
+    student_id: studentId,
+    for_role: 'student',
+    message: 'You have a new message from your tutor.',
   })
   revalidatePath('/partner')
 }
