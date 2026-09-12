@@ -61,6 +61,18 @@ export async function buyPack(packId: string, packName: string) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return
+
+  const { data: existing } = await supabase
+    .from('pack_orders')
+    .select('id')
+    .eq('student_id', user.id)
+    .eq('pack_id', packId)
+    .in('status', ['pending', 'awaiting', 'confirmed'])
+    .limit(1)
+  if (existing && existing.length > 0) {
+    return
+  }
+
   await supabase.from('pack_orders').insert({
     student_id: user.id,
     pack_id: packId,
