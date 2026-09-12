@@ -88,3 +88,134 @@ export default function PortalHome({ tier, uniSubjects, visiblePacks, bookings, 
                 <select name="format" required defaultValue="online">
                   <option value="online">Online</option>
                   <option value="physical">Physical</option>
+                </select>
+              </div>
+              <p className="meta">R150/hour — your first session ever is R100.</p>
+              <button className="btn btn-primary">Book & get payment details</button>
+            </form>
+          </section>
+        )}
+        {tier === 'highschool' && (
+          <section>
+            <h3>Subscribe — high school (Gr 10–12)</h3>
+            <form action={createHsSub}>
+              <div className="field"><label>Which month?</label><input name="month" required placeholder="e.g. September 2026" /></div>
+              <div className="field">
+                <label>Online or physical?</label>
+                <select name="format" required defaultValue="online">
+                  <option value="online">Online</option>
+                  <option value="physical">Physical</option>
+                </select>
+                <p className="meta" style={{ marginTop: 6 }}>Physical sessions for high school only run in June, December and February.</p>
+              </div>
+              <p className="meta">R600/month covers both Maths and Physical Sciences.</p>
+              <button className="btn btn-primary">Subscribe & get payment details</button>
+            </form>
+          </section>
+        )}
+        {(bookings || []).map((b: any) => b.status === 'pending' && (
+          <PayBlock key={b.id} kind="bookings" id={b.id} label={b.subject} price={b.price} markAwaiting={markAwaiting} />
+        ))}
+        {(subs || []).map((s: any) => s.status === 'pending' && (
+          <PayBlock key={s.id} kind="hs_subscriptions" id={s.id} label={`Subscription — ${s.month}`} price={s.price} markAwaiting={markAwaiting} />
+        ))}
+      </div>
+    )
+  }
+
+  if (section === 'packs') {
+    return (
+      <div>
+        <Back />
+        <h3>Study packs — R100 each</h3>
+        {visiblePacks.map((p: any) => (
+          <form key={p.id} action={async () => { await buyPack(p.id, p.name) }} style={{ display: 'inline-block', marginRight: 8, marginBottom: 8 }}>
+            <button className="btn" style={{ background: 'none', border: '1px solid var(--line)' }}>{p.name}</button>
+          </form>
+        ))}
+        {(orders || []).map((o: any) => (
+          <div className="panel" key={o.id} style={{ marginTop: 12 }}>
+            <h4>{o.pack_name}</h4>
+            <StatusPill status={o.status} />
+            {o.status === 'pending' && <div style={{ marginTop: 12 }}><PayBlock kind="pack_orders" id={o.id} label={o.pack_name} price={o.price} markAwaiting={markAwaiting} /></div>}
+            {o.status === 'confirmed' && o.download_url && <p style={{ marginTop: 8 }}><a href={o.download_url} target="_blank">Download your pack &rarr;</a></p>}
+            {o.status === 'confirmed' && !o.download_url && <p className="meta" style={{ marginTop: 8 }}>Confirmed — Lufuno will send your pack shortly.</p>}
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  if (section === 'chat') {
+    return (
+      <div>
+        <Back />
+        <h3>Message Lufuno</h3>
+        <div className="panel">
+          {(messages || []).length === 0 && <p className="meta">No messages yet — say hello.</p>}
+          {(messages || []).map((m: any) => (
+            <div key={m.id} style={{ marginBottom: 10, textAlign: m.sender === 'student' ? 'right' : 'left' }}>
+              <div className="meta" style={{ marginBottom: 2 }}>{m.sender === 'student' ? 'You' : 'Lufuno'}</div>
+              <div style={{ display: 'inline-block', background: m.sender === 'student' ? '#DCEEE0' : '#F3EFE4', padding: '8px 12px', borderRadius: 6 }}>{m.body}</div>
+            </div>
+          ))}
+        </div>
+        <form action={sendMessage}>
+          <div className="field"><input name="body" placeholder="Type a message..." required /></div>
+          <button className="btn btn-primary">Send</button>
+        </form>
+        {actions.userId && <MaterialsSection userId={actions.userId} />}
+      </div>
+    )
+  }
+
+  if (section === 'bank') {
+    return (
+      <div>
+        <Back />
+        <h3>Bank Details</h3>
+        <div className="pay-box">
+          <div className="pay-line"><span>Bank</span><span>ABSA</span></div>
+          <div className="pay-line"><span>Account holder</span><span>LP Moyo</span></div>
+          <div className="pay-line"><span>Account number</span><span>9383837426</span></div>
+        </div>
+        <p className="meta" style={{ marginTop: 10 }}>When you book or order something, a specific reference number is generated for that payment — use the reference shown there rather than a generic one.</p>
+      </div>
+    )
+  }
+
+  if (section === 'history') {
+    return (
+      <div>
+        <Back />
+        <h3>My bookings & orders</h3>
+        {[...(bookings || []), ...(subs || []), ...(orders || [])].length === 0 && <p className="meta">Nothing yet.</p>}
+        {(bookings || []).map((b: any) => (
+          <div className="panel" key={b.id}>
+            <h4>{b.subject}</h4>
+            <div className="meta">{b.day} at {b.time} · {b.format === 'physical' ? 'Physical' : 'Online'} · R{b.price}</div>
+            <StatusPill status={b.status} />
+            {b.status === 'confirmed' && b.format === 'online' && b.meeting_link && <p style={{ marginTop: 8 }}><a href={b.meeting_link} target="_blank">Join session &rarr;</a></p>}
+          </div>
+        ))}
+        {(subs || []).map((s: any) => (
+          <div className="panel" key={s.id}>
+            <h4>Monthly subscription — {s.month}</h4>
+            <div className="meta">Maths + Physical Sciences · {s.format === 'physical' ? 'Physical' : 'Online'} · R{s.price}</div>
+            <StatusPill status={s.status} />
+            {s.status === 'confirmed' && s.format === 'online' && s.meeting_link && <p style={{ marginTop: 8 }}><a href={s.meeting_link} target="_blank">Join session &rarr;</a></p>}
+          </div>
+        ))}
+        <h3 style={{ marginTop: 24 }}>My attendance</h3>
+        <div className="panel">
+          {(attendance || []).length === 0 && <p className="meta">No sessions logged yet.</p>}
+          {(attendance || []).map((a: any) => (
+            <div key={a.id} className="meta">{a.session_date} — {a.status}</div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  return null
+}
