@@ -28,13 +28,16 @@ function PayBlock({ kind, id, label, price, markAwaiting }: { kind: 'bookings' |
   )
 }
 
-export default function PortalHome({ tier, uniSubjects, visiblePacks, bookings, subs, orders, messages, attendance, actions }: any) {
+export default function PortalHome({ name, tier, uniSubjects, visiblePacks, bookings, subs, orders, messages, attendance, actions }: any) {
   const [section, setSection] = useState<Section>('menu')
   const { createBooking, createHsSub, buyPack, markAwaiting, sendMessage } = actions
 
   if (section === 'menu') {
+    const firstName = (name || '').split(' ')[0]
     return (
       <div>
+        <h2 style={{ marginBottom: 4 }}>Welcome{firstName ? `, ${firstName}` : ''}!</h2>
+        <p className="meta" style={{ marginBottom: 20 }}>Great to see you — what would you like to do today?</p>
         <div className="card-grid">
           <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('book')}>
             <div className="tile-art" style={{ background: 'linear-gradient(135deg, #8B6FD9, #6E4FC7)' }}><CalendarPlus size={36} color="#fff" /></div>
@@ -90,10 +93,10 @@ export default function PortalHome({ tier, uniSubjects, visiblePacks, bookings, 
                   <option value="online">Online</option>
                   <option value="physical">Physical</option>
                 </select>
-              </div>
+                            </div>
               <p className="meta">R150/hour — your first session ever is R100.</p>
               <button className="btn btn-primary">Book & get payment details</button>
-                          </form>
+            </form>
           </section>
         )}
         {tier === 'highschool' && (
@@ -218,4 +221,4 @@ export default function PortalHome({ tier, uniSubjects, visiblePacks, bookings, 
   }
 
   return null
-}
+}  
