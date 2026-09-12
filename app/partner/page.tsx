@@ -12,10 +12,10 @@ export default async function PartnerDashboard() {
   if (!profile || profile.role !== 'partner') redirect('/portal')
 
   const [{ data: openBookings }, { data: openSubs }, { data: myBookings }, { data: mySubs }, { data: attendanceRows }] = await Promise.all([
-    supabase.from('bookings').select('*, profiles(full_name, email)').is('tutor_id', null).order('created_at', { ascending: false }),
-    supabase.from('hs_subscriptions').select('*, profiles(full_name, email)').is('tutor_id', null).order('created_at', { ascending: false }),
-    supabase.from('bookings').select('*, profiles(full_name, email)').eq('tutor_id', user.id).order('created_at', { ascending: false }),
-    supabase.from('hs_subscriptions').select('*, profiles(full_name, email)').eq('tutor_id', user.id).order('created_at', { ascending: false }),
+    supabase.from('bookings').select('*, profiles:profiles!bookings_student_id_fkey(full_name, email)').is('tutor_id', null).order('created_at', { ascending: false }),
+    supabase.from('hs_subscriptions').select('*, profiles:profiles!hs_subscriptions_student_id_fkey(full_name, email)').is('tutor_id', null).order('created_at', { ascending: false }),
+    supabase.from('bookings').select('*, profiles:profiles!bookings_student_id_fkey(full_name, email)').eq('tutor_id', user.id).order('created_at', { ascending: false }),
+    supabase.from('hs_subscriptions').select('*, profiles:profiles!hs_subscriptions_student_id_fkey(full_name, email)').eq('tutor_id', user.id).order('created_at', { ascending: false }),
     supabase.from('attendance').select('*').order('created_at', { ascending: false }),
   ])
 
