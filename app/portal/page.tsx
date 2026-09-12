@@ -61,11 +61,12 @@ export default async function Portal() {
 
   const tier = profile.tier
 
-  const [{ data: bookings }, { data: subs }, { data: orders }, { data: messages }] = await Promise.all([
+  const [{ data: bookings }, { data: subs }, { data: orders }, { data: messages }, { data: attendance }] = await Promise.all([
     supabase.from('bookings').select('*').eq('student_id', user.id).order('created_at', { ascending: false }),
     supabase.from('hs_subscriptions').select('*').eq('student_id', user.id).order('created_at', { ascending: false }),
     supabase.from('pack_orders').select('*').eq('student_id', user.id).order('created_at', { ascending: false }),
     supabase.from('messages').select('*').eq('student_id', user.id).order('created_at', { ascending: true }),
+    supabase.from('attendance').select('*').eq('student_id', user.id).order('created_at', { ascending: false }),
   ])
 
   const visiblePacks = PACKS.filter(p => p.tier === tier)
@@ -140,6 +141,7 @@ export default async function Portal() {
             <div className="meta">{b.day} at {b.time} · {b.format === 'physical' ? 'Physical' : 'Online'} · R{b.price}</div>
             <StatusPill status={b.status} />
             {b.status === 'pending' && <div style={{ marginTop: 12 }}><PayBlock kind="bookings" id={b.id} label={b.subject} price={b.price} /></div>}
+            {b.status === 'confirmed' && b.format === 'online' && b.meeting_link && <p style={{ marginTop: 8 }}><a href={b.meeting_link} target="_blank">Join session &rarr;</a></p>}
           </div>
         ))}
         {(subs || []).map(s => (
@@ -148,6 +150,7 @@ export default async function Portal() {
             <div className="meta">Maths + Physical Sciences · {s.format === 'physical' ? 'Physical' : 'Online'} · R{s.price}</div>
             <StatusPill status={s.status} />
             {s.status === 'pending' && <div style={{ marginTop: 12 }}><PayBlock kind="hs_subscriptions" id={s.id} label={`Subscription — ${s.month}`} price={s.price} /></div>}
+            {s.status === 'confirmed' && s.format === 'online' && s.meeting_link && <p style={{ marginTop: 8 }}><a href={s.meeting_link} target="_blank">Join session &rarr;</a></p>}
           </div>
         ))}
         {(orders || []).map(o => (
@@ -177,6 +180,16 @@ export default async function Portal() {
           <div className="field"><input name="body" placeholder="Type a message..." required /></div>
           <button className="btn btn-primary">Send</button>
         </form>
+      </section>
+
+      <section>
+        <h3>My attendance</h3>
+        <div className="panel">
+          {(attendance || []).length === 0 && <p className="meta">No sessions logged yet.</p>}
+          {(attendance || []).map((a: any) => (
+            <div key={a.id} className="meta">{a.session_date} — {a.status}</div>
+          ))}
+        </div>
       </section>
 
       <MaterialsSection userId={user.id} />
