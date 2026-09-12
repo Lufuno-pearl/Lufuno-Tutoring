@@ -34,6 +34,7 @@ export default function LoginForm() {
 
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
+      if (user.email === 'pearllufunomoyo@gmail.com') { router.push('/tutor'); return }
       const { data: profile } = await supabase.from('profiles').select('role, tier').eq('id', user.id).single()
       if (profile?.role === 'partner') { router.push('/partner'); return }
       if (!profile?.tier && (tier === 'university' || tier === 'highschool')) {
