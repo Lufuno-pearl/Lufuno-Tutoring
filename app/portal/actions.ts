@@ -10,16 +10,22 @@ export async function createBooking(formData: FormData) {
   const { data: profile } = await supabase.from('profiles').select('uni_bookings_count').eq('id', user.id).single()
   const firstTime = !profile || profile.uni_bookings_count === 0
   const price = firstTime ? 100 : 150
+  const subject = formData.get('subject') as string
 
   await supabase.from('bookings').insert({
     student_id: user.id,
-    subject: formData.get('subject') as string,
+    subject,
     day: formData.get('day') as string,
     time: formData.get('time') as string,
     format: formData.get('format') as string,
     price,
   })
   await supabase.from('profiles').update({ uni_bookings_count: (profile?.uni_bookings_count || 0) + 1 }).eq('id', user.id)
+  await supabase.from('notifications').insert({
+    student_id: user.id,
+    for_role: 'staff',
+    message: `New university tutoring request: ${subject}`,
+  })
   revalidatePath('/portal')
 }
 
@@ -43,6 +49,11 @@ export async function createHsSub(formData: FormData) {
     format,
     price: 600,
   })
+  await supabase.from('notifications').insert({
+    student_id: user.id,
+    for_role: 'staff',
+    message: `New high school subscription request — ${month}`,
+  })
   revalidatePath('/portal')
 }
 
@@ -56,12 +67,38 @@ export async function buyPack(packId: string, packName: string) {
     pack_name: packName,
     price: 100,
   })
+  await supabase.from('notifications').insert({
+    student_id: user.id,
+    for_role: 'staff',
+    message: `New study pack request: ${packName}`,
+  })
   revalidatePath('/portal')
 }
 
 export async function markAwaiting(table: 'bookings' | 'hs_subscriptions' | 'pack_orders', id: string) {
   const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
   await supabase.from(table).update({ status: 'awaiting' }).eq('id', id)
+
+  let label = 'a payment'
+  if (table === 'bookings') {
+    const { data } = await supabase.from('bookings').select('subject').eq('id', id).single()
+    label = data?.subject || label
+  } else if (table === 'hs_subscriptions') {
+    const { data } = await supabase.from('hs_subscriptions').select('month').eq('id', id).single()
+    label = data ? `subscription — ${data.month}` : label
+  } else if (table === 'pack_orders') {
+    const { data } = await supabase.from('pack_orders').select('pack_name').eq('id', id).single()
+    label = data?.pack_name || label
+  }
+
+  if (user) {
+    await supabase.from('notifications').insert({
+      student_id: user.id,
+      for_role: 'staff',
+      message: `Payment marked as made for: ${label}`,
+    })
+  }
   revalidatePath('/portal')
 }
 
@@ -75,6 +112,11 @@ export async function sendMessage(formData: FormData) {
     student_id: user.id,
     sender: 'student',
     body: body.trim(),
+  })
+  await supabase.from('notifications').insert({
+    student_id: user.id,
+    for_role: 'staff',
+    message: `New message from a student`,
   })
   revalidatePath('/portal')
 }
