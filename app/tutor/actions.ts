@@ -66,4 +66,3 @@ export async function notifyPackReady(studentId: string) {
     message: 'Your study pack file is ready to download.',
   })
 }
-EOF
