@@ -4,34 +4,17 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '../../lib/supabase/client'
 
 export default function LoginForm() {
+  const [mode, setMode] = useState<'signup' | 'signin'>('signup')
   const [email, setEmail] = useState('')
   const [name, setName] = useState('')
-  const [code, setCode] = useState('')
-  const [step, setStep] = useState<'form' | 'code'>('form')
+  const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const router = useRouter()
   const searchParams = useSearchParams()
   const tier = searchParams.get('tier')
 
-  async function sendCode() {
-    setError('')
-    if (!email || !name) { setError('Please fill in both fields.'); return }
+  async function afterAuth() {
     const supabase = createClient()
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { data: { full_name: name } },
-    })
-    if (error) setError(error.message)
-    else setStep('code')
-  }
-
-  async function verifyCode() {
-    setError('')
-    if (!code) { setError('Please enter the code from your email.'); return }
-    const supabase = createClient()
-    const { error } = await supabase.auth.verifyOtp({ email, token: code, type: 'email' })
-    if (error) { setError(error.message); return }
-
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
       if (user.email === 'pearllufunomoyo@gmail.com') { router.push('/tutor'); return }
@@ -44,33 +27,51 @@ export default function LoginForm() {
     router.push('/portal')
   }
 
-  if (step === 'code') {
-    return (
-      <section>
-        <h2>Enter your code</h2>
-        <p style={{ color: '#6b6b6b', fontSize: '0.9rem', marginTop: '-10px' }}>
-          Check {email} for a 6-digit code.
-        </p>
-        <div className="field"><label>Code</label><input value={code} onChange={e => setCode(e.target.value)} placeholder="123456" /></div>
-        <p className="meta" style={{ background: '#F3E6C7', padding: '10px 14px', borderRadius: 10, marginBottom: 16 }}>
-          Don't see it? Check your Spam or Junk folder — mark it "Not spam" so future codes land straight in your inbox.
-        </p>
-        {error && <p style={{ color: '#A6443A', fontSize: '0.85rem' }}>{error}</p>}
-        <button className="btn btn-primary" onClick={verifyCode}>Confirm & sign in</button>
-      </section>
-    )
+  async function handleSignUp() {
+    setError('')
+    if (!email || !name || !password) { setError('Please fill in all fields.'); return }
+    if (password.length < 6) { setError('Password must be at least 6 characters.'); return }
+    const supabase = createClient()
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { full_name: name } },
+    })
+    if (error) { setError(error.message); return }
+    await afterAuth()
+  }
+
+  async function handleSignIn() {
+    setError('')
+    if (!email || !password) { setError('Please fill in both fields.'); return }
+    const supabase = createClient()
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) { setError(error.message); return }
+    await afterAuth()
   }
 
   return (
     <section>
-      <h2>Sign in</h2>
-      <p style={{ color: '#6b6b6b', fontSize: '0.9rem', marginTop: '-10px' }}>
-        We'll email you a 6-digit code — no password needed.
-      </p>
-      <div className="field"><label>Full name</label><input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Thandi Nkosi" /></div>
+      <h2>{mode === 'signup' ? 'Create your account' : 'Sign in'}</h2>
+      {mode === 'signup' && (
+        <div className="field"><label>Full name</label><input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Thandi Nkosi" /></div>
+      )}
       <div className="field"><label>Email</label><input value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" /></div>
+      <div className="field"><label>Password</label><input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="At least 6 characters" /></div>
       {error && <p style={{ color: '#A6443A', fontSize: '0.85rem' }}>{error}</p>}
-      <button className="btn btn-primary" onClick={sendCode}>Send code</button>
+      {mode === 'signup' ? (
+        <button className="btn btn-primary" onClick={handleSignUp}>Create account</button>
+      ) : (
+        <button className="btn btn-primary" onClick={handleSignIn}>Sign in</button>
+      )}
+      <p className="meta" style={{ marginTop: 14, cursor: 'pointer' }} onClick={() => { setMode(mode === 'signup' ? 'signin' : 'signup'); setError('') }}>
+        {mode === 'signup' ? 'Already have an account? Sign in' : "New here? Create an account"}
+      </p>
+      {mode === 'signin' && (
+        <p className="meta" style={{ marginTop: 10 }}>
+          Forgot your password? WhatsApp Lufuno on <strong>067 381 2727</strong> to have it reset.
+        </p>
+      )}
     </section>
   )
 }
