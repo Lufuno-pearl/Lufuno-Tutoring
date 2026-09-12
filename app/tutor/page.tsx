@@ -16,7 +16,7 @@ export default async function TutorDashboard() {
     supabase.from('bookings').select('*, profiles(full_name, email)').order('created_at', { ascending: false }),
     supabase.from('hs_subscriptions').select('*, profiles(full_name, email)').order('created_at', { ascending: false }),
     supabase.from('pack_orders').select('*, profiles(full_name, email)').order('created_at', { ascending: false }),
-    supabase.from('messages').select('*, profiles(full_name, email)').order('created_at', { ascending: true }),
+    supabase.from('messages').select('*, profiles:profiles!messages_student_id_fkey(full_name, email)').order('created_at', { ascending: true }),
     supabase.from('attendance').select('*, student:profiles!attendance_student_id_fkey(full_name), tutor:profiles!attendance_marked_by_fkey(full_name)').order('created_at', { ascending: false }),
     supabase.from('profiles').select('id, full_name, available').eq('role', 'partner'),
   ])
