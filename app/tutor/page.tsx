@@ -2,6 +2,7 @@ import { createClient } from '../../lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { confirmPayment, setMeetingLink, assignTutor, markAttendance, sendTutorMessage } from './actions'
 import TutorHome from './TutorHome'
+import NotificationBell from '../NotificationBell'
 
 const TUTOR_EMAIL = 'pearllufunomoyo@gmail.com'
 
@@ -29,7 +30,10 @@ export default async function TutorDashboard() {
 
   return (
     <div>
-      <h2>Tutor dashboard</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h2>Tutor dashboard</h2>
+        <NotificationBell forRole="staff" />
+      </div>
       <TutorHome
         bookings={bookings}
         subs={subs}
