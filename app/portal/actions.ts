@@ -29,17 +29,37 @@ export async function createBooking(formData: FormData) {
   revalidatePath('/portal')
 }
 
-const PHYSICAL_MONTHS = ['june', 'december', 'february']
+const PHYSICAL_MONTH_NUMBERS = ['02', '06', '12']
+
+function formatMonthLabel(value: string) {
+  const [year, mm] = value.split('-')
+  const names = ['January','February','March','April','May','June','July','August','September','October','November','December']
+  const idx = parseInt(mm, 10) - 1
+  return names[idx] ? `${names[idx]} ${year}` : value
+}
 
 export async function createHsSub(formData: FormData) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return
 
-  const month = formData.get('month') as string
+  const rawMonth = formData.get('month') as string
   const format = formData.get('format') as string
+  const mm = rawMonth.split('-')[1]
+  const month = formatMonthLabel(rawMonth)
 
-  if (format === 'physical' && !PHYSICAL_MONTHS.some(m => month.toLowerCase().includes(m))) {
+  if (format === 'physical' && !PHYSICAL_MONTH_NUMBERS.includes(mm)) {
+    return
+  }
+
+  const { data: existing } = await supabase
+    .from('hs_subscriptions')
+    .select('id')
+    .eq('student_id', user.id)
+    .ilike('month', month.trim())
+    .in('status', ['pending', 'awaiting', 'confirmed'])
+    .limit(1)
+  if (existing && existing.length > 0) {
     return
   }
 
