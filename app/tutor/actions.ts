@@ -4,19 +4,27 @@ import { revalidatePath } from 'next/cache'
 
 export async function confirmPayment(table: 'bookings' | 'hs_subscriptions' | 'pack_orders', id: string) {
   const supabase = createClient()
-  await supabase.from(table).update({ status: 'confirmed' }).eq('id', id)
-  revalidatePath('/tutor')
-}
-
-export async function setDownloadUrl(id: string, url: string) {
-  const supabase = createClient()
-  await supabase.from('pack_orders').update({ download_url: url }).eq('id', id)
+  const { data } = await supabase.from(table).update({ status: 'confirmed' }).eq('id', id).select('student_id').single()
+  if (data) {
+    await supabase.from('notifications').insert({
+      student_id: data.student_id,
+      for_role: 'student',
+      message: 'Your payment has been confirmed!',
+    })
+  }
   revalidatePath('/tutor')
 }
 
 export async function setMeetingLink(table: 'bookings' | 'hs_subscriptions', id: string, url: string) {
   const supabase = createClient()
-  await supabase.from(table).update({ meeting_link: url }).eq('id', id)
+  const { data } = await supabase.from(table).update({ meeting_link: url }).eq('id', id).select('student_id').single()
+  if (data) {
+    await supabase.from('notifications').insert({
+      student_id: data.student_id,
+      for_role: 'student',
+      message: 'Your session meeting link is ready.',
+    })
+  }
   revalidatePath('/tutor')
 }
 
@@ -36,6 +44,11 @@ export async function sendTutorMessage(studentId: string, formData: FormData) {
     sender: 'tutor',
     body: body.trim(),
   })
+  await supabase.from('notifications').insert({
+    student_id: studentId,
+    for_role: 'student',
+    message: 'You have a new message from Lufuno.',
+  })
   revalidatePath('/tutor')
 }
 
@@ -44,3 +57,13 @@ export async function assignTutor(table: 'bookings' | 'hs_subscriptions', id: st
   await supabase.from(table).update({ tutor_id: tutorId || null }).eq('id', id)
   revalidatePath('/tutor')
 }
+
+export async function notifyPackReady(studentId: string) {
+  const supabase = createClient()
+  await supabase.from('notifications').insert({
+    student_id: studentId,
+    for_role: 'student',
+    message: 'Your study pack file is ready to download.',
+  })
+}
+EOF
