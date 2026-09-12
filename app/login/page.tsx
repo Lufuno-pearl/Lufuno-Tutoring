@@ -28,8 +28,14 @@ export default function Login() {
     if (!code) { setError('Please enter the code from your email.'); return }
     const supabase = createClient()
     const { error } = await supabase.auth.verifyOtp({ email, token: code, type: 'email' })
-    if (error) setError(error.message)
-    else router.push('/portal')
+    if (error) { setError(error.message); return }
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+      if (profile?.role === 'partner') { router.push('/partner'); return }
+    }
+    router.push('/portal')
   }
 
   if (step === 'code') {
