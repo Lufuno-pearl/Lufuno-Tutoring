@@ -38,3 +38,9 @@ export async function sendTutorMessage(studentId: string, formData: FormData) {
   })
   revalidatePath('/tutor')
 }
+
+export async function assignTutor(table: 'bookings' | 'hs_subscriptions', id: string, tutorId: string) {
+  const supabase = createClient()
+  await supabase.from(table).update({ tutor_id: tutorId || null }).eq('id', id)
+  revalidatePath('/tutor')
+}
