@@ -18,6 +18,19 @@ export async function claim(table: 'bookings' | 'hs_subscriptions', id: string) 
   revalidatePath('/partner')
 }
 
+export async function setMeetingLink(table: 'bookings' | 'hs_subscriptions', id: string, url: string) {
+  const supabase = createClient()
+  await supabase.from(table).update({ meeting_link: url }).eq('id', id)
+  revalidatePath('/partner')
+}
+
+export async function markAttendance(studentId: string, status: 'present' | 'absent' | 'rescheduled') {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  await supabase.from('attendance').insert({ student_id: studentId, marked_by: user?.id, status })
+  revalidatePath('/partner')
+}
+
 export async function sendPartnerMessage(studentId: string, formData: FormData) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
