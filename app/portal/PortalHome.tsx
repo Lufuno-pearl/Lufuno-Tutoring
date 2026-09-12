@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { CalendarPlus, BookOpen, MessageCircle, Landmark, History } from 'lucide-react'
 import MaterialsSection from './MaterialsSection'
+import PackDownload from './PackDownload'
 
 type Section = 'menu' | 'book' | 'packs' | 'chat' | 'bank' | 'history'
 
@@ -92,7 +93,7 @@ export default function PortalHome({ tier, uniSubjects, visiblePacks, bookings, 
               </div>
               <p className="meta">R150/hour — your first session ever is R100.</p>
               <button className="btn btn-primary">Book & get payment details</button>
-            </form>
+                          </form>
           </section>
         )}
         {tier === 'highschool' && (
@@ -138,8 +139,7 @@ export default function PortalHome({ tier, uniSubjects, visiblePacks, bookings, 
             <h4>{o.pack_name}</h4>
             <StatusPill status={o.status} />
             {o.status === 'pending' && <div style={{ marginTop: 12 }}><PayBlock kind="pack_orders" id={o.id} label={o.pack_name} price={o.price} markAwaiting={markAwaiting} /></div>}
-            {o.status === 'confirmed' && o.download_url && <p style={{ marginTop: 8 }}><a href={o.download_url} target="_blank">Download your pack &rarr;</a></p>}
-            {o.status === 'confirmed' && !o.download_url && <p className="meta" style={{ marginTop: 8 }}>Confirmed — Lufuno will send your pack shortly.</p>}
+            {o.status === 'confirmed' && <PackDownload orderId={o.id} />}
           </div>
         ))}
       </div>
