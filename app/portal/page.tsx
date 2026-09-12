@@ -1,18 +1,18 @@
 import { createClient } from '../../lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { createBooking, createHsSub, buyPack, markAwaiting, sendMessage, signOut } from './actions'
+import { createBooking, createHsSub, buyPack, markAwaiting, sendMessage, signOut, setTier } from './actions'
 import MaterialsSection from './MaterialsSection'
 
 const UNI_SUBJECTS = ['Basic Analysis', 'Multi-Variable Calculus', 'Mathematical Modelling & Methods', 'Scientific Computing', 'Abstract Mathematics', 'Statistics']
 const PACKS = [
-  { id: 'analysis', name: 'Basic Analysis Pack' },
-  { id: 'multivar', name: 'Multi-Variable Calculus Pack' },
-  { id: 'modelling', name: 'Mathematical Modelling & Methods Pack' },
-  { id: 'scicomp', name: 'Scientific Computing Pack' },
-  { id: 'abstract', name: 'Abstract Mathematics Pack' },
-  { id: 'stats', name: 'Statistics Pack' },
-  { id: 'hsmath', name: 'High School Maths Pack' },
-  { id: 'hsphys', name: 'High School Physical Sciences Pack' },
+  { id: 'analysis', name: 'Basic Analysis Pack', tier: 'university' },
+  { id: 'multivar', name: 'Multi-Variable Calculus Pack', tier: 'university' },
+  { id: 'modelling', name: 'Mathematical Modelling & Methods Pack', tier: 'university' },
+  { id: 'scicomp', name: 'Scientific Computing Pack', tier: 'university' },
+  { id: 'abstract', name: 'Abstract Mathematics Pack', tier: 'university' },
+  { id: 'stats', name: 'Statistics Pack', tier: 'university' },
+  { id: 'hsmath', name: 'High School Maths Pack', tier: 'highschool' },
+  { id: 'hsphys', name: 'High School Physical Sciences Pack', tier: 'highschool' },
 ]
 
 function StatusPill({ status }: { status: string }) {
@@ -42,12 +42,33 @@ export default async function Portal() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  const { data: profile } = await supabase.from('profiles').select('tier').eq('id', user.id).single()
+
+  if (!profile?.tier) {
+    return (
+      <div>
+        <h2>Welcome — one quick question</h2>
+        <p className="meta">This decides what shows up in your portal.</p>
+        <form action={async () => { 'use server'; await setTier('university') }} style={{ marginBottom: 12 }}>
+          <button className="btn btn-primary" style={{ width: '100%' }}>I'm a university student</button>
+        </form>
+        <form action={async () => { 'use server'; await setTier('highschool') }}>
+          <button className="btn" style={{ width: '100%', background: 'none', border: '1px solid var(--purple-dark)', color: 'var(--purple-dark)' }}>I'm a high schooler (Gr 10–12)</button>
+        </form>
+      </div>
+    )
+  }
+
+  const tier = profile.tier
+
   const [{ data: bookings }, { data: subs }, { data: orders }, { data: messages }] = await Promise.all([
     supabase.from('bookings').select('*').eq('student_id', user.id).order('created_at', { ascending: false }),
     supabase.from('hs_subscriptions').select('*').eq('student_id', user.id).order('created_at', { ascending: false }),
     supabase.from('pack_orders').select('*').eq('student_id', user.id).order('created_at', { ascending: false }),
     supabase.from('messages').select('*').eq('student_id', user.id).order('created_at', { ascending: true }),
   ])
+
+  const visiblePacks = PACKS.filter(p => p.tier === tier)
 
   return (
     <div>
@@ -56,49 +77,53 @@ export default async function Portal() {
         <form action={signOut}><button className="btn" style={{ background: 'none', border: '1px solid var(--ink)' }}>Sign out</button></form>
       </div>
 
-      <section>
-        <h3>Book a university session</h3>
-        <form action={createBooking}>
-          <div className="field">
-            <label>Subject</label>
-            <select name="subject" required>
-              {UNI_SUBJECTS.map(s => <option key={s}>{s}</option>)}
-            </select>
-          </div>
-          <div className="field"><label>Preferred day</label><input name="day" required placeholder="e.g. Thursday 18 Sept" /></div>
-          <div className="field"><label>Preferred time</label><input name="time" required placeholder="e.g. 18:00" /></div>
-          <div className="field">
-            <label>Online or physical?</label>
-            <select name="format" required defaultValue="online">
-              <option value="online">Online</option>
-              <option value="physical">Physical</option>
-            </select>
-          </div>
-          <p className="meta">R150/hour — your first session ever is R100.</p>
-          <button className="btn btn-primary">Book & get payment details</button>
-        </form>
-      </section>
+      {tier === 'university' && (
+        <section>
+          <h3>Book a university session</h3>
+          <form action={createBooking}>
+            <div className="field">
+              <label>Subject</label>
+              <select name="subject" required>
+                {UNI_SUBJECTS.map(s => <option key={s}>{s}</option>)}
+              </select>
+            </div>
+            <div className="field"><label>Preferred day</label><input name="day" required placeholder="e.g. Thursday 18 Sept" /></div>
+            <div className="field"><label>Preferred time</label><input name="time" required placeholder="e.g. 18:00" /></div>
+            <div className="field">
+              <label>Online or physical?</label>
+              <select name="format" required defaultValue="online">
+                <option value="online">Online</option>
+                <option value="physical">Physical</option>
+              </select>
+            </div>
+            <p className="meta">R150/hour — your first session ever is R100.</p>
+            <button className="btn btn-primary">Book & get payment details</button>
+          </form>
+        </section>
+      )}
 
-      <section>
-        <h3>Subscribe — high school (Gr 10–12)</h3>
-        <form action={createHsSub}>
-          <div className="field"><label>Which month?</label><input name="month" required placeholder="e.g. September 2026" /></div>
-          <div className="field">
-            <label>Online or physical?</label>
-            <select name="format" required defaultValue="online">
-              <option value="online">Online</option>
-              <option value="physical">Physical</option>
-            </select>
-            <p className="meta" style={{ marginTop: 6 }}>Physical sessions for high school only run in June, December and February.</p>
-          </div>
-          <p className="meta">R600/month covers both Maths and Physical Sciences.</p>
-          <button className="btn btn-primary">Subscribe & get payment details</button>
-        </form>
-      </section>
+      {tier === 'highschool' && (
+        <section>
+          <h3>Subscribe — high school (Gr 10–12)</h3>
+          <form action={createHsSub}>
+            <div className="field"><label>Which month?</label><input name="month" required placeholder="e.g. September 2026" /></div>
+            <div className="field">
+              <label>Online or physical?</label>
+              <select name="format" required defaultValue="online">
+                <option value="online">Online</option>
+                <option value="physical">Physical</option>
+              </select>
+              <p className="meta" style={{ marginTop: 6 }}>Physical sessions for high school only run in June, December and February.</p>
+            </div>
+            <p className="meta">R600/month covers both Maths and Physical Sciences.</p>
+            <button className="btn btn-primary">Subscribe & get payment details</button>
+          </form>
+        </section>
+      )}
 
       <section>
         <h3>Study packs — R100 each</h3>
-        {PACKS.map(p => (
+        {visiblePacks.map(p => (
           <form key={p.id} action={async () => { 'use server'; await buyPack(p.id, p.name) }} style={{ display: 'inline-block', marginRight: 8, marginBottom: 8 }}>
             <button className="btn" style={{ background: 'none', border: '1px solid var(--line)' }}>{p.name}</button>
           </form>
