@@ -1,8 +1,9 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { createClient } from '../../lib/supabase/client'
+import { notifyPackReady } from './actions'
 
-export default function PackUpload({ orderId }: { orderId: string }) {
+export default function PackUpload({ orderId, studentId }: { orderId: string; studentId: string }) {
   const [files, setFiles] = useState<{ name: string }[]>([])
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
@@ -23,7 +24,10 @@ export default function PackUpload({ orderId }: { orderId: string }) {
     const { error } = await supabase.storage.from('study-packs').upload(`${orderId}/${file.name}`, file, { upsert: true })
     setUploading(false)
     if (error) setError(error.message)
-    else loadFiles()
+    else {
+      loadFiles()
+      await notifyPackReady(studentId)
+    }
     e.target.value = ''
   }
 
