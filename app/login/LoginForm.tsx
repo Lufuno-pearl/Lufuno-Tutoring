@@ -52,6 +52,9 @@ export default function LoginForm() {
           Check {email} for a 6-digit code.
         </p>
         <div className="field"><label>Code</label><input value={code} onChange={e => setCode(e.target.value)} placeholder="123456" /></div>
+        <p className="meta" style={{ background: '#F3E6C7', padding: '10px 14px', borderRadius: 10, marginBottom: 16 }}>
+          Don't see it? Check your Spam or Junk folder — mark it "Not spam" so future codes land straight in your inbox.
+        </p>
         {error && <p style={{ color: '#A6443A', fontSize: '0.85rem' }}>{error}</p>}
         <button className="btn btn-primary" onClick={verifyCode}>Confirm & sign in</button>
       </section>
