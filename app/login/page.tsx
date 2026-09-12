@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '../../lib/supabase/client'
 
 export default function Login() {
@@ -10,6 +10,8 @@ export default function Login() {
   const [step, setStep] = useState<'form' | 'code'>('form')
   const [error, setError] = useState('')
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const tier = searchParams.get('tier')
 
   async function sendCode() {
     setError('')
@@ -32,8 +34,11 @@ export default function Login() {
 
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
-      const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+      const { data: profile } = await supabase.from('profiles').select('role, tier').eq('id', user.id).single()
       if (profile?.role === 'partner') { router.push('/partner'); return }
+      if (!profile?.tier && (tier === 'university' || tier === 'highschool')) {
+        await supabase.from('profiles').update({ tier }).eq('id', user.id)
+      }
     }
     router.push('/portal')
   }
