@@ -96,3 +96,113 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
       </div>
     )
   }
+
+  if (section === 'assign') {
+    const all = [
+      ...(bookings || []).map((b: any) => ({ ...b, kind: 'bookings', label: `${b.subject} — ${b.day} ${b.time}` })),
+      ...(subs || []).map((s: any) => ({ ...s, kind: 'hs_subscriptions', label: `${s.month} — High School` })),
+    ]
+    return (
+      <div>
+        <Back />
+        <h3>Assign a tutor to each request</h3>
+        {all.length === 0 && <p className="meta">Nothing to assign yet.</p>}
+        {all.map((r: any) => (
+          <div className="panel" key={r.id}>
+            <h4>{r.label}</h4>
+            <div className="meta">{r.profiles?.full_name} · currently: {r.tutor_id ? (partners.find((p: any) => p.id === r.tutor_id)?.full_name || 'a partner') : 'unassigned'}</div>
+            <form action={async (formData: FormData) => { await assignTutor(r.kind, r.id, formData.get('tutorId') as string) }} style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+              <select name="tutorId" defaultValue={r.tutor_id || ''} style={{ flex: 1, padding: 8, border: '1px solid var(--line)', borderRadius: 100 }}>
+                <option value="">Unassigned</option>
+                {partners.map((p: any) => <option key={p.id} value={p.id}>{p.full_name}{p.available ? '' : ' (not available)'}</option>)}
+              </select>
+              <button className="btn btn-primary">Save</button>
+            </form>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  if (section === 'packs') {
+    return (
+      <div>
+        <Back />
+        <h3>Study pack orders</h3>
+        {(orders || []).map((o: any) => (
+          <div className="panel" key={o.id}>
+            <h4>{o.pack_name}</h4>
+            <div className="meta">{o.profiles?.full_name} · {o.profiles?.email} · R{o.price}</div>
+            <StatusPill status={o.status} />
+            {o.status !== 'confirmed' && (
+              <form action={async () => { await confirmPayment('pack_orders', o.id) }} style={{ marginTop: 8 }}>
+                <button className="btn btn-gold">Mark paid</button>
+              </form>
+            )}
+            {o.status === 'confirmed' && <PackUpload orderId={o.id} />}
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  if (section === 'sessions') {
+    return (
+      <div>
+        <Back />
+        <h3>Sessions log</h3>
+        {(attendanceRows || []).length === 0 && <p className="meta">No sessions logged yet.</p>}
+        {(attendanceRows || []).map((a: any) => (
+          <div className="panel" key={a.id}>
+            <h4>{a.student?.full_name || 'Student'}</h4>
+            <div className="meta">{a.session_date} — {a.status} · logged by {a.tutor?.full_name || 'you'}</div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  if (section === 'chat') {
+    return (
+      <div>
+        <Back />
+        {Object.keys(threadsByStudent).length === 0 && <p className="meta">No messages yet.</p>}
+        {Object.entries(threadsByStudent).map(([studentId, thread]: any) => (
+          <div className="panel" key={studentId}>
+            <h4>{thread.name}</h4>
+            <div className="meta">{thread.email}</div>
+            <div style={{ margin: '10px 0' }}>
+              {thread.msgs.map((m: any) => (
+                <div key={m.id} style={{ marginBottom: 8, textAlign: m.sender === 'tutor' ? 'right' : 'left' }}>
+                  <div className="meta" style={{ marginBottom: 2 }}>{m.sender === 'tutor' ? 'You' : thread.name}</div>
+                  <div style={{ display: 'inline-block', background: m.sender === 'tutor' ? '#DCEEE0' : '#F3EFE4', padding: '8px 12px', borderRadius: 6 }}>{m.body}</div>
+                </div>
+              ))}
+            </div>
+            <form action={async (formData: FormData) => { await sendTutorMessage(studentId, formData) }} style={{ display: 'flex', gap: 8 }}>
+              <input name="body" placeholder="Reply..." required style={{ flex: 1, padding: 8, border: '1px solid var(--line)' }} />
+              <button className="btn btn-primary">Send</button>
+            </form>
+            <TutorMaterials studentId={studentId} studentName={thread.name} />
+            <div style={{ marginTop: 14, borderTop: '1px solid var(--line)', paddingTop: 12 }}>
+              <div className="meta" style={{ marginBottom: 6 }}>Mark today's session</div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <form action={async () => { await markAttendance(studentId, 'present') }}>
+                  <button className="btn" style={{ background: '#DCEEE0', padding: '6px 14px' }}>Present</button>
+                </form>
+                <form action={async () => { await markAttendance(studentId, 'absent') }}>
+                  <button className="btn" style={{ background: '#F3D6D0', padding: '6px 14px' }}>Absent</button>
+                </form>
+                <form action={async () => { await markAttendance(studentId, 'rescheduled') }}>
+                  <button className="btn" style={{ background: '#F3E6C7', padding: '6px 14px' }}>Rescheduled</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  return null
+}
