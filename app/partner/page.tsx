@@ -1,6 +1,7 @@
 import { createClient } from '../../lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { toggleAvailable, claim, setMeetingLink, markAttendance, sendPartnerMessage } from './actions'
+import NotificationBell from '../NotificationBell'
 
 export default async function PartnerDashboard() {
   const supabase = createClient()
@@ -44,7 +45,10 @@ export default async function PartnerDashboard() {
 
   return (
     <div>
-      <h2>Partner dashboard</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h2>Partner dashboard</h2>
+        <NotificationBell forRole="staff" />
+      </div>
       <p className="meta">Signed in as {profile.full_name}</p>
 
       <section>
