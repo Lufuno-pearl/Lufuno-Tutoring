@@ -13,8 +13,8 @@ export default async function TutorDashboard() {
   if (user.email !== TUTOR_EMAIL) redirect('/portal')
 
   const [{ data: bookings }, { data: subs }, { data: orders }, { data: messages }, { data: attendanceRows }, { data: partners }] = await Promise.all([
-    supabase.from('bookings').select('*, profiles(full_name, email)').order('created_at', { ascending: false }),
-    supabase.from('hs_subscriptions').select('*, profiles(full_name, email)').order('created_at', { ascending: false }),
+    supabase.from('bookings').select('*, profiles:profiles!bookings_student_id_fkey(full_name, email)').order('created_at', { ascending: false }),
+    supabase.from('hs_subscriptions').select('*, profiles:profiles!hs_subscriptions_student_id_fkey(full_name, email)').order('created_at', { ascending: false }),
     supabase.from('pack_orders').select('*, profiles(full_name, email)').order('created_at', { ascending: false }),
     supabase.from('messages').select('*, profiles:profiles!messages_student_id_fkey(full_name, email)').order('created_at', { ascending: true }),
     supabase.from('attendance').select('*, student:profiles!attendance_student_id_fkey(full_name), tutor:profiles!attendance_marked_by_fkey(full_name)').order('created_at', { ascending: false }),
@@ -22,6 +22,18 @@ export default async function TutorDashboard() {
   ])
 
   const threadsByStudent: Record<string, { name: string; email: string; msgs: any[] }> = {}
+  ;(bookings || []).forEach((b: any) => {
+    const sid = b.student_id
+    if (!threadsByStudent[sid]) threadsByStudent[sid] = { name: b.profiles?.full_name || 'Student', email: b.profiles?.email || '', msgs: [] }
+  })
+  ;(subs || []).forEach((s: any) => {
+    const sid = s.student_id
+    if (!threadsByStudent[sid]) threadsByStudent[sid] = { name: s.profiles?.full_name || 'Student', email: s.profiles?.email || '', msgs: [] }
+  })
+  ;(orders || []).forEach((o: any) => {
+    const sid = o.student_id
+    if (!threadsByStudent[sid]) threadsByStudent[sid] = { name: o.profiles?.full_name || 'Student', email: o.profiles?.email || '', msgs: [] }
+  })
   ;(messages || []).forEach((m: any) => {
     const sid = m.student_id
     if (!threadsByStudent[sid]) threadsByStudent[sid] = { name: m.profiles?.full_name || 'Student', email: m.profiles?.email || '', msgs: [] }
