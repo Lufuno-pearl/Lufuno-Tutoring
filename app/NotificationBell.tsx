@@ -44,7 +44,7 @@ export default function NotificationBell({ forRole }: { forRole: 'student' | 'st
   return (
     <div style={{ position: 'relative' }}>
       <div style={{ cursor: 'pointer', position: 'relative' }} onClick={() => { setOpen(!open); if (!open) markAllRead() }}>
-        <Bell size={22} color="#fff" />
+        <Bell size={22} color="var(--purple-dark)" />
         {unreadCount > 0 && (
           <span style={{ position: 'absolute', top: -4, right: -4, background: '#A6443A', color: '#fff', fontSize: '0.65rem', borderRadius: 100, width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {unreadCount}
