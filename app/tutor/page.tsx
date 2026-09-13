@@ -1,25 +1,31 @@
 import { createClient } from '../../lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { confirmPayment, setMeetingLink, assignTutor, markAttendance, sendTutorMessage } from './actions'
+import { confirmPayment, setMeetingLink, assignTutor, markAttendance, sendTutorMessage, toggleAvailable, claim } from './actions'
 import TutorHome from './TutorHome'
 import NotificationBell from '../NotificationBell'
 
-const TUTOR_EMAIL = 'pearllufunomoyo@gmail.com'
+const ADMIN_EMAILS = ['pearllufunomoyo@gmail.com', 'jonesneliswa@gmail.com']
 
 export default async function TutorDashboard() {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
-  if (user.email !== TUTOR_EMAIL) redirect('/portal')
+  if (!ADMIN_EMAILS.includes(user.email!)) redirect('/portal')
 
-  const [{ data: bookings }, { data: subs }, { data: orders }, { data: messages }, { data: attendanceRows }, { data: partners }] = await Promise.all([
+  const [{ data: bookings }, { data: subs }, { data: orders }, { data: messages }, { data: attendanceRows }, { data: partners }, { data: myProfile }] = await Promise.all([
     supabase.from('bookings').select('*, profiles:profiles!bookings_student_id_fkey(full_name, email, tier)').order('created_at', { ascending: false }),
     supabase.from('hs_subscriptions').select('*, profiles:profiles!hs_subscriptions_student_id_fkey(full_name, email, tier)').order('created_at', { ascending: false }),
     supabase.from('pack_orders').select('*, profiles(full_name, email, tier)').order('created_at', { ascending: false }),
     supabase.from('messages').select('*, profiles:profiles!messages_student_id_fkey(full_name, email, tier)').order('created_at', { ascending: true }),
     supabase.from('attendance').select('*, student:profiles!attendance_student_id_fkey(full_name), tutor:profiles!attendance_marked_by_fkey(full_name)').order('created_at', { ascending: false }),
     supabase.from('profiles').select('id, full_name, available').eq('role', 'partner'),
+    supabase.from('profiles').select('available').eq('id', user.id).single(),
   ])
+
+  const myClaimedBookings = (bookings || []).filter((b: any) => b.tutor_id === user.id)
+  const myClaimedSubs = (subs || []).filter((s: any) => s.tutor_id === user.id)
+  const openBookings = (bookings || []).filter((b: any) => !b.tutor_id)
+  const openSubs = (subs || []).filter((s: any) => !s.tutor_id)
 
   const threadsByStudent: Record<string, { name: string; email: string; tier: string; msgs: any[] }> = {}
   ;(bookings || []).forEach((b: any) => {
@@ -53,7 +59,12 @@ export default async function TutorDashboard() {
         partners={partners || []}
         threadsByStudent={threadsByStudent}
         attendanceRows={attendanceRows}
-        actions={{ confirmPayment, setMeetingLink, assignTutor, markAttendance, sendTutorMessage }}
+        myAvailable={myProfile?.available ?? true}
+        openBookings={openBookings}
+        openSubs={openSubs}
+        myClaimedBookings={myClaimedBookings}
+        myClaimedSubs={myClaimedSubs}
+        actions={{ confirmPayment, setMeetingLink, assignTutor, markAttendance, sendTutorMessage, toggleAvailable, claim }}
       />
     </div>
   )
