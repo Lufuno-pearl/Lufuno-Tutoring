@@ -13,20 +13,18 @@ export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [loading, setLoading] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
   const tier = searchParams.get('tier')
 
-  async function afterAuth() {
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
-      if (user.email === 'pearllufunomoyo@gmail.com') { router.push('/tutor'); return }
-      const { data: profile } = await supabase.from('profiles').select('role, tier').eq('id', user.id).single()
-      if (profile?.role === 'partner') { router.push('/partner'); return }
-      if (!profile?.tier && (tier === 'university' || tier === 'highschool')) {
-        await supabase.from('profiles').update({ tier }).eq('id', user.id)
-      }
+  async function afterAuth(user: any, supabase: any) {
+    if (!user) { router.push('/portal'); return }
+    if (user.email === 'pearllufunomoyo@gmail.com') { router.push('/tutor'); return }
+    const { data: profile } = await supabase.from('profiles').select('role, tier').eq('id', user.id).single()
+    if (profile?.role === 'partner') { router.push('/partner'); return }
+    if (!profile?.tier && (tier === 'university' || tier === 'highschool')) {
+      await supabase.from('profiles').update({ tier }).eq('id', user.id)
     }
     router.push('/portal')
   }
@@ -36,14 +34,16 @@ export default function LoginForm() {
     if (!email || !name || !password || !confirmPassword) { setError('Please fill in all fields.'); return }
     if (password.length < 6) { setError('Password must be at least 6 characters.'); return }
     if (password !== confirmPassword) { setError('Passwords do not match.'); return }
+    setLoading(true)
     const supabase = createClient()
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: { data: { full_name: name } },
     })
-    if (error) { setError(error.message); return }
+    if (error) { setLoading(false); setError(error.message); return }
     await supabase.auth.signOut()
+    setLoading(false)
     setPassword('')
     setConfirmPassword('')
     setSuccess('Your account was created successfully! Please sign in below.')
@@ -54,10 +54,11 @@ export default function LoginForm() {
     setError('')
     setSuccess('')
     if (!email || !password) { setError('Please fill in both fields.'); return }
+    setLoading(true)
     const supabase = createClient()
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) { setError(error.message); return }
-    await afterAuth()
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) { setLoading(false); setError(error.message); return }
+    await afterAuth(data.user, supabase)
   }
 
   return (
@@ -99,9 +100,9 @@ export default function LoginForm() {
       )}
       {error && <p style={{ color: '#A6443A', fontSize: '0.85rem' }}>{error}</p>}
       {mode === 'signup' ? (
-        <button className="btn btn-primary" onClick={handleSignUp}>Create account</button>
+        <button className="btn btn-primary" onClick={handleSignUp} disabled={loading}>{loading ? 'Creating account...' : 'Create account'}</button>
       ) : (
-        <button className="btn btn-primary" onClick={handleSignIn}>Sign in</button>
+        <button className="btn btn-primary" onClick={handleSignIn} disabled={loading}>{loading ? 'Signing in...' : 'Sign in'}</button>
       )}
       <p className="meta" style={{ marginTop: 14, cursor: 'pointer' }} onClick={() => { setMode(mode === 'signup' ? 'signin' : 'signup'); setError(''); setSuccess('') }}>
         {mode === 'signup' ? 'Already have an account? Sign in' : "New here? Create an account"}
