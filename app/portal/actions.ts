@@ -5,17 +5,31 @@ import { revalidatePath } from 'next/cache'
 export async function createBooking(formData: FormData) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return
+  if (!user) return { ok: false }
+
+  const subject = formData.get('subject') as string
+  const day = formData.get('day') as string
+
+  const { data: existing } = await supabase
+    .from('bookings')
+    .select('id')
+    .eq('student_id', user.id)
+    .eq('subject', subject)
+    .eq('day', day)
+    .in('status', ['pending', 'awaiting', 'confirmed'])
+    .limit(1)
+  if (existing && existing.length > 0) {
+    return { ok: true, duplicate: true, subject, day }
+  }
 
   const { data: profile } = await supabase.from('profiles').select('uni_bookings_count').eq('id', user.id).single()
   const firstTime = !profile || profile.uni_bookings_count === 0
   const price = firstTime ? 100 : 150
-  const subject = formData.get('subject') as string
 
   await supabase.from('bookings').insert({
     student_id: user.id,
     subject,
-    day: formData.get('day') as string,
+    day,
     time: formData.get('time') as string,
     format: formData.get('format') as string,
     price,
@@ -27,6 +41,7 @@ export async function createBooking(formData: FormData) {
     message: `New university tutoring request: ${subject}`,
   })
   revalidatePath('/portal')
+  return { ok: true, duplicate: false, subject, day }
 }
 
 const PHYSICAL_MONTH_NUMBERS = ['02', '06', '12']
@@ -41,7 +56,7 @@ function formatMonthLabel(value: string) {
 export async function createHsSub(formData: FormData) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return
+  if (!user) return { ok: false }
 
   const rawMonth = formData.get('month') as string
   const format = formData.get('format') as string
@@ -49,7 +64,7 @@ export async function createHsSub(formData: FormData) {
   const month = formatMonthLabel(rawMonth)
 
   if (format === 'physical' && !PHYSICAL_MONTH_NUMBERS.includes(mm)) {
-    return
+    return { ok: false, physicalRejected: true }
   }
 
   const { data: existing } = await supabase
@@ -60,7 +75,7 @@ export async function createHsSub(formData: FormData) {
     .in('status', ['pending', 'awaiting', 'confirmed'])
     .limit(1)
   if (existing && existing.length > 0) {
-    return
+    return { ok: true, duplicate: true, month }
   }
 
   await supabase.from('hs_subscriptions').insert({
@@ -75,6 +90,7 @@ export async function createHsSub(formData: FormData) {
     message: `New high school subscription request — ${month}`,
   })
   revalidatePath('/portal')
+  return { ok: true, duplicate: false, month }
 }
 
 export async function buyPack(packId: string, packName: string) {
