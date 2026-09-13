@@ -66,3 +66,26 @@ export async function notifyPackReady(studentId: string) {
     message: 'Your study pack file is ready to download.',
   })
 }
+
+export async function toggleAvailable(current: boolean) {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
+  await supabase.from('profiles').update({ available: !current }).eq('id', user.id)
+  revalidatePath('/tutor')
+}
+
+export async function claim(table: 'bookings' | 'hs_subscriptions', id: string) {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
+  const { data } = await supabase.from(table).update({ tutor_id: user.id }).eq('id', id).select('student_id').single()
+  if (data) {
+    await supabase.from('notifications').insert({
+      student_id: data.student_id,
+      for_role: 'student',
+      message: 'A tutor has been assigned to your request.',
+    })
+  }
+  revalidatePath('/tutor')
+}
