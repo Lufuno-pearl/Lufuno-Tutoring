@@ -98,7 +98,32 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
         <p className="meta" style={{ marginBottom: 20 }}>Great to see you — what would you like to do today?</p>
         <div className="card-grid">
           <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('book')}>
-                  </div>
+            <div className="tile-art" style={{ background: 'linear-gradient(135deg, #8B6FD9, #6E4FC7)' }}><CalendarPlus size={36} color="#fff" /></div>
+            <div className="tile-body"><div className="name">Request Tutoring</div></div>
+          </div>
+          <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('packs')}>
+            <div className="tile-art" style={{ background: 'linear-gradient(135deg, #C89B3C, #A87D24)' }}><BookOpen size={36} color="#fff" /></div>
+            <div className="tile-body"><div className="name">Get Study Pack</div></div>
+          </div>
+          <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('chat')}>
+            <div className="tile-art" style={{ background: 'linear-gradient(135deg, #7C6FE0, #5B4FC0)' }}><MessageCircle size={36} color="#fff" /></div>
+            <div className="tile-body"><div className="name">Chats & Files</div></div>
+          </div>
+          <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('bank')}>
+            <div className="tile-art" style={{ background: 'linear-gradient(135deg, #9B7FE8, #7A5FD0)' }}><Landmark size={36} color="#fff" /></div>
+            <div className="tile-body"><div className="name">Bank Details</div></div>
+          </div>
+        </div>
+        <div className="panel" style={{ cursor: 'pointer' }} onClick={() => setSection('history')}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <History size={22} color="var(--purple-dark)" />
+            <div>
+              <h4 style={{ margin: 0 }}>My bookings & attendance</h4>
+              <div className="meta" style={{ marginBottom: 0 }}>See your history and status</div>
+            </div>
+          </div>
+        </div>
+      </div>
     )
   }
 
