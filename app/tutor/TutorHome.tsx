@@ -1,10 +1,10 @@
 'use client'
 import { useState } from 'react'
-import { Clock, UserCog, BookOpen, ClipboardList, MessageCircle, ChevronRight } from 'lucide-react'
+import { Clock, UserCog, BookOpen, ClipboardList, MessageCircle, ChevronRight, Star } from 'lucide-react'
 import TutorMaterials from './TutorMaterials'
 import PackUpload from './PackUpload'
 
-type Section = 'menu' | 'pending' | 'assign' | 'packs' | 'sessions' | 'chat'
+type Section = 'menu' | 'pending' | 'assign' | 'packs' | 'sessions' | 'chat' | 'mytutoring'
 
 function StatusPill({ status }: { status: string }) {
   const label = status === 'confirmed' ? 'Confirmed' : status === 'awaiting' ? 'Payment submitted' : 'Awaiting payment'
@@ -47,10 +47,11 @@ function ChatThread({ studentId, thread, actions }: { studentId: string; thread:
   )
 }
 
-export default function TutorHome({ bookings, subs, orders, partners, threadsByStudent, attendanceRows, actions }: any) {
+export default function TutorHome({ bookings, subs, orders, partners, threadsByStudent, attendanceRows, myAvailable, openBookings, openSubs, myClaimedBookings, myClaimedSubs, actions }: any) {
   const [section, setSection] = useState<Section>('menu')
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null)
-  const { confirmPayment, setMeetingLink, assignTutor } = actions
+  const [myStudentId, setMyStudentId] = useState<string | null>(null)
+  const { confirmPayment, setMeetingLink, assignTutor, toggleAvailable, claim, markAttendance, sendTutorMessage } = actions
 
   if (section === 'menu') {
     return (
@@ -73,12 +74,21 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
             <div className="tile-body"><div className="name">Sessions Log</div></div>
           </div>
         </div>
-        <div className="panel" style={{ cursor: 'pointer' }} onClick={() => { setSection('chat'); setSelectedStudentId(null) }}>
+        <div className="panel" style={{ cursor: 'pointer', marginBottom: 12 }} onClick={() => { setSection('chat'); setSelectedStudentId(null) }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <MessageCircle size={22} color="var(--purple-dark)" />
             <div>
               <h4 style={{ margin: 0 }}>Chats</h4>
               <div className="meta" style={{ marginBottom: 0 }}>Message students & share files</div>
+            </div>
+          </div>
+        </div>
+        <div className="panel" style={{ cursor: 'pointer' }} onClick={() => { setSection('mytutoring'); setMyStudentId(null) }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Star size={22} color="var(--gold)" />
+            <div>
+              <h4 style={{ margin: 0 }}>My Tutoring</h4>
+              <div className="meta" style={{ marginBottom: 0 }}>Your own availability, requests & students</div>
             </div>
           </div>
         </div>
@@ -103,7 +113,7 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
                 <button className="btn btn-gold">Mark paid</button>
               </form>
             )}
-            {b.status === 'confirmed' && b.format === 'online' && (
+                        {b.status === 'confirmed' && b.format === 'online' && (
               <form action={async (formData: FormData) => { await setMeetingLink('bookings', b.id, formData.get('url') as string) }} style={{ marginTop: 8, display: 'flex', gap: 8 }}>
                 <input name="url" defaultValue={b.meeting_link || ''} placeholder="Google Meet link" style={{ flex: 1, padding: 8, border: '1px solid var(--line)' }} />
                 <button className="btn btn-primary">Save</button>
@@ -140,7 +150,7 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
     const renderItem = (r: any) => (
       <div className="panel" key={r.id}>
         <h4>{r.label}</h4>
-        <div className="meta">{r.profiles?.full_name} · currently: {r.tutor_id ? (partners.find((p: any) => p.id === r.tutor_id)?.full_name || 'a partner') : 'unassigned'}</div>
+        <div className="meta">{r.profiles?.full_name} · currently: {r.tutor_id ? (partners.find((p: any) => p.id === r.tutor_id)?.full_name || 'a tutor') : 'unassigned'}</div>
         <form action={async (formData: FormData) => { await assignTutor(r.kind, r.id, formData.get('tutorId') as string) }} style={{ display: 'flex', gap: 8, marginTop: 8 }}>
           <select name="tutorId" defaultValue={r.tutor_id || ''} style={{ flex: 1, padding: 8, border: '1px solid var(--line)', borderRadius: 100 }}>
             <option value="">Unassigned</option>
@@ -178,7 +188,7 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
                 <button className="btn btn-gold">Mark paid</button>
               </form>
             )}
-                       {o.status === 'confirmed' && <PackUpload orderId={o.id} studentId={o.student_id} />}
+            {o.status === 'confirmed' && <PackUpload orderId={o.id} studentId={o.student_id} />}
           </div>
         ))}
       </div>
@@ -217,8 +227,7 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
     const entries = Object.entries(threadsByStudent)
     const uniEntries = entries.filter(([, t]: any) => t.tier !== 'highschool')
     const hsEntries = entries.filter(([, t]: any) => t.tier === 'highschool')
-
-    const renderRow = ([sid, t]: any) => (
+        const renderRow = ([sid, t]: any) => (
       <div key={sid} className="panel" style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} onClick={() => setSelectedStudentId(sid)}>
         <div>
           <h4 style={{ margin: 0 }}>{t.name}</h4>
@@ -241,5 +250,97 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
     )
   }
 
+  if (section === 'mytutoring') {
+    if (myStudentId) {
+      const bookingsHere = (myClaimedBookings || []).filter((b: any) => b.student_id === myStudentId)
+      const subsHere = (myClaimedSubs || []).filter((s: any) => s.student_id === myStudentId)
+      const thread = threadsByStudent[myStudentId] || { name: 'Student', msgs: [] }
+      return (
+        <div>
+          <Back onClick={() => setMyStudentId(null)} />
+          <h3>{thread.name}</h3>
+          {bookingsHere.map((b: any) => (
+            <div key={b.id} style={{ marginBottom: 8 }}>
+              <div className="meta">{b.subject} — {b.day} {b.time} · {b.format === 'physical' ? 'Physical' : 'Online'}</div>
+              {b.format === 'online' && (
+                <form action={async (formData: FormData) => { await setMeetingLink('bookings', b.id, formData.get('url') as string) }} style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+                  <input name="url" defaultValue={b.meeting_link || ''} placeholder="Google Meet link" style={{ flex: 1, padding: 6, border: '1px solid var(--line)' }} />
+                  <button className="btn btn-primary" style={{ padding: '6px 12px' }}>Save</button>
+                </form>
+              )}
+            </div>
+          ))}
+          {subsHere.map((s: any) => (
+            <div key={s.id} style={{ marginBottom: 8 }}>
+              <div className="meta">{s.month} — Maths & Physical Sciences · {s.format === 'physical' ? 'Physical' : 'Online'}</div>
+              {s.format === 'online' && (
+                <form action={async (formData: FormData) => { await setMeetingLink('hs_subscriptions', s.id, formData.get('url') as string) }} style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+                  <input name="url" defaultValue={s.meeting_link || ''} placeholder="Google Meet link" style={{ flex: 1, padding: 6, border: '1px solid var(--line)' }} />
+                  <button className="btn btn-primary" style={{ padding: '6px 12px' }}>Save</button>
+                </form>
+              )}
+            </div>
+          ))}
+          <ChatThread studentId={myStudentId} thread={thread} actions={{ markAttendance, sendTutorMessage }} />
+        </div>
+      )
+    }
+
+    const myStudentIds = Array.from(new Set([...(myClaimedBookings || []).map((b: any) => b.student_id), ...(myClaimedSubs || []).map((s: any) => s.student_id)]))
+
+    return (
+      <div>
+        <Back />
+        <div className="panel" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h4>Your availability</h4>
+            <div className="meta">Students can only be matched to you while you're available.</div>
+          </div>
+          <form action={async () => { await toggleAvailable(myAvailable) }}>
+            <button className={myAvailable ? 'btn btn-primary' : 'btn'} style={!myAvailable ? { background: 'none', border: '1px solid var(--ink)' } : {}}>
+              {myAvailable ? 'Available' : 'Not available'}
+            </button>
+          </form>
+        </div>
+
+        <h3>Requests needing a tutor</h3>
+        <h4 style={{ marginTop: 12 }}>University</h4>
+        {(openBookings || []).length === 0 && <p className="meta">Nothing open right now.</p>}
+        {(openBookings || []).map((b: any) => (
+          <div className="panel" key={b.id}>
+            <h4>{b.subject}</h4>
+            <div className="meta">{b.profiles?.full_name} · {b.day} at {b.time} · {b.format === 'physical' ? 'Physical' : 'Online'}</div>
+            <form action={async () => { await claim('bookings', b.id) }}>
+              <button className="btn btn-primary">Claim this student</button>
+            </form>
+          </div>
+        ))}
+        <h4 style={{ marginTop: 20 }}>High School</h4>
+        {(openSubs || []).length === 0 && <p className="meta">Nothing open right now.</p>}
+        {(openSubs || []).map((s: any) => (
+          <div className="panel" key={s.id}>
+            <h4>{s.month}</h4>
+            <div className="meta">{s.profiles?.full_name} · Maths & Physical Sciences · {s.format === 'physical' ? 'Physical' : 'Online'}</div>
+            <form action={async () => { await claim('hs_subscriptions', s.id) }}>
+              <button className="btn btn-primary">Claim this student</button>
+            </form>
+          </div>
+        ))}
+
+        <h3 style={{ marginTop: 20 }}>Your students</h3>
+        {myStudentIds.length === 0 && <p className="meta">You haven't claimed any students yet.</p>}
+        {myStudentIds.map((sid: string) => {
+          const thread = threadsByStudent[sid] || { name: 'Student' }
+          return (
+            <div key={sid} className="panel" style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} onClick={() => setMyStudentId(sid)}>
+              <h4 style={{ margin: 0 }}>{thread.name}</h4>
+              <ChevronRight size={18} color="var(--purple-dark)" />
+            </div>
+          )
+        })}
+      </div>
+    )
+  }
+
   return null
-} 
+}
