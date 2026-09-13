@@ -87,6 +87,7 @@ function ChatBox({ sendMessage }: { sendMessage: any }) {
 export default function PortalHome({ name, tier, uniSubjects, visiblePacks, bookings, subs, orders, messages, attendance, actions }: any) {
   const [section, setSection] = useState<Section>('menu')
   const [bookingSubmitting, setBookingSubmitting] = useState(false)
+  const [thankYou, setThankYou] = useState('')
   const { createBooking, createHsSub, buyPack, markAwaiting, sendMessage } = actions
 
   if (section === 'menu') {
@@ -97,32 +98,7 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
         <p className="meta" style={{ marginBottom: 20 }}>Great to see you — what would you like to do today?</p>
         <div className="card-grid">
           <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('book')}>
-            <div className="tile-art" style={{ background: 'linear-gradient(135deg, #8B6FD9, #6E4FC7)' }}><CalendarPlus size={36} color="#fff" /></div>
-            <div className="tile-body"><div className="name">Request Tutoring</div></div>
-          </div>
-          <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('packs')}>
-            <div className="tile-art" style={{ background: 'linear-gradient(135deg, #C89B3C, #A87D24)' }}><BookOpen size={36} color="#fff" /></div>
-            <div className="tile-body"><div className="name">Get Study Pack</div></div>
-          </div>
-          <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('chat')}>
-            <div className="tile-art" style={{ background: 'linear-gradient(135deg, #7C6FE0, #5B4FC0)' }}><MessageCircle size={36} color="#fff" /></div>
-            <div className="tile-body"><div className="name">Chats & Files</div></div>
-          </div>
-          <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('bank')}>
-            <div className="tile-art" style={{ background: 'linear-gradient(135deg, #9B7FE8, #7A5FD0)' }}><Landmark size={36} color="#fff" /></div>
-            <div className="tile-body"><div className="name">Bank Details</div></div>
-          </div>
-        </div>
-        <div className="panel" style={{ cursor: 'pointer' }} onClick={() => setSection('history')}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <History size={22} color="var(--purple-dark)" />
-            <div>
-              <h4 style={{ margin: 0 }}>My bookings & attendance</h4>
-              <div className="meta" style={{ marginBottom: 0 }}>See your history and status</div>
-            </div>
-          </div>
-        </div>
-      </div>
+                  </div>
     )
   }
 
@@ -134,20 +110,35 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
       if (bookingSubmitting) return
       setBookingSubmitting(true)
       const fd = new FormData(e.currentTarget)
-      await createBooking(fd)
+      const result = await createBooking(fd)
       setBookingSubmitting(false)
+      if (result?.ok) {
+        setThankYou(result.duplicate
+          ? `You already have a request for ${result.subject} on that day — check below for payment details.`
+          : `Thank you for requesting ${result.subject} on Aid & Ace!`)
+      }
     }
     async function handleHsSubmit(e: React.FormEvent<HTMLFormElement>) {
-            e.preventDefault()
+      e.preventDefault()
       if (bookingSubmitting) return
       setBookingSubmitting(true)
       const fd = new FormData(e.currentTarget)
-      await createHsSub(fd)
+      const result = await createHsSub(fd)
       setBookingSubmitting(false)
+      if (result?.ok) {
+        setThankYou(result.duplicate
+          ? `You already have a subscription request for ${result.month} — check below for payment details.`
+          : `Thank you for subscribing on Aid & Ace for ${result.month}!`)
+      }
     }
     return (
       <div>
         <Back />
+        {thankYou && (
+          <div className="panel" style={{ background: '#DCEEE0', textAlign: 'center' }}>
+            <p style={{ margin: 0, fontWeight: 600 }}>{thankYou}</p>
+          </div>
+        )}
         {tier === 'university' && (
           <section>
             <h3>Book a university session</h3>
