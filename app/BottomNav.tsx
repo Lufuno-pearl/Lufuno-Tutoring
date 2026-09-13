@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import { Home, User } from 'lucide-react'
 import { createClient } from '../lib/supabase/client'
 
-const TUTOR_EMAIL = 'pearllufunomoyo@gmail.com'
+const ADMIN_EMAILS = ['pearllufunomoyo@gmail.com', 'jonesneliswa@gmail.com']
 
 export default function BottomNav() {
   const pathname = usePathname()
@@ -14,14 +14,24 @@ export default function BottomNav() {
 
   useEffect(() => {
     const supabase = createClient()
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
+
+    async function checkUser() {
+      const { data: { user } } = await supabase.auth.getUser()
       if (!user) { setDashLink('/login'); setDashLabel('Sign in'); return }
-      if (user.email === TUTOR_EMAIL) { setDashLink('/tutor'); setDashLabel('Dashboard'); return }
+      if (ADMIN_EMAILS.includes(user.email!)) { setDashLink('/tutor'); setDashLabel('Dashboard'); return }
       const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
       if (profile?.role === 'partner') { setDashLink('/partner'); setDashLabel('Dashboard') }
       else { setDashLink('/portal'); setDashLabel('Portal') }
+    }
+
+    checkUser()
+
+    const { data: listener } = supabase.auth.onAuthStateChange(() => {
+      checkUser()
     })
-  }, [])
+
+    return () => { listener.subscription.unsubscribe() }
+  }, [pathname])
 
   return (
     <div className="bottom-nav">
