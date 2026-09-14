@@ -1,6 +1,6 @@
 import { createClient } from '../../lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { createBooking, createHsSub, buyPack, markAwaiting, sendMessage, signOut, setTier } from './actions'
+import { createBooking, createHsSub, buyPack, markAwaiting, sendMessage, signOut, setTier, requestVideoAccess, requestCustomPack } from './actions'
 import PortalHome from './PortalHome'
 import NotificationBell from '../NotificationBell'
 
@@ -40,12 +40,13 @@ export default async function Portal() {
 
   const tier = profile.tier
 
-  const [{ data: bookings }, { data: subs }, { data: orders }, { data: messages }, { data: attendance }] = await Promise.all([
+  const [{ data: bookings }, { data: subs }, { data: orders }, { data: messages }, { data: attendance }, { data: videoRequests }] = await Promise.all([
     supabase.from('bookings').select('*').eq('student_id', user.id).order('created_at', { ascending: false }),
     supabase.from('hs_subscriptions').select('*').eq('student_id', user.id).order('created_at', { ascending: false }),
     supabase.from('pack_orders').select('*').eq('student_id', user.id).order('created_at', { ascending: false }),
     supabase.from('messages').select('*').eq('student_id', user.id).order('created_at', { ascending: true }),
     supabase.from('attendance').select('*').eq('student_id', user.id).order('created_at', { ascending: false }),
+    supabase.from('video_access_requests').select('*').eq('student_id', user.id).order('created_at', { ascending: false }),
   ])
 
   const visiblePacks = PACKS.filter(p => p.tier === tier)
@@ -70,7 +71,8 @@ export default async function Portal() {
         orders={orders}
         messages={messages}
         attendance={attendance}
-        actions={{ createBooking, createHsSub, buyPack, markAwaiting, sendMessage, userId: user.id }}
+        videoRequests={videoRequests}
+        actions={{ createBooking, createHsSub, buyPack, markAwaiting, sendMessage, requestVideoAccess, requestCustomPack, userId: user.id }}
       />
     </div>
   )
