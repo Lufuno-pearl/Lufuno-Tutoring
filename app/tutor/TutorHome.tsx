@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Clock, UserCog, BookOpen, ClipboardList, MessageCircle, ChevronRight, Star } from 'lucide-react'
 import TutorMaterials from './TutorMaterials'
 import PackUpload from './PackUpload'
+import VideoManager from './VideoManager'
 
 type Section = 'menu' | 'pending' | 'assign' | 'packs' | 'sessions' | 'chat' | 'mytutoring'
 
@@ -200,11 +201,13 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
     )
   }
 
-  if (section === 'packs') {
+    if (section === 'packs') {
     return (
       <div>
         <Back />
-        <h3>Study pack orders</h3>
+        <h3>Manage videos</h3>
+        <VideoManager />
+        <h3 style={{ marginTop: 24 }}>Study pack orders</h3>
         {(orders || []).map((o: any) => (
           <div className="panel" key={o.id}>
             <h4>{o.pack_name}</h4>
