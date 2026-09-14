@@ -9,6 +9,7 @@ export async function createBooking(formData: FormData) {
 
   const subject = formData.get('subject') as string
   const day = formData.get('day') as string
+  const time = formData.get('time') as string
 
   const { data: existing } = await supabase
     .from('bookings')
@@ -22,26 +23,51 @@ export async function createBooking(formData: FormData) {
     return { ok: true, duplicate: true, subject, day }
   }
 
-  const { data: profile } = await supabase.from('profiles').select('uni_bookings_count').eq('id', user.id).single()
-  const firstTime = !profile || profile.uni_bookings_count === 0
-  const price = firstTime ? 100 : 150
-
   await supabase.from('bookings').insert({
     student_id: user.id,
     subject,
     day,
-    time: formData.get('time') as string,
-    format: formData.get('format') as string,
-    price,
+    time,
+    format: 'physical',
+    price: 150,
   })
-  await supabase.from('profiles').update({ uni_bookings_count: (profile?.uni_bookings_count || 0) + 1 }).eq('id', user.id)
   await supabase.from('notifications').insert({
     student_id: user.id,
     for_role: 'staff',
-    message: `New university tutoring request: ${subject}`,
+    message: `New physical session request: ${subject}`,
   })
   revalidatePath('/portal')
   return { ok: true, duplicate: false, subject, day }
+}
+
+export async function requestVideoAccess(subject: string) {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false }
+
+  const { data: existing } = await supabase
+    .from('video_access_requests')
+    .select('id')
+    .eq('student_id', user.id)
+    .eq('subject', subject)
+    .in('status', ['pending', 'awaiting', 'confirmed'])
+    .limit(1)
+  if (existing && existing.length > 0) {
+    return { ok: true, duplicate: true, subject }
+  }
+
+  await supabase.from('video_access_requests').insert({
+    student_id: user.id,
+    subject,
+    price: 250,
+  })
+  await supabase.from('notifications').insert({
+    student_id: user.id,
+    for_role: 'staff',
+    message: `New video access request: ${subject}`,
+  })
+  revalidatePath('/portal')
+  return { ok: true, duplicate: false, subject }
 }
 
 const PHYSICAL_MONTH_NUMBERS = ['02', '06', '12']
@@ -145,7 +171,7 @@ export async function requestCustomPack(subjectName: string, details: string) {
   revalidatePath('/portal')
 }
 
-export async function markAwaiting(table: 'bookings' | 'hs_subscriptions' | 'pack_orders' | 'other_course_requests', id: string) {
+export async function markAwaiting(table: 'bookings' | 'hs_subscriptions' | 'pack_orders' | 'other_course_requests' | 'video_access_requests', id: string) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   await supabase.from(table).update({ status: 'awaiting' }).eq('id', id)
@@ -163,6 +189,9 @@ export async function markAwaiting(table: 'bookings' | 'hs_subscriptions' | 'pac
   } else if (table === 'other_course_requests') {
     const { data } = await supabase.from('other_course_requests').select('course_name').eq('id', id).single()
     label = data?.course_name || label
+  } else if (table === 'video_access_requests') {
+    const { data } = await supabase.from('video_access_requests').select('subject').eq('id', id).single()
+    label = data ? `video access — ${data.subject}` : label
   }
 
   if (user) {
