@@ -62,6 +62,39 @@ function PackButton({ id, name, buyPack }: { id: string; name: string; buyPack: 
   )
 }
 
+function CustomPackBox({ requestCustomPack }: { requestCustomPack: any }) {
+  const [subjectName, setSubjectName] = useState('')
+  const [details, setDetails] = useState('')
+  const [sent, setSent] = useState(false)
+  const [sending, setSending] = useState(false)
+
+  async function handleSubmit() {
+    if (!subjectName.trim() || sending) return
+    setSending(true)
+    await requestCustomPack(subjectName, details)
+    setSending(false)
+    setSent(true)
+  }
+
+  if (sent) {
+    return (
+      <div className="panel" style={{ background: '#DCEEE0', textAlign: 'center', marginTop: 20 }}>
+        <p style={{ margin: 0, fontWeight: 600 }}>Thanks! We've got your request for {subjectName} — Lufuno will be in touch about payment.</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="panel" style={{ marginTop: 20 }}>
+      <h4>Need a different subject?</h4>
+      <p className="meta">Not on the list above? Tell us what subject and topic you need, and we'll put a pack together — same R100.</p>
+      <div className="field"><label>Subject</label><input value={subjectName} onChange={e => setSubjectName(e.target.value)} placeholder="e.g. Life Sciences" /></div>
+      <div className="field"><label>Topic / details (optional)</label><input value={details} onChange={e => setDetails(e.target.value)} placeholder="e.g. Photosynthesis" /></div>
+      <button className="btn btn-primary" onClick={handleSubmit} disabled={sending}>{sending ? 'Sending...' : 'Request this pack'}</button>
+    </div>
+  )
+}
+
 function ChatBox({ sendMessage }: { sendMessage: any }) {
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
@@ -88,14 +121,14 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
   const [section, setSection] = useState<Section>('menu')
   const [bookingSubmitting, setBookingSubmitting] = useState(false)
   const [thankYou, setThankYou] = useState('')
-  const { createBooking, createHsSub, buyPack, markAwaiting, sendMessage } = actions
+  const { createBooking, createHsSub, buyPack, markAwaiting, sendMessage, requestCustomPack } = actions
 
   if (section === 'menu') {
     const firstName = (name || '').split(' ')[0]
     return (
       <div>
         <h2 style={{ marginBottom: 4 }}>Welcome{firstName ? `, ${firstName}` : ''}!</h2>
-        <p className="meta" style={{ marginBottom: 20 }}>Great to see you — what would you like to do today?</p>
+                <p className="meta" style={{ marginBottom: 20 }}>Great to see you — what would you like to do today?</p>
         <div className="card-grid">
           <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('book')}>
             <div className="tile-art" style={{ background: 'linear-gradient(135deg, #8B6FD9, #6E4FC7)' }}><CalendarPlus size={36} color="#fff" /></div>
@@ -196,6 +229,14 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
             <form onSubmit={handleHsSubmit}>
               <div className="field"><label>Which month?</label><input type="month" name="month" required /></div>
               <div className="field">
+                <label>Which subject(s)?</label>
+                <select name="subjectChoice" required defaultValue="both">
+                  <option value="maths">Mathematics only — R350/month</option>
+                  <option value="physics">Physical Sciences only — R350/month</option>
+                  <option value="both">Both subjects — R600/month</option>
+                </select>
+              </div>
+              <div className="field">
                 <label>Online or physical?</label>
                 <select name="format" required defaultValue="online">
                   <option value="online">Online</option>
@@ -203,7 +244,6 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
                 </select>
                 <p className="meta" style={{ marginTop: 6 }}>Physical sessions for high school only run in June, December and February.</p>
               </div>
-              <p className="meta">R600/month covers both Maths and Physical Sciences.</p>
               <button className="btn btn-primary" disabled={bookingSubmitting} style={{ opacity: bookingSubmitting ? 0.6 : 1 }}>
                 {bookingSubmitting ? 'Submitting...' : 'Subscribe & get payment details'}
               </button>
@@ -218,7 +258,7 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
         ))}
       </div>
     )
-  }
+      }
 
   if (section === 'packs') {
     return (
@@ -228,6 +268,7 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
         {visiblePacks.map((p: any) => (
           <PackButton key={p.id} id={p.id} name={p.name} buyPack={buyPack} />
         ))}
+        <CustomPackBox requestCustomPack={requestCustomPack} />
         {(orders || []).map((o: any) => (
           <div className="panel" key={o.id} style={{ marginTop: 12 }}>
             <h4>{o.pack_name}</h4>
