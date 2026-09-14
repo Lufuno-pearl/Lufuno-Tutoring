@@ -11,7 +11,7 @@ function StatusPill({ status }: { status: string }) {
   return <span className={`status ${status}`}>{label}</span>
 }
 
-function PayBlock({ kind, id, label, price, markAwaiting }: { kind: 'bookings' | 'hs_subscriptions' | 'pack_orders'; id: string; label: string; price: number; markAwaiting: any }) {
+function PayBlock({ kind, id, label, price, markAwaiting }: { kind: 'bookings' | 'hs_subscriptions' | 'pack_orders' | 'video_access_requests'; id: string; label: string; price: number; markAwaiting: any }) {
   const [done, setDone] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const ref = `${kind.slice(0, 4).toUpperCase()}-${id.slice(0, 8).toUpperCase()}`
@@ -62,6 +62,20 @@ function PackButton({ id, name, buyPack }: { id: string; name: string; buyPack: 
   )
 }
 
+function VideoAccessButton({ subject, requestVideoAccess }: { subject: string; requestVideoAccess: any }) {
+  const [clicked, setClicked] = useState(false)
+  async function handleClick() {
+    if (clicked) return
+    setClicked(true)
+    await requestVideoAccess(subject)
+  }
+  return (
+    <button className="btn" style={{ background: 'none', border: '1px solid var(--line)', marginRight: 8, marginBottom: 8, opacity: clicked ? 0.6 : 1 }} onClick={handleClick} disabled={clicked}>
+      {clicked ? 'Requested...' : `${subject} — R250`}
+    </button>
+  )
+}
+
 function CustomPackBox({ requestCustomPack }: { requestCustomPack: any }) {
   const [subjectName, setSubjectName] = useState('')
   const [details, setDetails] = useState('')
@@ -108,8 +122,7 @@ function ChatBox({ sendMessage }: { sendMessage: any }) {
     setText('')
     setSending(false)
   }
-
-  return (
+    return (
     <div>
       <div className="field"><input value={text} onChange={e => setText(e.target.value)} placeholder="Type a message..." /></div>
       <button className="btn btn-primary" onClick={handleSend} disabled={sending}>{sending ? 'Sending...' : 'Send'}</button>
@@ -117,18 +130,18 @@ function ChatBox({ sendMessage }: { sendMessage: any }) {
   )
 }
 
-export default function PortalHome({ name, tier, uniSubjects, visiblePacks, bookings, subs, orders, messages, attendance, actions }: any) {
+export default function PortalHome({ name, tier, uniSubjects, visiblePacks, bookings, subs, orders, messages, attendance, videoRequests, actions }: any) {
   const [section, setSection] = useState<Section>('menu')
   const [bookingSubmitting, setBookingSubmitting] = useState(false)
   const [thankYou, setThankYou] = useState('')
-  const { createBooking, createHsSub, buyPack, markAwaiting, sendMessage, requestCustomPack } = actions
+  const { createBooking, createHsSub, buyPack, markAwaiting, sendMessage, requestCustomPack, requestVideoAccess } = actions
 
   if (section === 'menu') {
     const firstName = (name || '').split(' ')[0]
     return (
       <div>
         <h2 style={{ marginBottom: 4 }}>Welcome{firstName ? `, ${firstName}` : ''}!</h2>
-                <p className="meta" style={{ marginBottom: 20 }}>Great to see you — what would you like to do today?</p>
+        <p className="meta" style={{ marginBottom: 20 }}>Great to see you — what would you like to do today?</p>
         <div className="card-grid">
           <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('book')}>
             <div className="tile-art" style={{ background: 'linear-gradient(135deg, #8B6FD9, #6E4FC7)' }}><CalendarPlus size={36} color="#fff" /></div>
@@ -198,30 +211,34 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
           </div>
         )}
         {tier === 'university' && (
-          <section>
-            <h3>Book a university session</h3>
-            <form onSubmit={handleBookingSubmit}>
-              <div className="field">
-                <label>Subject</label>
-                <select name="subject" required>
-                  {uniSubjects.map((s: string) => <option key={s}>{s}</option>)}
-                </select>
-              </div>
-              <div className="field"><label>Preferred day</label><input type="date" name="day" required /></div>
-              <div className="field"><label>Preferred time</label><input type="time" name="time" required /></div>
-              <div className="field">
-                <label>Online or physical?</label>
-                <select name="format" required defaultValue="online">
-                  <option value="online">Online</option>
-                  <option value="physical">Physical</option>
-                </select>
-              </div>
-              <p className="meta">R150/hour — your first session ever is R100.</p>
-              <button className="btn btn-primary" disabled={bookingSubmitting} style={{ opacity: bookingSubmitting ? 0.6 : 1 }}>
-                {bookingSubmitting ? 'Booking...' : 'Book & get payment details'}
-              </button>
-            </form>
-          </section>
+          <>
+            <section>
+              <h3>Video lessons</h3>
+              <p className="meta">R250 unlocks video lessons for that subject — watch anytime, no live session needed.</p>
+              {uniSubjects.map((s: string) => <VideoAccessButton key={s} subject={s} requestVideoAccess={requestVideoAccess} />)}
+              {(videoRequests || []).map((v: any) => v.status === 'pending' && (
+                <PayBlock key={v.id} kind="video_access_requests" id={v.id} label={`Video access — ${v.subject}`} price={v.price} markAwaiting={markAwaiting} />
+              ))}
+            </section>
+
+            <section style={{ marginTop: 24 }}>
+              <h3>Prefer a physical session?</h3>
+              <p className="meta">R150 per 2 hours, paid upfront — arranged directly with Lufuno once requested.</p>
+              <form onSubmit={handleBookingSubmit}>
+                <div className="field">
+                  <label>Subject</label>
+                  <select name="subject" required>
+                    {uniSubjects.map((s: string) => <option key={s}>{s}</option>)}
+                  </select>
+                </div>
+                <div className="field"><label>Preferred day</label><input type="date" name="day" required /></div>
+                <div className="field"><label>Preferred time</label><input type="time" name="time" required /></div>
+                <button className="btn btn-primary" disabled={bookingSubmitting} style={{ opacity: bookingSubmitting ? 0.6 : 1 }}>
+                  {bookingSubmitting ? 'Requesting...' : 'Request & get payment details'}
+                </button>
+              </form>
+            </section>
+          </>
         )}
         {tier === 'highschool' && (
           <section>
@@ -230,7 +247,7 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
               <div className="field"><label>Which month?</label><input type="month" name="month" required /></div>
               <div className="field">
                 <label>Which subject(s)?</label>
-                <select name="subjectChoice" required defaultValue="both">
+                                <select name="subjectChoice" required defaultValue="both">
                   <option value="maths">Mathematics only — R350/month</option>
                   <option value="physics">Physical Sciences only — R350/month</option>
                   <option value="both">Both subjects — R600/month</option>
@@ -258,7 +275,7 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
         ))}
       </div>
     )
-      }
+  }
 
   if (section === 'packs') {
     return (
