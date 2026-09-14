@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '../../lib/supabase/client'
 
 const UNI_SUBJECTS = ['Basic Analysis', 'Multi-Variable Calculus', 'Mathematical Modelling & Methods', 'Scientific Computing', 'Abstract Mathematics', 'Statistics']
+const HS_SUBJECTS = ['Mathematics', 'Physical Sciences']
 
 function SubjectVideos({ subject }: { subject: string }) {
   const [open, setOpen] = useState(false)
@@ -78,7 +79,10 @@ function SubjectVideos({ subject }: { subject: string }) {
 export default function VideoManager() {
   return (
     <div>
+      <h4 style={{ marginBottom: 8 }}>University</h4>
       {UNI_SUBJECTS.map(s => <SubjectVideos key={s} subject={s} />)}
+      <h4 style={{ marginTop: 20, marginBottom: 8 }}>High School</h4>
+      {HS_SUBJECTS.map(s => <SubjectVideos key={s} subject={s} />)}
     </div>
   )
 }
