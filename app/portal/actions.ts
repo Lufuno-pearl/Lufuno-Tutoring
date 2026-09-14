@@ -60,11 +60,13 @@ export async function createHsSub(formData: FormData) {
 
   const rawMonth = formData.get('month') as string
   const format = formData.get('format') as string
+  const subjectChoice = formData.get('subjectChoice') as string
   const mm = rawMonth.split('-')[1]
   const month = formatMonthLabel(rawMonth)
+  const price = subjectChoice === 'both' ? 600 : 350
 
   if (format === 'physical' && !PHYSICAL_MONTH_NUMBERS.includes(mm)) {
-    return { ok: false, physicalRejected: true }
+    return { ok: false }
   }
 
   const { data: existing } = await supabase
@@ -72,6 +74,7 @@ export async function createHsSub(formData: FormData) {
     .select('id')
     .eq('student_id', user.id)
     .ilike('month', month.trim())
+    .eq('subject_choice', subjectChoice)
     .in('status', ['pending', 'awaiting', 'confirmed'])
     .limit(1)
   if (existing && existing.length > 0) {
@@ -82,12 +85,13 @@ export async function createHsSub(formData: FormData) {
     student_id: user.id,
     month,
     format,
-    price: 600,
+    subject_choice: subjectChoice,
+    price,
   })
   await supabase.from('notifications').insert({
     student_id: user.id,
     for_role: 'staff',
-    message: `New high school subscription request — ${month}`,
+    message: `New high school subscription request — ${month} (${subjectChoice})`,
   })
   revalidatePath('/portal')
   return { ok: true, duplicate: false, month }
@@ -123,7 +127,25 @@ export async function buyPack(packId: string, packName: string) {
   revalidatePath('/portal')
 }
 
-export async function markAwaiting(table: 'bookings' | 'hs_subscriptions' | 'pack_orders', id: string) {
+export async function requestCustomPack(subjectName: string, details: string) {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
+  await supabase.from('other_course_requests').insert({
+    student_id: user.id,
+    course_name: subjectName,
+    module_name: details || subjectName,
+    price: 100,
+  })
+  await supabase.from('notifications').insert({
+    student_id: user.id,
+    for_role: 'staff',
+    message: `New custom study pack request: ${subjectName}`,
+  })
+  revalidatePath('/portal')
+}
+
+export async function markAwaiting(table: 'bookings' | 'hs_subscriptions' | 'pack_orders' | 'other_course_requests', id: string) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   await supabase.from(table).update({ status: 'awaiting' }).eq('id', id)
@@ -138,6 +160,9 @@ export async function markAwaiting(table: 'bookings' | 'hs_subscriptions' | 'pac
   } else if (table === 'pack_orders') {
     const { data } = await supabase.from('pack_orders').select('pack_name').eq('id', id).single()
     label = data?.pack_name || label
+  } else if (table === 'other_course_requests') {
+    const { data } = await supabase.from('other_course_requests').select('course_name').eq('id', id).single()
+    label = data?.course_name || label
   }
 
   if (user) {
