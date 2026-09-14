@@ -2,7 +2,7 @@
 import { createClient } from '../../lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
-export async function confirmPayment(table: 'bookings' | 'hs_subscriptions' | 'pack_orders', id: string) {
+export async function confirmPayment(table: 'bookings' | 'hs_subscriptions' | 'pack_orders' | 'video_access_requests' | 'other_course_requests', id: string) {
   const supabase = createClient()
   const { data } = await supabase.from(table).update({ status: 'confirmed' }).eq('id', id).select('student_id').single()
   if (data) {
@@ -87,5 +87,11 @@ export async function claim(table: 'bookings' | 'hs_subscriptions', id: string) 
       message: 'A tutor has been assigned to your request.',
     })
   }
+  revalidatePath('/tutor')
+}
+
+export async function setCustomPackLink(id: string, url: string) {
+  const supabase = createClient()
+  await supabase.from('other_course_requests').update({ download_url: url }).eq('id', id)
   revalidatePath('/tutor')
 }
