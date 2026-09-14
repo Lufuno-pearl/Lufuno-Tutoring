@@ -1,6 +1,7 @@
 import { createClient } from '../../lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { confirmPayment, setMeetingLink, assignTutor, markAttendance, sendTutorMessage, toggleAvailable, claim } from './actions'
+import { confirmPayment, setMeetingLink, assignTutor, markAttendance, sendTutorMessage, toggleAvailable, claim, setCustomPackLink } from './actions'
+import { signOut } from '../portal/actions'
 import TutorHome from './TutorHome'
 import NotificationBell from '../NotificationBell'
 
@@ -12,7 +13,7 @@ export default async function TutorDashboard() {
   if (!user) redirect('/login')
   if (!ADMIN_EMAILS.includes(user.email!)) redirect('/portal')
 
-  const [{ data: bookings }, { data: subs }, { data: orders }, { data: messages }, { data: attendanceRows }, { data: partners }, { data: myProfile }] = await Promise.all([
+  const [{ data: bookings }, { data: subs }, { data: orders }, { data: messages }, { data: attendanceRows }, { data: partners }, { data: myProfile }, { data: videoRequests }, { data: customPackRequests }] = await Promise.all([
     supabase.from('bookings').select('*, profiles:profiles!bookings_student_id_fkey(full_name, email, tier)').order('created_at', { ascending: false }),
     supabase.from('hs_subscriptions').select('*, profiles:profiles!hs_subscriptions_student_id_fkey(full_name, email, tier)').order('created_at', { ascending: false }),
     supabase.from('pack_orders').select('*, profiles(full_name, email, tier)').order('created_at', { ascending: false }),
@@ -20,6 +21,8 @@ export default async function TutorDashboard() {
     supabase.from('attendance').select('*, student:profiles!attendance_student_id_fkey(full_name), tutor:profiles!attendance_marked_by_fkey(full_name)').order('created_at', { ascending: false }),
     supabase.from('profiles').select('id, full_name, available').eq('role', 'partner'),
     supabase.from('profiles').select('available').eq('id', user.id).single(),
+    supabase.from('video_access_requests').select('*, profiles(full_name, email)').order('created_at', { ascending: false }),
+    supabase.from('other_course_requests').select('*, profiles(full_name, email)').order('created_at', { ascending: false }),
   ])
 
   const myClaimedBookings = (bookings || []).filter((b: any) => b.tutor_id === user.id)
@@ -50,7 +53,10 @@ export default async function TutorDashboard() {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h2>Tutor dashboard</h2>
-        <NotificationBell forRole="staff" />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <NotificationBell forRole="staff" />
+          <form action={signOut}><button className="btn" style={{ background: 'none', border: '1px solid var(--ink)' }}>Sign out</button></form>
+        </div>
       </div>
       <TutorHome
         bookings={bookings}
@@ -64,7 +70,9 @@ export default async function TutorDashboard() {
         openSubs={openSubs}
         myClaimedBookings={myClaimedBookings}
         myClaimedSubs={myClaimedSubs}
-        actions={{ confirmPayment, setMeetingLink, assignTutor, markAttendance, sendTutorMessage, toggleAvailable, claim }}
+        videoRequests={videoRequests}
+        customPackRequests={customPackRequests}
+        actions={{ confirmPayment, setMeetingLink, assignTutor, markAttendance, sendTutorMessage, toggleAvailable, claim, setCustomPackLink }}
       />
     </div>
   )
