@@ -1,8 +1,10 @@
 import { createClient } from '../../lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { toggleAvailable, claim, setMeetingLink, markAttendance, sendPartnerMessage } from './actions'
+import { signOut } from '../portal/actions'
 import NotificationBell from '../NotificationBell'
 import PartnerStudents from './PartnerStudents'
+import VideoManager from '../tutor/VideoManager'
 
 export default async function PartnerDashboard() {
   const supabase = createClient()
@@ -67,7 +69,10 @@ export default async function PartnerDashboard() {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h2>Tutor dashboard</h2>
-        <NotificationBell forRole="staff" />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <NotificationBell forRole="staff" />
+          <form action={signOut}><button className="btn" style={{ background: 'none', border: '1px solid var(--ink)' }}>Sign out</button></form>
+        </div>
       </div>
       <p className="meta">Signed in as {profile.full_name}</p>
 
@@ -109,6 +114,11 @@ export default async function PartnerDashboard() {
             </form>
           </div>
         ))}
+      </section>
+
+      <section>
+        <h3>Manage videos</h3>
+        <VideoManager />
       </section>
 
       <section>
