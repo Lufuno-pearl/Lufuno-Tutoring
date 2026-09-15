@@ -19,11 +19,12 @@ function ChatThread({ studentId, thread, actions }: { studentId: string; thread:
 
   async function handleSend() {
     if (!text.trim() || sending) return
+    const body = text
+    setText('')
     setSending(true)
     const fd = new FormData()
-    fd.set('body', text)
+    fd.set('body', body)
     await sendTutorMessage(studentId, fd)
-    setText('')
     setSending(false)
   }
 
@@ -124,7 +125,7 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
         {(bookings || []).map((b: any) => (
           <div className="panel" key={b.id}>
             <h4>{b.subject} — {b.day} {b.time}</h4>
-            <div className="meta">{b.profiles?.full_name} · {b.profiles?.email} · {b.format === 'physical' ? 'Physical' : 'Online'} · R{b.price}</div>
+            <div className="meta">{b.profiles?.full_name} · {b.profiles?.email} · {b.format === 'physical' ? 'Physical' : 'Online'} · R{b.price}{b.reference ? ` · Ref: ${b.reference}` : ''}</div>
             <StatusPill status={b.status} />
             {b.status !== 'confirmed' && (
               <form action={async () => { await confirmPayment('bookings', b.id) }} style={{ marginTop: 8 }}>
@@ -143,7 +144,7 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
         {(subs || []).map((s: any) => (
           <div className="panel" key={s.id}>
             <h4>{s.month}</h4>
-            <div className="meta">{s.profiles?.full_name} · {s.profiles?.email} · {s.format === 'physical' ? 'Physical' : 'Online'} · R{s.price}</div>
+            <div className="meta">{s.profiles?.full_name} · {s.profiles?.email} · {s.format === 'physical' ? 'Physical' : 'Online'} · R{s.price}{s.reference ? ` · Ref: ${s.reference}` : ''}</div>
             <StatusPill status={s.status} />
             {s.status !== 'confirmed' && (
               <form action={async () => { await confirmPayment('hs_subscriptions', s.id) }} style={{ marginTop: 8 }}>
@@ -163,7 +164,7 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
         {(videoRequests || []).map((v: any) => (
           <div className="panel" key={v.id}>
             <h4>{v.subject}</h4>
-            <div className="meta">{v.profiles?.full_name} · {v.profiles?.email} · R{v.price}</div>
+            <div className="meta">{v.profiles?.full_name} · {v.profiles?.email} · R{v.price}{v.reference ? ` · Ref: ${v.reference}` : ''}</div>
             <StatusPill status={v.status} />
             {v.status !== 'confirmed' && (
               <form action={async () => { await confirmPayment('video_access_requests', v.id) }} style={{ marginTop: 8 }}>
@@ -229,7 +230,7 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
         {(orders || []).map((o: any) => (
           <div className="panel" key={o.id}>
             <h4>{o.pack_name}</h4>
-            <div className="meta">{o.profiles?.full_name} · {o.profiles?.email} · R{o.price}</div>
+            <div className="meta">{o.profiles?.full_name} · {o.profiles?.email} · R{o.price}{o.reference ? ` · Ref: ${o.reference}` : ''}</div>
             <StatusPill status={o.status} />
             {o.status !== 'confirmed' && (
               <form action={async () => { await confirmPayment('pack_orders', o.id) }} style={{ marginTop: 8 }}>
