@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect, useLayoutEffect } from 'react'
 import { CalendarPlus, BookOpen, MessageCircle, Landmark, History } from 'lucide-react'
 import MaterialsSection from './MaterialsSection'
 import PackDownload from './PackDownload'
@@ -188,6 +188,13 @@ const MONTH_NAMES = ['January','February','March','April','May','June','July','A
 
 export default function PortalHome({ name, tier, uniSubjects, visiblePacks, bookings, subs, orders, messages, attendance, videoRequests, myVideoSubjects, homeworkRequests, actions }: any) {
   const [section, setSection] = useState<Section>('menu')
+  useLayoutEffect(() => {
+    const saved = sessionStorage.getItem('portalSection') as Section | null
+    if (saved) setSection(saved)
+  }, [])
+  useEffect(() => {
+    sessionStorage.setItem('portalSection', section)
+  }, [section])
   const [bookingSubmitting, setBookingSubmitting] = useState(false)
   const [thankYou, setThankYou] = useState('')
   const { createBooking, createHsSub, buyPack, markAwaiting, sendMessage, requestCustomPack, requestVideoAccess, submitHomework } = actions
