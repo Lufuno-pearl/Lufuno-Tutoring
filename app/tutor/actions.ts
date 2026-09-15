@@ -95,3 +95,16 @@ export async function setCustomPackLink(id: string, url: string) {
   await supabase.from('other_course_requests').update({ download_url: url }).eq('id', id)
   revalidatePath('/tutor')
 }
+
+export async function markHomeworkSolved(id: string) {
+  const supabase = createClient()
+  const { data } = await supabase.from('homework_requests').update({ status: 'solved' }).eq('id', id).select('student_id').single()
+  if (data) {
+    await supabase.from('notifications').insert({
+      student_id: data.student_id,
+      for_role: 'student',
+      message: 'Your homework has been solved — check your chat for the solution.',
+    })
+  }
+  revalidatePath('/tutor')
+}
