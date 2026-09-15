@@ -167,11 +167,12 @@ function ChatBox({ sendMessage }: { sendMessage: any }) {
 
   async function handleSend() {
     if (!text.trim() || sending) return
+    const body = text
+    setText('')
     setSending(true)
     const fd = new FormData()
-    fd.set('body', text)
+    fd.set('body', body)
     await sendMessage(fd)
-    setText('')
     setSending(false)
   }
 
@@ -183,11 +184,17 @@ function ChatBox({ sendMessage }: { sendMessage: any }) {
   )
 }
 
+const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December']
+
 export default function PortalHome({ name, tier, uniSubjects, visiblePacks, bookings, subs, orders, messages, attendance, videoRequests, myVideoSubjects, homeworkRequests, actions }: any) {
   const [section, setSection] = useState<Section>('menu')
   const [bookingSubmitting, setBookingSubmitting] = useState(false)
   const [thankYou, setThankYou] = useState('')
   const { createBooking, createHsSub, buyPack, markAwaiting, sendMessage, requestCustomPack, requestVideoAccess, submitHomework } = actions
+
+  const now = new Date()
+  const currentMonthLabel = `${MONTH_NAMES[now.getMonth()]} ${now.getFullYear()}`
+  const hasActiveSub = (subs || []).some((s: any) => s.status === 'confirmed' && s.month === currentMonthLabel)
 
   if (section === 'menu') {
     const firstName = (name || '').split(' ')[0]
@@ -233,10 +240,12 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
       e.preventDefault()
       if (bookingSubmitting) return
       setBookingSubmitting(true)
-      const fd = new FormData(e.currentTarget)
+      const form = e.currentTarget
+      const fd = new FormData(form)
       const result = await createBooking(fd)
       setBookingSubmitting(false)
       if (result?.ok) {
+        form.reset()
         setThankYou(result.duplicate
           ? `You already have a request for ${result.subject} on that day — check below for payment details.`
           : `Thank you for requesting ${result.subject} on Aid & Ace!`)
@@ -246,10 +255,12 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
       e.preventDefault()
       if (bookingSubmitting) return
       setBookingSubmitting(true)
-      const fd = new FormData(e.currentTarget)
+      const form = e.currentTarget
+      const fd = new FormData(form)
       const result = await createHsSub(fd)
       setBookingSubmitting(false)
       if (result?.ok) {
+        form.reset()
         setThankYou(result.duplicate
           ? `You already have a subscription request for ${result.month} — check below for payment details.`
           : `Thank you for subscribing on Aid & Ace for ${result.month}!`)
@@ -328,7 +339,14 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
         )}
         {tier === 'highschool' && (
           <section style={{ marginTop: 24 }}>
-            <HomeworkBox subjectOptions={['Mathematics', 'Physical Sciences']} submitHomework={submitHomework} myRequests={homeworkRequests || []} />
+            {hasActiveSub ? (
+              <HomeworkBox subjectOptions={['Mathematics', 'Physical Sciences']} submitHomework={submitHomework} myRequests={homeworkRequests || []} />
+            ) : (
+              <div className="panel">
+                <h4>Homework & assignment help</h4>
+                <p className="meta">This unlocks once you have a confirmed subscription for {currentMonthLabel}. Subscribe above and confirm your payment to access it.</p>
+              </div>
+            )}
           </section>
         )}
         {(bookings || []).map((b: any) => b.status === 'pending' && (
