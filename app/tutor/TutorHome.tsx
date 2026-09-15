@@ -129,11 +129,11 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
             )}
             {b.status === 'confirmed' && b.format === 'online' && (
               <form action={async (formData: FormData) => { await setMeetingLink('bookings', b.id, formData.get('url') as string) }} style={{ marginTop: 8, display: 'flex', gap: 8 }}>
-                                <input name="url" defaultValue={b.meeting_link || ''} placeholder="Google Meet link" style={{ flex: 1, padding: 8, border: '1px solid var(--line)' }} />
+                <input name="url" defaultValue={b.meeting_link || ''} placeholder="Google Meet link" style={{ flex: 1, padding: 8, border: '1px solid var(--line)' }} />
                 <button className="btn btn-primary">Save</button>
               </form>
             )}
-          </div>
+                      </div>
         ))}
         <h3>High school subscriptions</h3>
         {(subs || []).map((s: any) => (
@@ -201,7 +201,7 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
     )
   }
 
-    if (section === 'packs') {
+  if (section === 'packs') {
     return (
       <div>
         <Back />
@@ -260,14 +260,15 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
       </div>
     )
   }
-    if (section === 'chat') {
+
+  if (section === 'chat') {
     if (selectedStudentId) {
       const thread = threadsByStudent[selectedStudentId]
       return (
         <div>
           <Back onClick={() => setSelectedStudentId(null)} />
           <h3>{thread.name}</h3>
-          <div className="meta" style={{ marginBottom: 10 }}>{thread.email}</div>
+                    <div className="meta" style={{ marginBottom: 10 }}>{thread.email}</div>
           <ChatThread studentId={selectedStudentId} thread={thread} actions={actions} />
         </div>
       )
