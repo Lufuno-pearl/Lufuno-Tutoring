@@ -110,6 +110,57 @@ function CustomPackBox({ requestCustomPack }: { requestCustomPack: any }) {
   )
 }
 
+function HomeworkBox({ subjectOptions, submitHomework, myRequests }: { subjectOptions: string[]; submitHomework: any; myRequests: any[] }) {
+  const [subject, setSubject] = useState(subjectOptions[0] || '')
+  const [description, setDescription] = useState('')
+  const [sent, setSent] = useState(false)
+  const [sending, setSending] = useState(false)
+
+  async function handleSubmit() {
+    if (!subject || sending) return
+    setSending(true)
+    await submitHomework(subject, description)
+    setSending(false)
+    setDescription('')
+    setSent(true)
+  }
+
+  return (
+    <div>
+      <h3>Homework & assignment help</h3>
+      <p className="meta">Tell us what you need help with, then upload the document itself under Chats & Files — Lufuno (or your tutor) will upload the solution there once it's ready.</p>
+      {sent && (
+        <div className="panel" style={{ background: '#DCEEE0', textAlign: 'center' }}>
+          <p style={{ margin: 0, fontWeight: 600 }}>Thanks! Don't forget to upload the document under Chats & Files.</p>
+        </div>
+      )}
+      <div className="field">
+        <label>Subject</label>
+        <select value={subject} onChange={e => setSubject(e.target.value)}>
+          {subjectOptions.map(s => <option key={s}>{s}</option>)}
+        </select>
+      </div>
+      <div className="field">
+        <label>What do you need help with?</label>
+        <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="e.g. Assignment 3, question 4 — stuck on the working" />
+      </div>
+      <button className="btn btn-primary" onClick={handleSubmit} disabled={sending}>{sending ? 'Sending...' : 'Submit request'}</button>
+
+      {myRequests.length > 0 && (
+        <div style={{ marginTop: 16 }}>
+          {myRequests.map((h: any) => (
+            <div className="panel" key={h.id}>
+              <h4>{h.subject}</h4>
+              {h.description && <p className="meta">{h.description}</p>}
+              <span className={`status ${h.status === 'solved' ? 'confirmed' : 'pending'}`}>{h.status === 'solved' ? 'Solution ready — check Chats & Files' : 'Pending'}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function ChatBox({ sendMessage }: { sendMessage: any }) {
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
@@ -128,15 +179,15 @@ function ChatBox({ sendMessage }: { sendMessage: any }) {
     <div>
       <div className="field"><input value={text} onChange={e => setText(e.target.value)} placeholder="Type a message..." /></div>
       <button className="btn btn-primary" onClick={handleSend} disabled={sending}>{sending ? 'Sending...' : 'Send'}</button>
-          </div>
+    </div>
   )
 }
 
-export default function PortalHome({ name, tier, uniSubjects, visiblePacks, bookings, subs, orders, messages, attendance, videoRequests, myVideoSubjects, actions }: any) {
+export default function PortalHome({ name, tier, uniSubjects, visiblePacks, bookings, subs, orders, messages, attendance, videoRequests, myVideoSubjects, homeworkRequests, actions }: any) {
   const [section, setSection] = useState<Section>('menu')
   const [bookingSubmitting, setBookingSubmitting] = useState(false)
   const [thankYou, setThankYou] = useState('')
-  const { createBooking, createHsSub, buyPack, markAwaiting, sendMessage, requestCustomPack, requestVideoAccess } = actions
+  const { createBooking, createHsSub, buyPack, markAwaiting, sendMessage, requestCustomPack, requestVideoAccess, submitHomework } = actions
 
   if (section === 'menu') {
     const firstName = (name || '').split(' ')[0]
@@ -253,7 +304,7 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
             <h3>Subscribe — high school (Gr 10–12)</h3>
             <form onSubmit={handleHsSubmit}>
               <div className="field"><label>Which month?</label><input type="month" name="month" required /></div>
-                            <div className="field">
+              <div className="field">
                 <label>Which subject(s)?</label>
                 <select name="subjectChoice" required defaultValue="both">
                   <option value="maths">Mathematics only — R350/month</option>
@@ -273,6 +324,11 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
                 {bookingSubmitting ? 'Submitting...' : 'Subscribe & get payment details'}
               </button>
             </form>
+          </section>
+        )}
+        {tier === 'highschool' && (
+          <section style={{ marginTop: 24 }}>
+            <HomeworkBox subjectOptions={['Mathematics', 'Physical Sciences']} submitHomework={submitHomework} myRequests={homeworkRequests || []} />
           </section>
         )}
         {(bookings || []).map((b: any) => b.status === 'pending' && (
