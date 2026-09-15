@@ -2,6 +2,18 @@
 import { createClient } from '../../lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
+function makeReference(name: string) {
+  const clean = (name || 'STUDENT').replace(/[^a-zA-Z]/g, '').toUpperCase().slice(0, 10) || 'STUDENT'
+  const digits = Math.floor(1000 + Math.random() * 9000)
+  return `${clean}${digits}`
+}
+
+async function getReference(supabase: any, userId: string) {
+  const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', userId).single()
+  const firstName = profile?.full_name?.trim().split(' ')[0] || 'STUDENT'
+  return makeReference(firstName)
+}
+
 export async function createBooking(formData: FormData) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -13,15 +25,17 @@ export async function createBooking(formData: FormData) {
 
   const { data: existing } = await supabase
     .from('bookings')
-    .select('id')
+    .select('id, reference')
     .eq('student_id', user.id)
     .eq('subject', subject)
     .eq('day', day)
     .in('status', ['pending', 'awaiting', 'confirmed'])
     .limit(1)
   if (existing && existing.length > 0) {
-    return { ok: true, duplicate: true, subject, day }
+    return { ok: true, duplicate: true, subject, day, reference: existing[0].reference }
   }
+
+  const reference = await getReference(supabase, user.id)
 
   await supabase.from('bookings').insert({
     student_id: user.id,
@@ -30,6 +44,7 @@ export async function createBooking(formData: FormData) {
     time,
     format: 'physical',
     price: 150,
+    reference,
   })
   await supabase.from('notifications').insert({
     student_id: user.id,
@@ -37,7 +52,7 @@ export async function createBooking(formData: FormData) {
     message: `New physical session request: ${subject}`,
   })
   revalidatePath('/portal')
-  return { ok: true, duplicate: false, subject, day }
+  return { ok: true, duplicate: false, subject, day, reference }
 }
 
 export async function requestVideoAccess(subject: string) {
@@ -47,19 +62,22 @@ export async function requestVideoAccess(subject: string) {
 
   const { data: existing } = await supabase
     .from('video_access_requests')
-    .select('id')
+    .select('id, reference')
     .eq('student_id', user.id)
     .eq('subject', subject)
     .in('status', ['pending', 'awaiting', 'confirmed'])
     .limit(1)
   if (existing && existing.length > 0) {
-    return { ok: true, duplicate: true, subject }
+    return { ok: true, duplicate: true, subject, reference: existing[0].reference }
   }
+
+  const reference = await getReference(supabase, user.id)
 
   await supabase.from('video_access_requests').insert({
     student_id: user.id,
     subject,
     price: 250,
+    reference,
   })
   await supabase.from('notifications').insert({
     student_id: user.id,
@@ -67,7 +85,7 @@ export async function requestVideoAccess(subject: string) {
     message: `New video access request: ${subject}`,
   })
   revalidatePath('/portal')
-  return { ok: true, duplicate: false, subject }
+  return { ok: true, duplicate: false, subject, reference }
 }
 
 const PHYSICAL_MONTH_NUMBERS = ['02', '06', '12']
@@ -97,15 +115,17 @@ export async function createHsSub(formData: FormData) {
 
   const { data: existing } = await supabase
     .from('hs_subscriptions')
-    .select('id')
+    .select('id, reference')
     .eq('student_id', user.id)
     .ilike('month', month.trim())
     .eq('subject_choice', subjectChoice)
     .in('status', ['pending', 'awaiting', 'confirmed'])
     .limit(1)
   if (existing && existing.length > 0) {
-    return { ok: true, duplicate: true, month }
+    return { ok: true, duplicate: true, month, reference: existing[0].reference }
   }
+
+  const reference = await getReference(supabase, user.id)
 
   await supabase.from('hs_subscriptions').insert({
     student_id: user.id,
@@ -113,6 +133,7 @@ export async function createHsSub(formData: FormData) {
     format,
     subject_choice: subjectChoice,
     price,
+    reference,
   })
   await supabase.from('notifications').insert({
     student_id: user.id,
@@ -120,7 +141,7 @@ export async function createHsSub(formData: FormData) {
     message: `New high school subscription request — ${month} (${subjectChoice})`,
   })
   revalidatePath('/portal')
-  return { ok: true, duplicate: false, month }
+  return { ok: true, duplicate: false, month, reference }
 }
 
 export async function buyPack(packId: string, packName: string) {
@@ -130,20 +151,23 @@ export async function buyPack(packId: string, packName: string) {
 
   const { data: existing } = await supabase
     .from('pack_orders')
-    .select('id')
+    .select('id, reference')
     .eq('student_id', user.id)
     .eq('pack_id', packId)
     .in('status', ['pending', 'awaiting', 'confirmed'])
     .limit(1)
   if (existing && existing.length > 0) {
-    return
+    return { ok: true, duplicate: true, reference: existing[0].reference }
   }
+
+  const reference = await getReference(supabase, user.id)
 
   await supabase.from('pack_orders').insert({
     student_id: user.id,
     pack_id: packId,
     pack_name: packName,
     price: 100,
+    reference,
   })
   await supabase.from('notifications').insert({
     student_id: user.id,
@@ -151,17 +175,22 @@ export async function buyPack(packId: string, packName: string) {
     message: `New study pack request: ${packName}`,
   })
   revalidatePath('/portal')
+  return { ok: true, duplicate: false, reference }
 }
 
 export async function requestCustomPack(subjectName: string, details: string) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return
+
+  const reference = await getReference(supabase, user.id)
+
   await supabase.from('other_course_requests').insert({
     student_id: user.id,
     course_name: subjectName,
     module_name: details || subjectName,
     price: 100,
+    reference,
   })
   await supabase.from('notifications').insert({
     student_id: user.id,
@@ -169,6 +198,7 @@ export async function requestCustomPack(subjectName: string, details: string) {
     message: `New custom study pack request: ${subjectName}`,
   })
   revalidatePath('/portal')
+  return { reference }
 }
 
 export async function markAwaiting(table: 'bookings' | 'hs_subscriptions' | 'pack_orders' | 'other_course_requests' | 'video_access_requests', id: string) {
