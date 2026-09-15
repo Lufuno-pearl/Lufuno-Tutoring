@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { CalendarPlus, BookOpen, MessageCircle, Landmark, History } from 'lucide-react'
 import MaterialsSection from './MaterialsSection'
 import PackDownload from './PackDownload'
+import MyVideos from './MyVideos'
 
 type Section = 'menu' | 'book' | 'packs' | 'chat' | 'bank' | 'history'
 
@@ -122,15 +123,16 @@ function ChatBox({ sendMessage }: { sendMessage: any }) {
     setText('')
     setSending(false)
   }
-    return (
+
+  return (
     <div>
       <div className="field"><input value={text} onChange={e => setText(e.target.value)} placeholder="Type a message..." /></div>
       <button className="btn btn-primary" onClick={handleSend} disabled={sending}>{sending ? 'Sending...' : 'Send'}</button>
-    </div>
+          </div>
   )
 }
 
-export default function PortalHome({ name, tier, uniSubjects, visiblePacks, bookings, subs, orders, messages, attendance, videoRequests, actions }: any) {
+export default function PortalHome({ name, tier, uniSubjects, visiblePacks, bookings, subs, orders, messages, attendance, videoRequests, myVideoSubjects, actions }: any) {
   const [section, setSection] = useState<Section>('menu')
   const [bookingSubmitting, setBookingSubmitting] = useState(false)
   const [thankYou, setThankYou] = useState('')
@@ -210,6 +212,12 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
             <p style={{ margin: 0, fontWeight: 600 }}>{thankYou}</p>
           </div>
         )}
+
+        <section>
+          <h3>Your video lessons</h3>
+          <MyVideos subjects={myVideoSubjects || []} />
+        </section>
+
         {tier === 'university' && (
           <>
             <section>
@@ -245,9 +253,9 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
             <h3>Subscribe — high school (Gr 10–12)</h3>
             <form onSubmit={handleHsSubmit}>
               <div className="field"><label>Which month?</label><input type="month" name="month" required /></div>
-              <div className="field">
+                            <div className="field">
                 <label>Which subject(s)?</label>
-                                <select name="subjectChoice" required defaultValue="both">
+                <select name="subjectChoice" required defaultValue="both">
                   <option value="maths">Mathematics only — R350/month</option>
                   <option value="physics">Physical Sciences only — R350/month</option>
                   <option value="both">Both subjects — R600/month</option>
