@@ -12,10 +12,10 @@ function StatusPill({ status }: { status: string }) {
   return <span className={`status ${status}`}>{label}</span>
 }
 
-function PayBlock({ kind, id, label, price, markAwaiting }: { kind: 'bookings' | 'hs_subscriptions' | 'pack_orders' | 'video_access_requests'; id: string; label: string; price: number; markAwaiting: any }) {
+function PayBlock({ kind, id, label, price, reference, markAwaiting }: { kind: 'bookings' | 'hs_subscriptions' | 'pack_orders' | 'video_access_requests'; id: string; label: string; price: number; reference?: string | null; markAwaiting: any }) {
   const [done, setDone] = useState(false)
   const [submitting, setSubmitting] = useState(false)
-  const ref = `${kind.slice(0, 4).toUpperCase()}-${id.slice(0, 8).toUpperCase()}`
+  const ref = reference || `${kind.slice(0, 4).toUpperCase()}-${id.slice(0, 8).toUpperCase()}`
 
   async function handleClick() {
     if (submitting || done) return
@@ -276,7 +276,7 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
               <p className="meta">R250 unlocks video lessons for that subject — watch anytime, no live session needed.</p>
               {uniSubjects.map((s: string) => <VideoAccessButton key={s} subject={s} requestVideoAccess={requestVideoAccess} />)}
               {(videoRequests || []).map((v: any) => v.status === 'pending' && (
-                <PayBlock key={v.id} kind="video_access_requests" id={v.id} label={`Video access — ${v.subject}`} price={v.price} markAwaiting={markAwaiting} />
+                <PayBlock key={v.id} kind="video_access_requests" id={v.id} label={`Video access — ${v.subject}`} price={v.price} reference={v.reference} markAwaiting={markAwaiting} />
               ))}
             </section>
 
@@ -332,10 +332,10 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
           </section>
         )}
         {(bookings || []).map((b: any) => b.status === 'pending' && (
-          <PayBlock key={b.id} kind="bookings" id={b.id} label={b.subject} price={b.price} markAwaiting={markAwaiting} />
+          <PayBlock key={b.id} kind="bookings" id={b.id} label={b.subject} price={b.price} reference={b.reference} markAwaiting={markAwaiting} />
         ))}
         {(subs || []).map((s: any) => s.status === 'pending' && (
-          <PayBlock key={s.id} kind="hs_subscriptions" id={s.id} label={`Subscription — ${s.month}`} price={s.price} markAwaiting={markAwaiting} />
+          <PayBlock key={s.id} kind="hs_subscriptions" id={s.id} label={`Subscription — ${s.month}`} price={s.price} reference={s.reference} markAwaiting={markAwaiting} />
         ))}
       </div>
     )
@@ -354,7 +354,7 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
           <div className="panel" key={o.id} style={{ marginTop: 12 }}>
             <h4>{o.pack_name}</h4>
             <StatusPill status={o.status} />
-            {o.status === 'pending' && <div style={{ marginTop: 12 }}><PayBlock kind="pack_orders" id={o.id} label={o.pack_name} price={o.price} markAwaiting={markAwaiting} /></div>}
+            {o.status === 'pending' && <div style={{ marginTop: 12 }}><PayBlock kind="pack_orders" id={o.id} label={o.pack_name} price={o.price} reference={o.reference} markAwaiting={markAwaiting} /></div>}
             {o.status === 'confirmed' && <PackDownload orderId={o.id} />}
           </div>
         ))}
