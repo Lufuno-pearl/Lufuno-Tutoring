@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect, useLayoutEffect } from 'react'
 import { Clock, UserCog, BookOpen, ClipboardList, MessageCircle, ChevronRight, Star, Video } from 'lucide-react'
 import TutorMaterials from './TutorMaterials'
 import PackUpload from './PackUpload'
@@ -64,6 +64,13 @@ function ChatThread({ studentId, thread, actions }: { studentId: string; thread:
 
 export default function TutorHome({ bookings, subs, orders, partners, threadsByStudent, attendanceRows, myAvailable, openBookings, openSubs, myClaimedBookings, myClaimedSubs, videoRequests, customPackRequests, homeworkRequests, actions }: any) {
   const [section, setSection] = useState<Section>('menu')
+  useLayoutEffect(() => {
+    const saved = sessionStorage.getItem('tutorSection') as Section | null
+    if (saved) setSection(saved)
+  }, [])
+  useEffect(() => {
+    sessionStorage.setItem('tutorSection', section)
+  }, [section])
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null)
   const [myStudentId, setMyStudentId] = useState<string | null>(null)
   const { confirmPayment, setMeetingLink, assignTutor, toggleAvailable, claim, markAttendance, sendTutorMessage, setCustomPackLink, markHomeworkSolved } = actions
