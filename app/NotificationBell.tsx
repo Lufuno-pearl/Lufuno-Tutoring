@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Bell, X } from 'lucide-react'
 import { createClient } from '../lib/supabase/client'
 
@@ -7,6 +7,7 @@ export default function NotificationBell({ forRole }: { forRole: 'student' | 'st
   const [items, setItems] = useState<any[]>([])
   const [open, setOpen] = useState(false)
   const supabase = createClient()
+  const containerRef = useRef<HTMLDivElement>(null)
 
   async function load() {
     const { data } = await supabase
@@ -27,6 +28,16 @@ export default function NotificationBell({ forRole }: { forRole: 'student' | 'st
     return () => { supabase.removeChannel(channel) }
   }, [])
 
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false)
+      }
+    }
+    if (open) document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [open])
+
   const unreadCount = items.filter(n => !n.read).length
 
   async function dismiss(id: string) {
@@ -42,7 +53,7 @@ export default function NotificationBell({ forRole }: { forRole: 'student' | 'st
   }
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div ref={containerRef} style={{ position: 'relative' }}>
       <div style={{ cursor: 'pointer', position: 'relative' }} onClick={() => setOpen(!open)}>
         <Bell size={22} color="var(--purple-dark)" />
         {unreadCount > 0 && (
