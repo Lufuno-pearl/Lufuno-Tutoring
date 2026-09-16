@@ -1,6 +1,7 @@
 'use server'
 import { createClient } from '../../lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { sendPushToRole } from '../../lib/push'
 
 function makeReference(name: string) {
   const clean = (name || 'STUDENT').replace(/[^a-zA-Z]/g, '').toUpperCase().slice(0, 10) || 'STUDENT'
@@ -51,6 +52,7 @@ export async function createBooking(formData: FormData) {
     for_role: 'staff',
     message: `New physical session request: ${subject}`,
   })
+  await sendPushToRole('staff', 'New session request', `${subject} — ${day} ${time}`, '/tutor')
   revalidatePath('/portal')
   return { ok: true, duplicate: false, subject, day, reference }
 }
@@ -84,6 +86,7 @@ export async function requestVideoAccess(subject: string) {
     for_role: 'staff',
     message: `New video access request: ${subject}`,
   })
+  await sendPushToRole('staff', 'New video access request', subject, '/tutor')
   revalidatePath('/portal')
   return { ok: true, duplicate: false, subject, reference }
 }
@@ -140,6 +143,7 @@ export async function createHsSub(formData: FormData) {
     for_role: 'staff',
     message: `New high school subscription request — ${month} (${subjectChoice})`,
   })
+  await sendPushToRole('staff', 'New subscription request', `${month} (${subjectChoice})`, '/tutor')
   revalidatePath('/portal')
   return { ok: true, duplicate: false, month, reference }
 }
@@ -174,6 +178,7 @@ export async function buyPack(packId: string, packName: string) {
     for_role: 'staff',
     message: `New study pack request: ${packName}`,
   })
+  await sendPushToRole('staff', 'New study pack request', packName, '/tutor')
   revalidatePath('/portal')
   return { ok: true, duplicate: false, reference }
 }
@@ -197,6 +202,7 @@ export async function requestCustomPack(subjectName: string, details: string) {
     for_role: 'staff',
     message: `New custom study pack request: ${subjectName}`,
   })
+  await sendPushToRole('staff', 'New custom pack request', subjectName, '/tutor')
   revalidatePath('/portal')
   return { reference }
 }
@@ -230,6 +236,7 @@ export async function markAwaiting(table: 'bookings' | 'hs_subscriptions' | 'pac
       for_role: 'staff',
       message: `Payment marked as made for: ${label}`,
     })
+    await sendPushToRole('staff', 'Payment submitted', label, '/tutor')
   }
   revalidatePath('/portal')
 }
@@ -250,6 +257,7 @@ export async function sendMessage(formData: FormData) {
     for_role: 'staff',
     message: `New message from a student`,
   })
+  await sendPushToRole('staff', 'New message', body.trim().slice(0, 100), '/tutor')
   revalidatePath('/portal')
 }
 
