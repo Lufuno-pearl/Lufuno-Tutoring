@@ -62,7 +62,7 @@ function ChatThread({ studentId, thread, actions }: { studentId: string; thread:
   )
 }
 
-export default function TutorHome({ bookings, subs, orders, partners, threadsByStudent, attendanceRows, myAvailable, openBookings, openSubs, myClaimedBookings, myClaimedSubs, videoRequests, customPackRequests, homeworkRequests, actions }: any) {
+export default function TutorHome({ bookings, subs, orders, partners, threadsByStudent, attendanceRows, myAvailable, openBookings, openSubs, myClaimedBookings, myClaimedSubs, videoRequests, customPackRequests, homeworkRequests, videoTopicRequests, actions }: any) {
   const [section, setSection] = useState<Section>('menu')
   useLayoutEffect(() => {
     const saved = sessionStorage.getItem('tutorSection') as Section | null
@@ -72,8 +72,9 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
     sessionStorage.setItem('tutorSection', section)
   }, [section])
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null)
+  const [chatSearch, setChatSearch] = useState('')
   const [myStudentId, setMyStudentId] = useState<string | null>(null)
-  const { confirmPayment, setMeetingLink, assignTutor, toggleAvailable, claim, markAttendance, sendTutorMessage, setCustomPackLink, markHomeworkSolved } = actions
+  const { confirmPayment, setMeetingLink, assignTutor, toggleAvailable, claim, markAttendance, sendTutorMessage, setCustomPackLink, markHomeworkSolved, setVideoTopicLink } = actions
 
   if (section === 'menu') {
     return (
@@ -151,7 +152,7 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
         {(subs || []).map((s: any) => (
           <div className="panel" key={s.id}>
             <h4>{s.month}</h4>
-            <div className="meta">{s.profiles?.full_name} · {s.profiles?.email} · {s.format === 'physical' ? 'Physical' : 'Online'} · R{s.price}{s.reference ? ` · Ref: ${s.reference}` : ''}</div>
+            <div className="meta">{s.profiles?.full_name} · {s.profiles?.email} · {s.format === 'physical' ? 'Physical' : 'Online'} · R{s.price}{s.reference ? ` · Ref: ${s.reference}` : ''}{s.status === 'confirmed' && s.end_date ? ` · Active until ${s.end_date}` : ''}</div>
             <StatusPill status={s.status} />
             {s.status !== 'confirmed' && (
               <form action={async () => { await confirmPayment('hs_subscriptions', s.id) }} style={{ marginTop: 8 }}>
@@ -194,6 +195,19 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
                 <button className="btn btn-gold">Mark solved</button>
               </form>
             )}
+          </div>
+        ))}
+        <h3>Video topic requests</h3>
+        {(videoTopicRequests || []).length === 0 && <p className="meta">None yet.</p>}
+        {(videoTopicRequests || []).map((v: any) => (
+          <div className="panel" key={v.id}>
+            <h4>{v.subject} — {v.topic}</h4>
+            <div className="meta">{v.profiles?.full_name} · {v.profiles?.email}</div>
+            <span className={`status ${v.status === 'ready' ? 'confirmed' : 'pending'}`}>{v.status === 'ready' ? 'Ready' : 'Pending'}</span>
+            <form action={async (formData: FormData) => { await setVideoTopicLink(v.id, formData.get('url') as string) }} style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+              <input name="url" defaultValue={v.video_url || ''} placeholder="Video link (Drive, YouTube unlisted, etc.)" style={{ flex: 1, padding: 8, border: '1px solid var(--line)' }} />
+              <button className="btn btn-primary">Save</button>
+            </form>
           </div>
         ))}
       </div>
@@ -311,8 +325,11 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
     }
 
     const entries = Object.entries(threadsByStudent)
-    const uniEntries = entries.filter(([, t]: any) => t.tier !== 'highschool')
-    const hsEntries = entries.filter(([, t]: any) => t.tier === 'highschool')
+    const filteredEntries = chatSearch.trim()
+      ? entries.filter(([, t]: any) => t.name.toLowerCase().includes(chatSearch.trim().toLowerCase()))
+      : entries
+    const uniEntries = filteredEntries.filter(([, t]: any) => t.tier !== 'highschool')
+    const hsEntries = filteredEntries.filter(([, t]: any) => t.tier === 'highschool')
 
     const renderRow = ([sid, t]: any) => (
       <div key={sid} className="panel" style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} onClick={() => setSelectedStudentId(sid)}>
@@ -327,11 +344,14 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
     return (
       <div>
         <Back />
+        <div className="field">
+          <input value={chatSearch} onChange={e => setChatSearch(e.target.value)} placeholder="Search by student name..." />
+        </div>
         <h3>University</h3>
-        {uniEntries.length === 0 && <p className="meta">No students yet.</p>}
+        {uniEntries.length === 0 && <p className="meta">{chatSearch.trim() ? 'No matches.' : 'No students yet.'}</p>}
         {uniEntries.map(renderRow)}
         <h3 style={{ marginTop: 20 }}>High School</h3>
-        {hsEntries.length === 0 && <p className="meta">No students yet.</p>}
+        {hsEntries.length === 0 && <p className="meta">{chatSearch.trim() ? 'No matches.' : 'No students yet.'}</p>}
         {hsEntries.map(renderRow)}
       </div>
     )
