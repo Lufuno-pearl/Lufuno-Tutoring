@@ -114,6 +114,20 @@ export async function setCustomPackLink(id: string, url: string) {
   revalidatePath('/tutor')
 }
 
+export async function setVideoTopicLink(id: string, url: string) {
+  const supabase = createClient()
+  const { data } = await supabase.from('video_topic_requests').update({ video_url: url, status: 'ready' }).eq('id', id).select('student_id, subject, topic').single()
+  if (data) {
+    await supabase.from('notifications').insert({
+      student_id: data.student_id,
+      for_role: 'student',
+      message: `Your video on "${data.topic}" is ready — check your portal.`,
+    })
+    await sendPushToUser(data.student_id, 'Video ready', `Your video on "${data.topic}" is ready.`, '/portal')
+  }
+  revalidatePath('/tutor')
+}
+
 export async function markHomeworkSolved(id: string) {
   const supabase = createClient()
   const { data } = await supabase.from('homework_requests').update({ status: 'solved' }).eq('id', id).select('student_id').single()
