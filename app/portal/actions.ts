@@ -105,27 +105,39 @@ export async function createHsSub(formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { ok: false }
 
-  const rawMonth = formData.get('month') as string
   const format = formData.get('format') as string
   const subjectChoice = formData.get('subjectChoice') as string
-  const mm = rawMonth.split('-')[1]
-  const month = formatMonthLabel(rawMonth)
   const price = subjectChoice === 'both' ? 600 : 350
 
-  if (format === 'physical' && !PHYSICAL_MONTH_NUMBERS.includes(mm)) {
+  const now = new Date()
+  const currentMonthNum = String(now.getMonth() + 1).padStart(2, '0')
+  if (format === 'physical' && !PHYSICAL_MONTH_NUMBERS.includes(currentMonthNum)) {
     return { ok: false }
   }
 
-  const { data: existing } = await supabase
+  const todayISO = now.toISOString().slice(0, 10)
+  const month = formatMonthLabel(`${now.getFullYear()}-${currentMonthNum}`)
+
+  const { data: pendingExisting } = await supabase
     .from('hs_subscriptions')
     .select('id, reference')
     .eq('student_id', user.id)
-    .ilike('month', month.trim())
     .eq('subject_choice', subjectChoice)
-    .in('status', ['pending', 'awaiting', 'confirmed'])
+    .in('status', ['pending', 'awaiting'])
     .limit(1)
-  if (existing && existing.length > 0) {
-    return { ok: true, duplicate: true, month, reference: existing[0].reference }
+
+  const { data: activeExisting } = await supabase
+    .from('hs_subscriptions')
+    .select('id, reference')
+    .eq('student_id', user.id)
+    .eq('subject_choice', subjectChoice)
+    .eq('status', 'confirmed')
+    .gte('end_date', todayISO)
+    .limit(1)
+
+  const existing = [...(pendingExisting || []), ...(activeExisting || [])]
+  if (existing.length > 0) {
+    return { ok: true, duplicate: true, reference: existing[0].reference }
   }
 
   const reference = await getReference(supabase, user.id)
@@ -141,11 +153,11 @@ export async function createHsSub(formData: FormData) {
   await supabase.from('notifications').insert({
     student_id: user.id,
     for_role: 'staff',
-    message: `New high school subscription request — ${month} (${subjectChoice})`,
+    message: `New high school subscription request (${subjectChoice})`,
   })
-  await sendPushToRole('staff', 'New subscription request', `${month} (${subjectChoice})`, '/tutor')
+  await sendPushToRole('staff', 'New subscription request', `${subjectChoice} subscription`, '/tutor')
   revalidatePath('/portal')
-  return { ok: true, duplicate: false, month, reference }
+  return { ok: true, duplicate: false, reference }
 }
 
 export async function buyPack(packId: string, packName: string) {
