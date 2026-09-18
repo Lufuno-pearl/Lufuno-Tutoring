@@ -161,6 +161,61 @@ function HomeworkBox({ subjectOptions, submitHomework, myRequests }: { subjectOp
   )
 }
 
+function VideoTopicBox({ requestVideoTopic, myRequests }: { requestVideoTopic: any; myRequests: any[] }) {
+  const [subject, setSubject] = useState('Mathematics')
+  const [topic, setTopic] = useState('')
+  const [sent, setSent] = useState(false)
+  const [sending, setSending] = useState(false)
+
+  async function handleSubmit() {
+    if (!topic.trim() || sending) return
+    setSending(true)
+    await requestVideoTopic(subject, topic.trim())
+    setSending(false)
+    setTopic('')
+    setSent(true)
+  }
+
+  return (
+    <div className="panel" style={{ marginTop: 12 }}>
+      <h4>Request a video</h4>
+      <p className="meta">Tell us the topic and we'll record a video explaining it.</p>
+      {sent && (
+        <div className="panel" style={{ background: '#DCEEE0', textAlign: 'center' }}>
+          <p style={{ margin: 0, fontWeight: 600 }}>Thanks! We'll let you know once your video is ready.</p>
+        </div>
+      )}
+      <div className="field">
+        <label>Subject</label>
+        <select value={subject} onChange={e => setSubject(e.target.value)}>
+          <option>Mathematics</option>
+          <option>Physical Sciences</option>
+        </select>
+      </div>
+      <div className="field">
+        <label>Which topic?</label>
+        <input value={topic} onChange={e => setTopic(e.target.value)} placeholder="e.g. Completing the square" />
+      </div>
+      <button className="btn btn-primary" onClick={handleSubmit} disabled={sending}>{sending ? 'Sending...' : 'Request video'}</button>
+
+      {myRequests.length > 0 && (
+        <div style={{ marginTop: 16 }}>
+          {myRequests.map((v: any) => (
+            <div className="panel" key={v.id}>
+              <h4>{v.subject} — {v.topic}</h4>
+              {v.status === 'ready' && v.video_url ? (
+                <p style={{ marginTop: 8 }}><a href={v.video_url} target="_blank">Watch video &rarr;</a></p>
+              ) : (
+                <span className="status pending">Being recorded</span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function ChatBox({ sendMessage }: { sendMessage: any }) {
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
@@ -184,7 +239,7 @@ function ChatBox({ sendMessage }: { sendMessage: any }) {
   )
 }
 
-export default function PortalHome({ name, tier, uniSubjects, visiblePacks, bookings, subs, orders, messages, attendance, videoRequests, myVideoSubjects, homeworkRequests, actions }: any) {
+export default function PortalHome({ name, tier, uniSubjects, visiblePacks, bookings, subs, orders, messages, attendance, videoRequests, myVideoSubjects, homeworkRequests, videoTopicRequests, actions }: any) {
   const [section, setSection] = useState<Section>('menu')
   useLayoutEffect(() => {
     const saved = sessionStorage.getItem('portalSection') as Section | null
@@ -195,10 +250,11 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
   }, [section])
   const [bookingSubmitting, setBookingSubmitting] = useState(false)
   const [thankYou, setThankYou] = useState('')
-  const { createBooking, createHsSub, buyPack, markAwaiting, sendMessage, requestCustomPack, requestVideoAccess, submitHomework } = actions
+  const { createBooking, createHsSub, buyPack, markAwaiting, sendMessage, requestCustomPack, requestVideoAccess, submitHomework, requestVideoTopic } = actions
 
   const todayISO = new Date().toISOString().slice(0, 10)
   const hasActiveSub = (subs || []).some((s: any) => s.status === 'confirmed' && s.end_date && s.end_date >= todayISO)
+  const isVideoOnlyPeriod = [9, 10].includes(new Date().getMonth())
 
   if (section === 'menu') {
     const firstName = (name || '').split(' ')[0]
@@ -338,6 +394,15 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
                 {bookingSubmitting ? 'Submitting...' : 'Subscribe & get payment details'}
               </button>
             </form>
+          </section>
+        )}
+        {tier === 'highschool' && isVideoOnlyPeriod && (
+          <section style={{ marginTop: 24 }}>
+            <div className="panel" style={{ background: '#F3EFE4' }}>
+              <h4>Video tutoring only — October & November</h4>
+              <p className="meta">Live physical and online sessions aren't available this period. Tell us a topic and we'll record a video explaining it.</p>
+            </div>
+            <VideoTopicBox requestVideoTopic={requestVideoTopic} myRequests={videoTopicRequests || []} />
           </section>
         )}
         {tier === 'highschool' && (
