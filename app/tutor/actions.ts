@@ -5,14 +5,26 @@ import { sendPushToUser } from '../../lib/push'
 
 export async function confirmPayment(table: 'bookings' | 'hs_subscriptions' | 'pack_orders' | 'video_access_requests' | 'other_course_requests', id: string) {
   const supabase = createClient()
-  const { data } = await supabase.from(table).update({ status: 'confirmed' }).eq('id', id).select('student_id').single()
+
+  const updates: any = { status: 'confirmed' }
+  if (table === 'hs_subscriptions') {
+    const start = new Date()
+    const end = new Date(start.getTime() + 30 * 24 * 60 * 60 * 1000)
+    updates.start_date = start.toISOString().slice(0, 10)
+    updates.end_date = end.toISOString().slice(0, 10)
+  }
+
+  const { data } = await supabase.from(table).update(updates).eq('id', id).select('student_id').single()
   if (data) {
+    const message = table === 'hs_subscriptions'
+      ? 'Your subscription is confirmed — active for the next 30 days!'
+      : 'Your payment has been confirmed!'
     await supabase.from('notifications').insert({
       student_id: data.student_id,
       for_role: 'student',
-      message: 'Your payment has been confirmed!',
+      message,
     })
-    await sendPushToUser(data.student_id, 'Payment confirmed', 'Your payment has been confirmed!', '/portal')
+    await sendPushToUser(data.student_id, 'Payment confirmed', message, '/portal')
   }
   revalidatePath('/tutor')
 }
