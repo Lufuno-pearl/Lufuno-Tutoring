@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/reminders?secret=ace2026reminder9x7",
+      "schedule": "0 * * * *"
+    }
+  ]
+}
