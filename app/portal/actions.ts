@@ -273,6 +273,24 @@ export async function sendMessage(formData: FormData) {
   revalidatePath('/portal')
 }
 
+export async function requestVideoTopic(subject: string, topic: string) {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
+  await supabase.from('video_topic_requests').insert({
+    student_id: user.id,
+    subject,
+    topic,
+  })
+  await supabase.from('notifications').insert({
+    student_id: user.id,
+    for_role: 'staff',
+    message: `New video topic request: ${subject} — ${topic}`,
+  })
+  await sendPushToRole('staff', 'New video topic request', `${subject}: ${topic}`, '/tutor')
+  revalidatePath('/portal')
+}
+
 export async function signOut() {
   const supabase = createClient()
   await supabase.auth.signOut()
