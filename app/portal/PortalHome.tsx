@@ -184,8 +184,6 @@ function ChatBox({ sendMessage }: { sendMessage: any }) {
   )
 }
 
-const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December']
-
 export default function PortalHome({ name, tier, uniSubjects, visiblePacks, bookings, subs, orders, messages, attendance, videoRequests, myVideoSubjects, homeworkRequests, actions }: any) {
   const [section, setSection] = useState<Section>('menu')
   useLayoutEffect(() => {
@@ -199,9 +197,8 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
   const [thankYou, setThankYou] = useState('')
   const { createBooking, createHsSub, buyPack, markAwaiting, sendMessage, requestCustomPack, requestVideoAccess, submitHomework } = actions
 
-  const now = new Date()
-  const currentMonthLabel = `${MONTH_NAMES[now.getMonth()]} ${now.getFullYear()}`
-  const hasActiveSub = (subs || []).some((s: any) => s.status === 'confirmed' && s.month === currentMonthLabel)
+  const todayISO = new Date().toISOString().slice(0, 10)
+  const hasActiveSub = (subs || []).some((s: any) => s.status === 'confirmed' && s.end_date && s.end_date >= todayISO)
 
   if (section === 'menu') {
     const firstName = (name || '').split(' ')[0]
@@ -269,8 +266,8 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
       if (result?.ok) {
         form.reset()
         setThankYou(result.duplicate
-          ? `You already have a subscription request for ${result.month} — check below for payment details.`
-          : `Thank you for subscribing on Aid & Ace for ${result.month}!`)
+          ? `You already have an active or pending subscription — check below for payment details.`
+          : `Thank you for subscribing on Aid & Ace!`)
       }
     }
     return (
@@ -321,7 +318,6 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
           <section>
             <h3>Subscribe — high school (Gr 10–12)</h3>
             <form onSubmit={handleHsSubmit}>
-              <div className="field"><label>Which month?</label><input type="month" name="month" required /></div>
               <div className="field">
                 <label>Which subject(s)?</label>
                 <select name="subjectChoice" required defaultValue="both">
@@ -351,7 +347,7 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
             ) : (
               <div className="panel">
                 <h4>Homework & assignment help</h4>
-                <p className="meta">This unlocks once you have a confirmed subscription for {currentMonthLabel}. Subscribe above and confirm your payment to access it.</p>
+                <p className="meta">This unlocks once you have an active, confirmed subscription. Subscribe above and confirm your payment to access it.</p>
               </div>
             )}
           </section>
@@ -439,7 +435,7 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
         {(subs || []).map((s: any) => (
           <div className="panel" key={s.id}>
             <h4>Monthly subscription — {s.month}</h4>
-            <div className="meta">Maths + Physical Sciences · {s.format === 'physical' ? 'Physical' : 'Online'} · R{s.price}</div>
+            <div className="meta">Maths + Physical Sciences · {s.format === 'physical' ? 'Physical' : 'Online'} · R{s.price}{s.status === 'confirmed' && s.end_date ? ` · Active until ${s.end_date}` : ''}</div>
             <StatusPill status={s.status} />
             {s.status === 'confirmed' && s.format === 'online' && s.meeting_link && <p style={{ marginTop: 8 }}><a href={s.meeting_link} target="_blank">Join session &rarr;</a></p>}
           </div>
