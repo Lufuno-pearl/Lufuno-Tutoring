@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/cron/reminders?secret=ace9x2v7cron26",
-      "schedule": "0 * * * *"
+      "schedule": "0 5 * * *"
     }
   ]
 }
