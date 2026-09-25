@@ -115,14 +115,21 @@ function HomeworkBox({ subjectOptions, submitHomework, myRequests }: { subjectOp
   const [description, setDescription] = useState('')
   const [sent, setSent] = useState(false)
   const [sending, setSending] = useState(false)
+  const [error, setError] = useState(false)
 
   async function handleSubmit() {
     if (!subject || sending) return
     setSending(true)
-    await submitHomework(subject, description)
-    setSending(false)
-    setDescription('')
-    setSent(true)
+    setError(false)
+    try {
+      await submitHomework(subject, description)
+      setDescription('')
+      setSent(true)
+    } catch (e) {
+      setError(true)
+    } finally {
+      setSending(false)
+    }
   }
 
   return (
@@ -132,6 +139,11 @@ function HomeworkBox({ subjectOptions, submitHomework, myRequests }: { subjectOp
       {sent && (
         <div className="panel" style={{ background: '#DCEEE0', textAlign: 'center' }}>
           <p style={{ margin: 0, fontWeight: 600 }}>Thanks! Don't forget to upload the document under Chats & Files.</p>
+        </div>
+      )}
+      {error && (
+        <div className="panel" style={{ background: '#F3D6D0', textAlign: 'center' }}>
+          <p style={{ margin: 0, fontWeight: 600 }}>Something went wrong sending that — please try again.</p>
         </div>
       )}
       <div className="field">
