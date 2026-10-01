@@ -294,12 +294,12 @@ export async function requestVideoTopic(subject: string, topic: string) {
 export async function submitHomework(subject: string, description: string) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return
-  await supabase.from('homework_requests').insert({
+  if (!user) return { ok: false }
+  const { data } = await supabase.from('homework_requests').insert({
     student_id: user.id,
     subject,
     description,
-  })
+  }).select('id').single()
   await supabase.from('notifications').insert({
     student_id: user.id,
     for_role: 'staff',
@@ -307,6 +307,7 @@ export async function submitHomework(subject: string, description: string) {
   })
   await sendPushToRole('staff', 'New homework help request', subject, '/tutor')
   revalidatePath('/portal')
+  return { ok: true, id: data?.id as string | undefined }
 }
 
 export async function signOut() {
