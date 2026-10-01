@@ -4,6 +4,7 @@ import { Clock, UserCog, BookOpen, ClipboardList, MessageCircle, ChevronRight, S
 import TutorMaterials from './TutorMaterials'
 import PackUpload from './PackUpload'
 import VideoManager from './VideoManager'
+import FileBox from '../FileBox'
 
 type Section = 'menu' | 'pending' | 'assign' | 'packs' | 'sessions' | 'chat' | 'mytutoring' | 'videos'
 
@@ -181,7 +182,7 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
             )}
           </div>
         ))}
-        <h3>Homework help requests</h3>
+               <h3>Homework help requests</h3>
         {(homeworkRequests || []).length === 0 && <p className="meta">None yet.</p>}
         {(homeworkRequests || []).map((h: any) => (
           <div className="panel" key={h.id}>
@@ -189,7 +190,10 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
             <div className="meta">{h.profiles?.full_name} · {h.profiles?.email}</div>
             {h.description && <p className="meta">{h.description}</p>}
             <span className={`status ${h.status === 'solved' ? 'confirmed' : 'pending'}`}>{h.status === 'solved' ? 'Solved' : 'Pending'}</span>
-            <p className="meta" style={{ marginTop: 6 }}>View their uploaded homework and add your solution under Chats & Files for this student.</p>
+            <div className="meta" style={{ marginTop: 8, fontWeight: 600 }}>Their document</div>
+            <FileBox folderPath={`${h.student_id}/${h.id}/question`} allowUpload={false} />
+            <div className="meta" style={{ marginTop: 10, fontWeight: 600 }}>Upload your solution</div>
+            <FileBox folderPath={`${h.student_id}/${h.id}/solution`} uploadLabel="Upload solved file" />
             {h.status !== 'solved' && (
               <form action={async () => { await markHomeworkSolved(h.id) }} style={{ marginTop: 8 }}>
                 <button className="btn btn-gold">Mark solved</button>
