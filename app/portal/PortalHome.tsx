@@ -1,11 +1,12 @@
 'use client'
 import { useState, useEffect, useLayoutEffect } from 'react'
-import { CalendarPlus, BookOpen, MessageCircle, Landmark, History } from 'lucide-react'
+import { CalendarPlus, BookOpen, MessageCircle, Landmark, History, Video, HelpCircle } from 'lucide-react'
 import MaterialsSection from './MaterialsSection'
 import PackDownload from './PackDownload'
 import MyVideos from './MyVideos'
+import FileBox from '../FileBox'
 
-type Section = 'menu' | 'book' | 'packs' | 'chat' | 'bank' | 'history'
+type Section = 'menu' | 'book' | 'packs' | 'chat' | 'bank' | 'history' | 'video' | 'guide'
 
 function StatusPill({ status }: { status: string }) {
   const label = status === 'confirmed' ? 'Confirmed' : status === 'awaiting' ? 'Payment submitted — confirming' : 'Awaiting payment'
@@ -110,10 +111,11 @@ function CustomPackBox({ requestCustomPack }: { requestCustomPack: any }) {
   )
 }
 
-function HomeworkBox({ subjectOptions, submitHomework, myRequests }: { subjectOptions: string[]; submitHomework: any; myRequests: any[] }) {
+function HomeworkBox({ userId, subjectOptions, submitHomework, myRequests }: { userId: string; subjectOptions: string[]; submitHomework: any; myRequests: any[] }) {
   const [subject, setSubject] = useState(subjectOptions[0] || '')
   const [description, setDescription] = useState('')
   const [sent, setSent] = useState(false)
+  const [sentId, setSentId] = useState<string | undefined>(undefined)
   const [sending, setSending] = useState(false)
   const [error, setError] = useState(false)
 
@@ -122,7 +124,8 @@ function HomeworkBox({ subjectOptions, submitHomework, myRequests }: { subjectOp
     setSending(true)
     setError(false)
     try {
-      await submitHomework(subject, description)
+      const result = await submitHomework(subject, description)
+      setSentId(result?.id)
       setDescription('')
       setSent(true)
     } catch (e) {
@@ -135,10 +138,11 @@ function HomeworkBox({ subjectOptions, submitHomework, myRequests }: { subjectOp
   return (
     <div>
       <h3>Homework & assignment help</h3>
-      <p className="meta">Tell us what you need help with, then upload the document itself under Chats & Files — Lufuno (or your tutor) will upload the solution there once it's ready.</p>
+      <p className="meta">Tell us what you need help with, then upload the document right here — Lufuno (or your tutor) will upload the solution back to this same request once it's ready.</p>
       {sent && (
         <div className="panel" style={{ background: '#DCEEE0', textAlign: 'center' }}>
-          <p style={{ margin: 0, fontWeight: 600 }}>Thanks! Don't forget to upload the document under Chats & Files.</p>
+          <p style={{ margin: 0, fontWeight: 600 }}>Thanks! Upload your document below.</p>
+          {sentId && <FileBox folderPath={`${userId}/${sentId}/question`} uploadLabel="Upload your homework document" />}
         </div>
       )}
       {error && (
@@ -164,7 +168,15 @@ function HomeworkBox({ subjectOptions, submitHomework, myRequests }: { subjectOp
             <div className="panel" key={h.id}>
               <h4>{h.subject}</h4>
               {h.description && <p className="meta">{h.description}</p>}
-              <span className={`status ${h.status === 'solved' ? 'confirmed' : 'pending'}`}>{h.status === 'solved' ? 'Solution ready — check Chats & Files' : 'Pending'}</span>
+              <span className={`status ${h.status === 'solved' ? 'confirmed' : 'pending'}`}>{h.status === 'solved' ? 'Solved' : 'Pending'}</span>
+              <div className="meta" style={{ marginTop: 8, fontWeight: 600 }}>Your document</div>
+              <FileBox folderPath={`${userId}/${h.id}/question`} uploadLabel="Upload / replace your document" />
+              {h.status === 'solved' && (
+                <>
+                  <div className="meta" style={{ marginTop: 10, fontWeight: 600 }}>Solution</div>
+                  <FileBox folderPath={`${userId}/${h.id}/solution`} allowUpload={false} />
+                </>
+              )}
             </div>
           ))}
         </div>
@@ -172,7 +184,6 @@ function HomeworkBox({ subjectOptions, submitHomework, myRequests }: { subjectOp
     </div>
   )
 }
-
 function VideoTopicBox({ requestVideoTopic, myRequests }: { requestVideoTopic: any; myRequests: any[] }) {
   const [subject, setSubject] = useState('Mathematics')
   const [topic, setTopic] = useState('')
@@ -266,9 +277,9 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
 
   const todayISO = new Date().toISOString().slice(0, 10)
   const hasActiveSub = (subs || []).some((s: any) => s.status === 'confirmed' && s.end_date && s.end_date >= todayISO)
-  const isVideoOnlyPeriod = [9, 10].includes(new Date().getMonth())
+ 
 
-  if (section === 'menu') {
+ if (section === 'menu') {
     const firstName = (name || '').split(' ')[0]
     return (
       <div>
@@ -290,6 +301,16 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
           <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('bank')}>
             <div className="tile-art" style={{ background: 'linear-gradient(135deg, #9B7FE8, #7A5FD0)' }}><Landmark size={36} color="#fff" /></div>
             <div className="tile-body"><div className="name">Bank Details</div></div>
+          </div>
+          {tier === 'highschool' && (
+            <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('video')}>
+              <div className="tile-art" style={{ background: 'linear-gradient(135deg, #1FB6A3, #17897B)' }}><Video size={36} color="#fff" /></div>
+              <div className="tile-body"><div className="name">Request a Video</div></div>
+            </div>
+          )}
+          <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('guide')}>
+            <div className="tile-art" style={{ background: 'linear-gradient(135deg, #B98CE0, #8B5FC7)' }}><HelpCircle size={36} color="#fff" /></div>
+            <div className="tile-body"><div className="name">How It Works</div></div>
           </div>
         </div>
         <div className="panel" style={{ cursor: 'pointer' }} onClick={() => setSection('history')}>
@@ -408,19 +429,11 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
             </form>
           </section>
         )}
-        {tier === 'highschool' && isVideoOnlyPeriod && (
-          <section style={{ marginTop: 24 }}>
-            <div className="panel" style={{ background: '#F3EFE4' }}>
-              <h4>Video tutoring only — October & November</h4>
-              <p className="meta">Live physical and online sessions aren't available this period. Tell us a topic and we'll record a video explaining it.</p>
-            </div>
-            <VideoTopicBox requestVideoTopic={requestVideoTopic} myRequests={videoTopicRequests || []} />
-          </section>
-        )}
+        
         {tier === 'highschool' && (
           <section style={{ marginTop: 24 }}>
             {hasActiveSub ? (
-              <HomeworkBox subjectOptions={['Mathematics', 'Physical Sciences']} submitHomework={submitHomework} myRequests={homeworkRequests || []} />
+              <HomeworkBox userId={actions.userId} subjectOptions={['Mathematics', 'Physical Sciences']} submitHomework={submitHomework} myRequests={homeworkRequests || []} />
             ) : (
               <div className="panel">
                 <h4>Homework & assignment help</h4>
@@ -438,6 +451,52 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
       </div>
     )
   }
+     if (section === 'video') {
+  return (
+    <div>
+      <button className="btn" onClick={() => setSection('menu')}>← Back</button>
+      <h2>Request a Video</h2>
+      {hasActiveSub ? (
+        <VideoTopicBox requestVideoTopic={requestVideoTopic} myRequests={videoTopicRequests || []} />
+      ) : (
+        <div className="panel">
+          <h4>You're not subscribed</h4>
+          <p className="meta">A high school subscription unlocks unlimited video topic requests. Subscribe from the menu to get started.</p>
+        </div>
+      )}
+    </div>
+  )
+}
+  if (section === 'guide') {
+  return (
+    <div>
+      <button className="btn" onClick={() => setSection('menu')}>← Back</button>
+      <h2>How It Works</h2>
+      <div className="panel">
+        <h4>1. Choose what you need</h4>
+        <p className="meta">Book a session, buy a study pack, or ask a homework question from the menu.</p>
+      </div>
+      <div className="panel">
+        <h4>2. We confirm and you pay</h4>
+        <p className="meta">We'll send a reference number — pay and mark it as paid, then we confirm it on our side.</p>
+      </div>
+      <div className="panel">
+        <h4>3. Get notified</h4>
+        <p className="meta">You'll get a notification here (and a push notification, if enabled) the moment something's ready.</p>
+      </div>
+      {tier === 'highschool' && (
+        <div className="panel">
+          <h4>4. Use your subscription</h4>
+          <p className="meta">Once your subscription is active, request unlimited video topics and join your scheduled sessions.</p>
+        </div>
+      )}
+      <div className="panel">
+        <h4>Turn on notifications</h4>
+        <p className="meta">Enable push notifications on this device so you never miss an update.</p>
+      </div>
+    </div>
+  )
+}
 
   if (section === 'packs') {
     return (
