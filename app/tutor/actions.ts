@@ -135,9 +135,9 @@ export async function markHomeworkSolved(id: string) {
     await supabase.from('notifications').insert({
       student_id: data.student_id,
       for_role: 'student',
-      message: 'Your homework has been solved — check your chat for the solution.',
+      message: 'Your homework has been solved — check your homework request to download it.',
     })
-    await sendPushToUser(data.student_id, 'Homework solved', 'Check your chat for the solution.', '/portal')
+    await sendPushToUser(data.student_id, 'Homework solved', 'Your solution is ready to download.', '/portal')
   }
   revalidatePath('/tutor')
 }
