@@ -1,10 +1,11 @@
 'use client'
 import { useState, useEffect, useLayoutEffect } from 'react'
-import { CalendarPlus, BookOpen, MessageCircle, Landmark, History, Video, HelpCircle } from 'lucide-react'
+import { CalendarPlus, BookOpen, MessageCircle, Landmark, History, Video, HelpCircle, ClipboardList } from 'lucide-react'
 import MaterialsSection from './MaterialsSection'
 import PackDownload from './PackDownload'
 import MyVideos from './MyVideos'
 import FileBox from '../FileBox'
+
 
 type Section = 'menu' | 'book' | 'packs' | 'chat' | 'bank' | 'history' | 'video' | 'guide' | 'homework'
 
@@ -539,6 +540,21 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
           <div className="pay-line"><span>Account number</span><span>9383837426</span></div>
         </div>
         <p className="meta" style={{ marginTop: 10 }}>When you book or order something, a specific reference number is generated for that payment — use the reference shown there rather than a generic one.</p>
+      </div>
+    )
+  }
+    if (section === 'homework') {
+    return (
+      <div>
+        <Back />
+        {hasActiveSub ? (
+          <HomeworkBox userId={actions.userId} subjectOptions={['Mathematics', 'Physical Sciences']} submitHomework={submitHomework} myRequests={homeworkRequests || []} />
+        ) : (
+          <div className="panel">
+            <h4>Homework & assignment help</h4>
+            <p className="meta">This unlocks once you have an active, confirmed subscription. Subscribe from the menu and confirm your payment to access it.</p>
+          </div>
+        )}
       </div>
     )
   }
