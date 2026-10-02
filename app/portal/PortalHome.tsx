@@ -309,6 +309,12 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
               <div className="tile-body"><div className="name">Request a Video</div></div>
             </div>
           )}
+          {tier === 'highschool' && (
+            <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('homework')}>
+              <div className="tile-art" style={{ background: 'linear-gradient(135deg, #E0956F, #C46B3E)' }}><ClipboardList size={36} color="#fff" /></div>
+              <div className="tile-body"><div className="name">Homework Help</div></div>
+            </div>
+          )}
           <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('guide')}>
             <div className="tile-art" style={{ background: 'linear-gradient(135deg, #B98CE0, #8B5FC7)' }}><HelpCircle size={36} color="#fff" /></div>
             <div className="tile-body"><div className="name">How It Works</div></div>
@@ -326,7 +332,6 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
       </div>
     )
   }
-
   const Back = () => <div className="meta" style={{ cursor: 'pointer', marginBottom: 16, color: 'var(--purple-dark)', fontWeight: 600 }} onClick={() => setSection('menu')}>&larr; Back</div>
 
   if (section === 'book') {
