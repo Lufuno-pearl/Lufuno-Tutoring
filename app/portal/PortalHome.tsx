@@ -6,7 +6,7 @@ import PackDownload from './PackDownload'
 import MyVideos from './MyVideos'
 import FileBox from '../FileBox'
 
-type Section = 'menu' | 'book' | 'packs' | 'chat' | 'bank' | 'history' | 'video' | 'guide'
+type Section = 'menu' | 'book' | 'packs' | 'chat' | 'bank' | 'history' | 'video' | 'guide' | 'homework'
 
 function StatusPill({ status }: { status: string }) {
   const label = status === 'confirmed' ? 'Confirmed' : status === 'awaiting' ? 'Payment submitted — confirming' : 'Awaiting payment'
@@ -430,18 +430,7 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
           </section>
         )}
         
-        {tier === 'highschool' && (
-          <section style={{ marginTop: 24 }}>
-            {hasActiveSub ? (
-              <HomeworkBox userId={actions.userId} subjectOptions={['Mathematics', 'Physical Sciences']} submitHomework={submitHomework} myRequests={homeworkRequests || []} />
-            ) : (
-              <div className="panel">
-                <h4>Homework & assignment help</h4>
-                <p className="meta">This unlocks once you have an active, confirmed subscription. Subscribe above and confirm your payment to access it.</p>
-              </div>
-            )}
-          </section>
-        )}
+      
         {(bookings || []).map((b: any) => b.status === 'pending' && (
           <PayBlock key={b.id} kind="bookings" id={b.id} label={b.subject} price={b.price} reference={b.reference} markAwaiting={markAwaiting} />
         ))}
