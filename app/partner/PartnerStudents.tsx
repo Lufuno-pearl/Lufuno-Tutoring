@@ -56,7 +56,7 @@ export default function PartnerStudents({ myStudentIds, threads, bookingsByStude
       ))}
       {subsHere.map((s: any) => (
         <div key={s.id} style={{ marginBottom: 8 }}>
-          <div className="meta">{s.month} — Maths & Physical Sciences · {s.format === 'physical' ? 'Physical' : 'Online'}</div>
+          <div className="meta">{s.month} — {s.subject_choice === 'maths' ? 'Mathematics' : s.subject_choice === 'physics' ? 'Physical Sciences' : 'Maths & Physical Sciences'}{s.grade ? ` · Gr ${s.grade}` : ''} · {s.format === 'physical' ? 'Physical' : 'Online'}</div>
           {s.format === 'online' && (
             <form action={async (formData: FormData) => { await setMeetingLink('hs_subscriptions', s.id, formData.get('url') as string) }} style={{ display: 'flex', gap: 8, marginTop: 4 }}>
               <input name="url" defaultValue={s.meeting_link || ''} placeholder="Google Meet link" style={{ flex: 1, padding: 6, border: '1px solid var(--line)' }} />
@@ -80,19 +80,22 @@ export default function PartnerStudents({ myStudentIds, threads, bookingsByStude
       </form>
       <div style={{ marginTop: 14, borderTop: '1px solid var(--line)', paddingTop: 12 }}>
         <div className="meta" style={{ marginBottom: 6 }}>Mark today's session</div>
-        <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
           <form action={async () => { await markAttendance(sid, 'present') }}>
             <button className="btn" style={{ background: '#DCEEE0', padding: '6px 14px' }}>Present</button>
           </form>
           <form action={async () => { await markAttendance(sid, 'absent') }}>
-            <button className="btn" style={{ background: '#F3D6D0', padding: '6px 14px' }}>Absent</button>
+            <button className="btn" style={{ background: '#F3D6D0', padding: '6px 14px' }}>Student absent</button>
+          </form>
+          <form action={async () => { await markAttendance(sid, 'tutor_missed') }}>
+            <button className="btn" style={{ background: '#E8C4C4', padding: '6px 14px' }}>Tutor missed</button>
           </form>
           <form action={async () => { await markAttendance(sid, 'rescheduled') }}>
             <button className="btn" style={{ background: '#F3E6C7', padding: '6px 14px' }}>Rescheduled</button>
           </form>
         </div>
         {(attendanceByStudent[sid] || []).slice(0, 5).map((a: any) => (
-          <div key={a.id} className="meta">{a.session_date} — {a.status}</div>
+          <div key={a.id} className="meta">{a.session_date} — {String(a.status).replace('_', ' ')}</div>
         ))}
       </div>
     </div>
