@@ -14,7 +14,7 @@ export default async function TutorDashboard() {
   if (!user) redirect('/login')
   if (!ADMIN_EMAILS.includes(user.email!)) redirect('/portal')
 
-  const [{ data: bookings }, { data: subs }, { data: orders }, { data: messagesDesc }, { data: attendanceRows }, { data: partners }, { data: myProfile }, { data: videoRequests }, { data: customPackRequests }, { data: homeworkRequests }, { data: videoTopicRequests }] = await Promise.all([
+  const [{ data: bookings }, { data: subs }, { data: orders }, { data: messagesDesc }, { data: attendanceRows }, { data: partners }, { data: myProfile }, { data: videoRequests }, { data: customPackRequests }, { data: homeworkRequests }, { data: videoTopicRequestsRaw }] = await Promise.all([
     supabase.from('bookings').select('*, profiles:profiles!bookings_student_id_fkey(full_name, email, tier)').order('created_at', { ascending: false }),
     supabase.from('hs_subscriptions').select('*, profiles:profiles!hs_subscriptions_student_id_fkey(full_name, email, tier)').order('created_at', { ascending: false }),
     supabase.from('pack_orders').select('*, profiles(full_name, email, tier)').order('created_at', { ascending: false }),
@@ -25,8 +25,18 @@ export default async function TutorDashboard() {
     supabase.from('video_access_requests').select('*, profiles(full_name, email)').order('created_at', { ascending: false }),
     supabase.from('other_course_requests').select('*, profiles(full_name, email)').order('created_at', { ascending: false }),
     supabase.from('homework_requests').select('*, profiles(full_name, email)').order('created_at', { ascending: false }),
-    supabase.from('video_topic_requests').select('*, profiles(full_name, email)').order('created_at', { ascending: false }),
+    supabase.from('video_topic_requests').select('*').order('created_at', { ascending: false }),
   ])
+
+  // attach student names to video topic requests (done separately so it never fails on a missing table link)
+  const topicStudentIds = Array.from(new Set((videoTopicRequestsRaw || []).map((v: any) => v.student_id).filter(Boolean)))
+  const { data: topicProfiles } = topicStudentIds.length
+    ? await supabase.from('profiles').select('id, full_name, email').in('id', topicStudentIds as string[])
+    : { data: [] as any[] }
+  const videoTopicRequests = (videoTopicRequestsRaw || []).map((v: any) => ({
+    ...v,
+    profiles: (topicProfiles || []).find((p: any) => p.id === v.student_id) || null,
+  }))
 
   // newest 500 messages, shown oldest to newest inside each chat thread
   const messages = (messagesDesc || []).slice().reverse()
