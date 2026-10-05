@@ -43,7 +43,7 @@ export async function setMeetingLink(table: 'bookings' | 'hs_subscriptions', id:
   revalidatePath('/tutor')
 }
 
-export async function markAttendance(studentId: string, status: 'present' | 'absent' | 'rescheduled') {
+export async function markAttendance(studentId: string, status: 'present' | 'absent' | 'tutor_missed' | 'rescheduled') {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   await supabase.from('attendance').insert({ student_id: studentId, marked_by: user?.id, status })
@@ -140,4 +140,24 @@ export async function markHomeworkSolved(id: string) {
     await sendPushToUser(data.student_id, 'Homework solved', 'Your solution is ready to download.', '/portal')
   }
   revalidatePath('/tutor')
+}
+
+export async function markVideoReady(id: string, path: string) {
+  const supabase = createClient()
+  const { data } = await supabase
+    .from('video_topic_requests')
+    .update({ video_path: path, status: 'ready' })
+    .eq('id', id)
+    .select('student_id, subject, topic')
+    .single()
+  if (data) {
+    await supabase.from('notifications').insert({
+      student_id: data.student_id,
+      for_role: 'student',
+      message: `Your video on "${data.topic}" is ready — open Video Lessons to watch it.`,
+    })
+    await sendPushToUser(data.student_id, 'Video ready', `Your video on "${data.topic}" is ready.`, '/portal')
+  }
+  revalidatePath('/tutor')
+  revalidatePath('/portal')
 }
