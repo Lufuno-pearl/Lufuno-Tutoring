@@ -262,6 +262,46 @@ function ChatBox({ sendMessage }: { sendMessage: any }) {
   )
 }
 
+function SessionConfirm({ rows, respondToSession }: { rows: any[]; respondToSession: any }) {
+  const [done, setDone] = useState<string[]>([])
+  const [busy, setBusy] = useState<string | null>(null)
+
+  async function answer(id: string, response: 'yes' | 'no') {
+    if (busy) return
+    setBusy(id)
+    const result = await respondToSession(id, response)
+    setBusy(null)
+    if (result?.ok) setDone(d => [...d, id])
+  }
+
+  const open = rows.filter(r => !done.includes(r.id))
+  if (open.length === 0) return null
+
+  return (
+    <div className="panel" style={{ border: '2px solid var(--gold)', marginBottom: 20 }}>
+      <h4 style={{ marginTop: 0 }}>Please confirm your sessions</h4>
+      <p className="meta">This takes one tap and makes sure your tutor is paid fairly.</p>
+      {open.map(r => (
+        <div key={r.id} style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--line)' }}>
+          <p style={{ margin: '0 0 8px', fontWeight: 600 }}>
+            {r.status === 'present'
+              ? `Did your session on ${r.session_date} take place?`
+              : `Your tutor marked you absent on ${r.session_date}. Is that right?`}
+          </p>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button className="btn btn-primary" style={{ padding: '6px 14px', opacity: busy === r.id ? 0.6 : 1 }} disabled={busy === r.id} onClick={() => answer(r.id, 'yes')}>
+              {r.status === 'present' ? 'Yes, it happened' : 'Yes, I was absent'}
+            </button>
+            <button className="btn" style={{ background: '#F3D6D0', padding: '6px 14px', opacity: busy === r.id ? 0.6 : 1 }} disabled={busy === r.id} onClick={() => answer(r.id, 'no')}>
+              {r.status === 'present' ? "No, my tutor didn't show" : "No, that's wrong"}
+            </button>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export default function PortalHome({ name, tier, uniSubjects, visiblePacks, bookings, subs, orders, messages, attendance, videoRequests, myVideoSubjects, homeworkRequests, videoTopicRequests, actions }: any) {
   const [section, setSection] = useState<Section>('menu')
   useLayoutEffect(() => {
@@ -274,7 +314,7 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
   const [bookingSubmitting, setBookingSubmitting] = useState(false)
   const [thankYou, setThankYou] = useState('')
   const [hsGrade, setHsGrade] = useState('')
-  const { createBooking, createHsSub, buyPack, markAwaiting, sendMessage, requestCustomPack, requestVideoAccess, submitHomework, requestVideoTopic } = actions
+  const { createBooking, createHsSub, buyPack, markAwaiting, sendMessage, requestCustomPack, requestVideoAccess, submitHomework, requestVideoTopic, respondToSession } = actions
 
   const todayISO = new Date().toISOString().slice(0, 10)
   const hasActiveSub = (subs || []).some((s: any) => s.status === 'confirmed' && s.end_date && s.end_date >= todayISO)
@@ -283,6 +323,12 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
   if (activeSubs.some((s: any) => s.subject_choice === 'maths' || s.subject_choice === 'both')) subjectsFromSubs.push('Mathematics')
   if (activeSubs.some((s: any) => s.subject_choice === 'physics' || s.subject_choice === 'both')) subjectsFromSubs.push('Physical Sciences')
   const allowedSubjects = subjectsFromSubs.length > 0 ? subjectsFromSubs : ['Mathematics', 'Physical Sciences']
+  const toConfirm = (attendance || []).filter((a: any) => {
+    if (a.student_response) return false
+    if (a.status !== 'present' && a.status !== 'absent') return false
+    const ageDays = (Date.now() - new Date(a.session_date + 'T00:00:00').getTime()) / 86400000
+    return ageDays <= 14
+  })
 
   if (section === 'menu') {
     const firstName = (name || '').split(' ')[0]
@@ -290,6 +336,7 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
       <div>
         <h2 style={{ marginBottom: 4 }}>Welcome{firstName ? `, ${firstName}` : ''}!</h2>
         <p className="meta" style={{ marginBottom: 20 }}>Great to see you — what would you like to do today?</p>
+        <SessionConfirm rows={toConfirm} respondToSession={respondToSession} />
         <div className="card-grid">
           <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('book')}>
             <div className="tile-art" style={{ background: 'linear-gradient(135deg, #8B6FD9, #6E4FC7)' }}><CalendarPlus size={36} color="#fff" /></div>
@@ -613,7 +660,7 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
         <div className="panel">
           {(attendance || []).length === 0 && <p className="meta">No sessions logged yet.</p>}
           {(attendance || []).map((a: any) => (
-            <div key={a.id} className="meta">{a.session_date} — {a.status}</div>
+            <div key={a.id} className="meta">{a.session_date} — {String(a.status).replace('_', ' ')}</div>
           ))}
         </div>
       </div>
