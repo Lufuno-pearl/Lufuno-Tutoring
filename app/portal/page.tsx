@@ -21,7 +21,17 @@ export default async function Portal() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase.from('profiles').select('tier, full_name').eq('id', user.id).single()
+  const [{ data: profile }, { data: bookings }, { data: subs }, { data: orders }, { data: messages }, { data: attendance }, { data: videoRequests }, { data: videoTopicRequests }, { data: homeworkRequests }] = await Promise.all([
+    supabase.from('profiles').select('tier, full_name').eq('id', user.id).single(),
+    supabase.from('bookings').select('*').eq('student_id', user.id).order('created_at', { ascending: false }),
+    supabase.from('hs_subscriptions').select('*').eq('student_id', user.id).order('created_at', { ascending: false }),
+    supabase.from('pack_orders').select('*').eq('student_id', user.id).order('created_at', { ascending: false }),
+    supabase.from('messages').select('*').eq('student_id', user.id).order('created_at', { ascending: true }),
+    supabase.from('attendance').select('*').eq('student_id', user.id).order('created_at', { ascending: false }),
+    supabase.from('video_access_requests').select('*').eq('student_id', user.id).order('created_at', { ascending: false }),
+    supabase.from('video_topic_requests').select('*').eq('student_id', user.id).order('created_at', { ascending: false }),
+    supabase.from('homework_requests').select('*').eq('student_id', user.id).order('created_at', { ascending: false }),
+  ])
 
   if (!profile?.tier) {
     return (
@@ -39,17 +49,6 @@ export default async function Portal() {
   }
 
   const tier = profile.tier
-
-  const [{ data: bookings }, { data: subs }, { data: orders }, { data: messages }, { data: attendance }, { data: videoRequests }, { data: videoTopicRequests }, { data: homeworkRequests }] = await Promise.all([
-    supabase.from('bookings').select('*').eq('student_id', user.id).order('created_at', { ascending: false }),
-    supabase.from('hs_subscriptions').select('*').eq('student_id', user.id).order('created_at', { ascending: false }),
-    supabase.from('pack_orders').select('*').eq('student_id', user.id).order('created_at', { ascending: false }),
-    supabase.from('messages').select('*').eq('student_id', user.id).order('created_at', { ascending: true }),
-    supabase.from('attendance').select('*').eq('student_id', user.id).order('created_at', { ascending: false }),
-    supabase.from('video_access_requests').select('*').eq('student_id', user.id).order('created_at', { ascending: false }),
-    supabase.from('video_topic_requests').select('*').eq('student_id', user.id).order('created_at', { ascending: false }),
-    supabase.from('homework_requests').select('*').eq('student_id', user.id).order('created_at', { ascending: false }),
-  ])
 
   const myVideoSubjects = new Set<string>()
   ;(videoRequests || []).forEach((v: any) => { if (v.status === 'confirmed') myVideoSubjects.add(v.subject) })
