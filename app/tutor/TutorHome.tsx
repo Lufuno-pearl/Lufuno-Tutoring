@@ -51,12 +51,15 @@ function ChatThread({ studentId, thread, actions }: { studentId: string; thread:
       <TutorMaterials studentId={studentId} studentName={thread.name} />
       <div style={{ marginTop: 14, borderTop: '1px solid var(--line)', paddingTop: 12 }}>
         <div className="meta" style={{ marginBottom: 6 }}>Mark today's session</div>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <form action={async () => { await markAttendance(studentId, 'present') }}>
             <button className="btn" style={{ background: '#DCEEE0', padding: '6px 14px' }}>Present</button>
           </form>
           <form action={async () => { await markAttendance(studentId, 'absent') }}>
-            <button className="btn" style={{ background: '#F3D6D0', padding: '6px 14px' }}>Absent</button>
+            <button className="btn" style={{ background: '#F3D6D0', padding: '6px 14px' }}>Student absent</button>
+          </form>
+          <form action={async () => { await markAttendance(studentId, 'tutor_missed') }}>
+            <button className="btn" style={{ background: '#E8C4C4', padding: '6px 14px' }}>Tutor missed</button>
           </form>
           <form action={async () => { await markAttendance(studentId, 'rescheduled') }}>
             <button className="btn" style={{ background: '#F3E6C7', padding: '6px 14px' }}>Rescheduled</button>
@@ -186,7 +189,7 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
             )}
           </div>
         ))}
-        <h3>Homework help requests</h3>
+               <h3>Homework help requests</h3>
         {(homeworkRequests || []).length === 0 && <p className="meta">None yet.</p>}
         {(homeworkRequests || []).map((h: any) => (
           <div className="panel" key={h.id}>
@@ -312,7 +315,7 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
         {(attendanceRows || []).map((a: any) => (
           <div className="panel" key={a.id}>
             <h4>{a.student?.full_name || 'Student'}</h4>
-            <div className="meta">{a.session_date} — {a.status} · logged by {a.tutor?.full_name || 'you'}</div>
+            <div className="meta">{a.session_date} — {String(a.status).replace('_', ' ')} · logged by {a.tutor?.full_name || 'you'}</div>
           </div>
         ))}
       </div>
