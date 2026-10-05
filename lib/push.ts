@@ -32,7 +32,7 @@ export async function sendPushToRole(forRole: 'student' | 'staff', title: string
   try {
     if (!setup()) return
     const supabase = createClient()
-    const { data: subs } = await supabase.from('push_subscriptions').select('*').eq('for_role', forRole)
+    const { data: subs } = await supabase.rpc('push_targets_for_role', { r: forRole })
     if (!subs || subs.length === 0) return
     await sendToRows(supabase, subs, title, body, url)
   } catch {}
@@ -42,7 +42,7 @@ export async function sendPushToUser(userId: string, title: string, body: string
   try {
     if (!setup()) return
     const supabase = createClient()
-    const { data: subs } = await supabase.from('push_subscriptions').select('*').eq('user_id', userId)
+    const { data: subs } = await supabase.rpc('push_targets_for_user', { u: userId })
     if (!subs || subs.length === 0) return
     await sendToRows(supabase, subs, title, body, url)
   } catch {}
