@@ -328,3 +328,21 @@ export async function setTier(tier: 'university' | 'highschool') {
   await supabase.from('profiles').update({ tier }).eq('id', user.id)
   revalidatePath('/portal')
 }
+
+export async function respondToSession(attendanceId: string, response: 'yes' | 'no') {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false }
+  const { error } = await supabase.rpc('respond_to_session', { att_id: attendanceId, resp: response })
+  if (error) return { ok: false }
+  if (response === 'no') {
+    await supabase.from('notifications').insert({
+      student_id: user.id,
+      for_role: 'staff',
+      message: 'A student disputed a session log — check Tutor pay.',
+    })
+    await sendPushToRole('staff', 'Session disputed', 'A student says a logged session did not happen as logged.', '/tutor/pay')
+  }
+  revalidatePath('/portal')
+  return { ok: true }
+}
