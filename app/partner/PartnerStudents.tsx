@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { ChevronRight } from 'lucide-react'
+import AttendanceButtons from '../AttendanceButtons'
 
 export default function PartnerStudents({ myStudentIds, threads, bookingsByStudent, subsByStudent, attendanceByStudent, actions }: any) {
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -80,19 +81,8 @@ export default function PartnerStudents({ myStudentIds, threads, bookingsByStude
       </form>
       <div style={{ marginTop: 14, borderTop: '1px solid var(--line)', paddingTop: 12 }}>
         <div className="meta" style={{ marginBottom: 6 }}>Mark today's session</div>
-        <div style={{ display: 'flex', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
-          <form action={async () => { await markAttendance(sid, 'present') }}>
-            <button className="btn" style={{ background: '#DCEEE0', padding: '6px 14px' }}>Present</button>
-          </form>
-          <form action={async () => { await markAttendance(sid, 'absent') }}>
-            <button className="btn" style={{ background: '#F3D6D0', padding: '6px 14px' }}>Student absent</button>
-          </form>
-          <form action={async () => { await markAttendance(sid, 'tutor_missed') }}>
-            <button className="btn" style={{ background: '#E8C4C4', padding: '6px 14px' }}>Tutor missed</button>
-          </form>
-          <form action={async () => { await markAttendance(sid, 'rescheduled') }}>
-            <button className="btn" style={{ background: '#F3E6C7', padding: '6px 14px' }}>Rescheduled</button>
-          </form>
+        <div style={{ marginBottom: 10 }}>
+          <AttendanceButtons studentId={sid} markAttendance={markAttendance} />
         </div>
         {(attendanceByStudent[sid] || []).slice(0, 5).map((a: any) => (
           <div key={a.id} className="meta">{a.session_date} — {String(a.status).replace('_', ' ')}</div>
