@@ -106,7 +106,10 @@ export async function createHsSub(formData: FormData) {
   if (!user) return { ok: false }
 
   const format = formData.get('format') as string
-  const subjectChoice = formData.get('subjectChoice') as string
+   const grade = parseInt(formData.get('grade') as string, 10)
+  if (!grade || grade < 8 || grade > 12) return { ok: false }
+  // Grades 8 and 9 are Mathematics only
+  const subjectChoice = grade <= 9 ? 'maths' : (formData.get('subjectChoice') as string)
   const price = subjectChoice === 'both' ? 600 : 350
 
   const now = new Date()
@@ -142,18 +145,20 @@ export async function createHsSub(formData: FormData) {
 
   const reference = await getReference(supabase, user.id)
 
-  await supabase.from('hs_subscriptions').insert({
+   const { error: insertError } = await supabase.from('hs_subscriptions').insert({
     student_id: user.id,
     month,
     format,
+    grade,
     subject_choice: subjectChoice,
     price,
     reference,
   })
+  if (insertError) return { ok: false }
   await supabase.from('notifications').insert({
     student_id: user.id,
     for_role: 'staff',
-    message: `New high school subscription request (${subjectChoice})`,
+      message: `New high school subscription request (Gr ${grade}, ${subjectChoice})`,
   })
   await sendPushToRole('staff', 'New subscription request', `${subjectChoice} subscription`, '/tutor')
   revalidatePath('/portal')
