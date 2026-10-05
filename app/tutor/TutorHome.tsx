@@ -8,6 +8,10 @@ import FileBox from '../FileBox'
 
 type Section = 'menu' | 'pending' | 'assign' | 'packs' | 'sessions' | 'chat' | 'mytutoring' | 'videos'
 
+function subjectLabel(choice?: string) {
+  return choice === 'maths' ? 'Mathematics' : choice === 'physics' ? 'Physical Sciences' : 'Maths & Physical Sciences'
+}
+
 function StatusPill({ status }: { status: string }) {
   const label = status === 'confirmed' ? 'Confirmed' : status === 'awaiting' ? 'Payment submitted' : 'Awaiting payment'
   return <span className={`status ${status}`}>{label}</span>
@@ -153,7 +157,7 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
         {(subs || []).map((s: any) => (
           <div className="panel" key={s.id}>
             <h4>{s.month}</h4>
-            <div className="meta">{s.profiles?.full_name} · {s.profiles?.email} · {s.format === 'physical' ? 'Physical' : 'Online'} · R{s.price}{s.reference ? ` · Ref: ${s.reference}` : ''}{s.status === 'confirmed' && s.end_date ? ` · Active until ${s.end_date}` : ''}</div>
+            <div className="meta">{s.profiles?.full_name} · {s.profiles?.email}{s.grade ? ` · Gr ${s.grade}` : ''} · {subjectLabel(s.subject_choice)} · {s.format === 'physical' ? 'Physical' : 'Online'} · R{s.price}{s.reference ? ` · Ref: ${s.reference}` : ''}{s.status === 'confirmed' && s.end_date ? ` · Active until ${s.end_date}` : ''}</div>
             <StatusPill status={s.status} />
             {s.status !== 'confirmed' && (
               <form action={async () => { await confirmPayment('hs_subscriptions', s.id) }} style={{ marginTop: 8 }}>
@@ -182,7 +186,7 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
             )}
           </div>
         ))}
-               <h3>Homework help requests</h3>
+        <h3>Homework help requests</h3>
         {(homeworkRequests || []).length === 0 && <p className="meta">None yet.</p>}
         {(homeworkRequests || []).map((h: any) => (
           <div className="panel" key={h.id}>
@@ -220,7 +224,7 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
 
   if (section === 'assign') {
     const uniItems = (bookings || []).map((b: any) => ({ ...b, kind: 'bookings', label: `${b.subject} — ${b.day} ${b.time}` }))
-    const hsItems = (subs || []).map((s: any) => ({ ...s, kind: 'hs_subscriptions', label: `${s.month} — High School` }))
+    const hsItems = (subs || []).map((s: any) => ({ ...s, kind: 'hs_subscriptions', label: `${s.month} — High School${s.grade ? ` Gr ${s.grade}` : ''} · ${subjectLabel(s.subject_choice)}` }))
     const renderItem = (r: any) => (
       <div className="panel" key={r.id}>
         <h4>{r.label}</h4>
@@ -383,7 +387,7 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
           ))}
           {subsHere.map((s: any) => (
             <div key={s.id} style={{ marginBottom: 8 }}>
-              <div className="meta">{s.month} — Maths & Physical Sciences · {s.format === 'physical' ? 'Physical' : 'Online'}</div>
+              <div className="meta">{s.month} — {subjectLabel(s.subject_choice)}{s.grade ? ` · Gr ${s.grade}` : ''} · {s.format === 'physical' ? 'Physical' : 'Online'}</div>
               {s.format === 'online' && (
                 <form action={async (formData: FormData) => { await setMeetingLink('hs_subscriptions', s.id, formData.get('url') as string) }} style={{ display: 'flex', gap: 8, marginTop: 4 }}>
                   <input name="url" defaultValue={s.meeting_link || ''} placeholder="Google Meet link" style={{ flex: 1, padding: 6, border: '1px solid var(--line)' }} />
@@ -431,7 +435,7 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
         {(openSubs || []).map((s: any) => (
           <div className="panel" key={s.id}>
             <h4>{s.month}</h4>
-            <div className="meta">{s.profiles?.full_name} · Maths & Physical Sciences · {s.format === 'physical' ? 'Physical' : 'Online'}</div>
+            <div className="meta">{s.profiles?.full_name}{s.grade ? ` · Gr ${s.grade}` : ''} · {subjectLabel(s.subject_choice)} · {s.format === 'physical' ? 'Physical' : 'Online'}</div>
             <form action={async () => { await claim('hs_subscriptions', s.id) }}>
               <button className="btn btn-primary">Claim this student</button>
             </form>
