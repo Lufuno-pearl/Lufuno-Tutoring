@@ -1,13 +1,14 @@
 'use client'
 import { useState, useEffect, useLayoutEffect } from 'react'
-import { Clock, UserCog, BookOpen, ClipboardList, MessageCircle, ChevronRight, Star, Video } from 'lucide-react'
+import { Clock, UserCog, BookOpen, ClipboardList, MessageCircle, ChevronRight, Star, Video, Film } from 'lucide-react'
 import TutorMaterials from './TutorMaterials'
 import PackUpload from './PackUpload'
 import VideoManager from './VideoManager'
+import VideoRequests from './VideoRequests'
 import FileBox from '../FileBox'
 import AttendanceButtons from '../AttendanceButtons'
 
-type Section = 'menu' | 'pending' | 'assign' | 'packs' | 'sessions' | 'chat' | 'mytutoring' | 'videos'
+type Section = 'menu' | 'pending' | 'assign' | 'packs' | 'sessions' | 'chat' | 'mytutoring' | 'videos' | 'videoreq'
 
 function subjectLabel(choice?: string) {
   return choice === 'maths' ? 'Mathematics' : choice === 'physics' ? 'Physical Sciences' : 'Maths & Physical Sciences'
@@ -70,6 +71,7 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null)
   const [chatSearch, setChatSearch] = useState('')
   const [myStudentId, setMyStudentId] = useState<string | null>(null)
+  const pendingVideos = (videoTopicRequests || []).filter((v: any) => v.status !== 'ready').length
   const { confirmPayment, setMeetingLink, assignTutor, toggleAvailable, claim, markAttendance, sendTutorMessage, setCustomPackLink, markHomeworkSolved, setVideoTopicLink } = actions
 
   if (section === 'menu') {
@@ -95,6 +97,15 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
           <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('videos')}>
             <div className="tile-art" style={{ background: 'linear-gradient(135deg, #1FB6A3, #17897B)' }}><Video size={36} color="#fff" /></div>
             <div className="tile-body"><div className="name">Videos</div></div>
+          </div>
+          <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('videoreq')}>
+            <div className="tile-art" style={{ background: 'linear-gradient(135deg, #E0956F, #C46B3E)', position: 'relative' }}>
+              <Film size={36} color="#fff" />
+              {pendingVideos > 0 && (
+                <span style={{ position: 'absolute', top: 10, right: 12, background: '#A6443A', color: '#fff', fontSize: '0.75rem', borderRadius: 100, minWidth: 22, height: 22, padding: '0 5px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{pendingVideos}</span>
+              )}
+            </div>
+            <div className="tile-body"><div className="name">Video Requests</div></div>
           </div>
         </div>
         <div className="panel" style={{ cursor: 'pointer', marginBottom: 12 }} onClick={() => { setSection('chat'); setSelectedStudentId(null) }}>
@@ -196,19 +207,6 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
             )}
           </div>
         ))}
-        <h3>Video topic requests</h3>
-        {(videoTopicRequests || []).length === 0 && <p className="meta">None yet.</p>}
-        {(videoTopicRequests || []).map((v: any) => (
-          <div className="panel" key={v.id}>
-            <h4>{v.subject} — {v.topic}</h4>
-            <div className="meta">{v.profiles?.full_name} · {v.profiles?.email}</div>
-            <span className={`status ${v.status === 'ready' ? 'confirmed' : 'pending'}`}>{v.status === 'ready' ? 'Ready' : 'Pending'}</span>
-            <form action={async (formData: FormData) => { await setVideoTopicLink(v.id, formData.get('url') as string) }} style={{ marginTop: 8, display: 'flex', gap: 8 }}>
-              <input name="url" defaultValue={v.video_url || ''} placeholder="Video link (Drive, YouTube unlisted, etc.)" style={{ flex: 1, padding: 8, border: '1px solid var(--line)' }} />
-              <button className="btn btn-primary">Save</button>
-            </form>
-          </div>
-        ))}
       </div>
     )
   }
@@ -290,6 +288,16 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
         <Back />
         <h3>Manage videos</h3>
         <VideoManager />
+      </div>
+    )
+  }
+
+  if (section === 'videoreq') {
+    return (
+      <div>
+        <Back />
+        <h3>Video requests{pendingVideos > 0 ? ` (${pendingVideos} waiting)` : ''}</h3>
+        <VideoRequests requests={videoTopicRequests || []} />
       </div>
     )
   }
