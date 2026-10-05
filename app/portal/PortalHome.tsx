@@ -212,7 +212,7 @@ function VideoTopicBox({ subjectOptions, requestVideoTopic, myRequests }: { subj
       <div className="field">
         <label>Subject</label>
         <select value={subject} onChange={e => setSubject(e.target.value)}>
-                    {subjectOptions.map(s => <option key={s}>{s}</option>)}
+          {subjectOptions.map(s => <option key={s}>{s}</option>)}
         </select>
       </div>
       <div className="field">
@@ -273,13 +273,18 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
   }, [section])
   const [bookingSubmitting, setBookingSubmitting] = useState(false)
   const [thankYou, setThankYou] = useState('')
+  const [hsGrade, setHsGrade] = useState('')
   const { createBooking, createHsSub, buyPack, markAwaiting, sendMessage, requestCustomPack, requestVideoAccess, submitHomework, requestVideoTopic } = actions
 
   const todayISO = new Date().toISOString().slice(0, 10)
   const hasActiveSub = (subs || []).some((s: any) => s.status === 'confirmed' && s.end_date && s.end_date >= todayISO)
- 
+  const activeSubs = (subs || []).filter((s: any) => s.status === 'confirmed' && s.end_date && s.end_date >= todayISO)
+  const subjectsFromSubs: string[] = []
+  if (activeSubs.some((s: any) => s.subject_choice === 'maths' || s.subject_choice === 'both')) subjectsFromSubs.push('Mathematics')
+  if (activeSubs.some((s: any) => s.subject_choice === 'physics' || s.subject_choice === 'both')) subjectsFromSubs.push('Physical Sciences')
+  const allowedSubjects = subjectsFromSubs.length > 0 ? subjectsFromSubs : ['Mathematics', 'Physical Sciences']
 
- if (section === 'menu') {
+  if (section === 'menu') {
     const firstName = (name || '').split(' ')[0]
     return (
       <div>
@@ -314,12 +319,6 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
               <div className="tile-body"><div className="name">Homework Help</div></div>
             </div>
           )}
-                    {tier === 'highschool' && (
-            <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('homework')}>
-              <div className="tile-art" style={{ background: 'linear-gradient(135deg, #E0956F, #C46B3E)' }}><ClipboardList size={36} color="#fff" /></div>
-              <div className="tile-body"><div className="name">Homework Help</div></div>
-            </div>
-          )}
           <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('guide')}>
             <div className="tile-art" style={{ background: 'linear-gradient(135deg, #B98CE0, #8B5FC7)' }}><HelpCircle size={36} color="#fff" /></div>
             <div className="tile-body"><div className="name">How It Works</div></div>
@@ -349,8 +348,7 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
       const result = await createBooking(fd)
       setBookingSubmitting(false)
       if (result?.ok) {
-               form.reset()
-        setHsGrade('')
+        form.reset()
         setThankYou(result.duplicate
           ? `You already have a request for ${result.subject} on that day — check below for payment details.`
           : `Thank you for requesting ${result.subject} on Aid & Ace!`)
@@ -366,6 +364,7 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
       setBookingSubmitting(false)
       if (result?.ok) {
         form.reset()
+        setHsGrade('')
         setThankYou(result.duplicate
           ? `You already have an active or pending subscription — check below for payment details.`
           : `Thank you for subscribing on Aid & Ace!`)
@@ -417,7 +416,7 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
         )}
         {tier === 'highschool' && (
           <section>
-                       <h3>Subscribe — high school (Gr 8–12)</h3>
+            <h3>Subscribe — high school (Gr 8–12)</h3>
             <form onSubmit={handleHsSubmit}>
               <div className="field">
                 <label>Which grade are you in?</label>
@@ -475,7 +474,7 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
       <button className="btn" onClick={() => setSection('menu')}>← Back</button>
       <h2>Request a Video</h2>
       {hasActiveSub ? (
-               <VideoTopicBox subjectOptions={allowedSubjects} requestVideoTopic={requestVideoTopic} myRequests={videoTopicRequests || []} />
+        <VideoTopicBox subjectOptions={allowedSubjects} requestVideoTopic={requestVideoTopic} myRequests={videoTopicRequests || []} />
       ) : (
         <div className="panel">
           <h4>You're not subscribed</h4>
@@ -604,7 +603,7 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
         {(subs || []).map((s: any) => (
           <div className="panel" key={s.id}>
             <h4>Monthly subscription — {s.month}</h4>
-                        <div className="meta">{s.subject_choice === 'maths' ? 'Mathematics' : s.subject_choice === 'physics' ? 'Physical Sciences' : 'Maths + Physical Sciences'}{s.grade ? ` · Gr ${s.grade}` : ''} · {s.format === 'physical' ? 'Physical' : 'Online'} · R{s.price}{s.status === 'confirmed' && s.end_date ? ` · Active until ${s.end_date}` : ''}</div>
+            <div className="meta">{s.subject_choice === 'maths' ? 'Mathematics' : s.subject_choice === 'physics' ? 'Physical Sciences' : 'Maths + Physical Sciences'}{s.grade ? ` · Gr ${s.grade}` : ''} · {s.format === 'physical' ? 'Physical' : 'Online'} · R{s.price}{s.status === 'confirmed' && s.end_date ? ` · Active until ${s.end_date}` : ''}</div>
             <StatusPill status={s.status} />
             {s.status === 'confirmed' && s.format === 'online' && s.meeting_link && <p style={{ marginTop: 8 }}><a href={s.meeting_link} target="_blank">Join session &rarr;</a></p>}
           </div>
