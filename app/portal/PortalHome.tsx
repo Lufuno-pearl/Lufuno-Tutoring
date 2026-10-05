@@ -307,10 +307,10 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
             <div className="tile-art" style={{ background: 'linear-gradient(135deg, #9B7FE8, #7A5FD0)' }}><Landmark size={36} color="#fff" /></div>
             <div className="tile-body"><div className="name">Bank Details</div></div>
           </div>
-          {tier === 'highschool' && (
+          {(tier === 'highschool' || (myVideoSubjects || []).length > 0) && (
             <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('video')}>
               <div className="tile-art" style={{ background: 'linear-gradient(135deg, #1FB6A3, #17897B)' }}><Video size={36} color="#fff" /></div>
-              <div className="tile-body"><div className="name">Request a Video</div></div>
+              <div className="tile-body"><div className="name">Video Lessons</div></div>
             </div>
           )}
           {tier === 'highschool' && (
@@ -378,11 +378,6 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
             <p style={{ margin: 0, fontWeight: 600 }}>{thankYou}</p>
           </div>
         )}
-
-        <section>
-          <h3>Your video lessons</h3>
-          <MyVideos subjects={myVideoSubjects || []} />
-        </section>
 
         {tier === 'university' && (
           <>
@@ -472,15 +467,21 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
   return (
     <div>
       <button className="btn" onClick={() => setSection('menu')}>← Back</button>
-      <h2>Request a Video</h2>
-      {hasActiveSub ? (
+      <h2>Video Lessons</h2>
+      {(myVideoSubjects || []).length > 0 && (
+        <section>
+          <h3>Your video lessons</h3>
+          <MyVideos subjects={myVideoSubjects || []} />
+        </section>
+      )}
+      {tier === 'highschool' && (hasActiveSub ? (
         <VideoTopicBox subjectOptions={allowedSubjects} requestVideoTopic={requestVideoTopic} myRequests={videoTopicRequests || []} />
       ) : (
         <div className="panel">
           <h4>You're not subscribed</h4>
           <p className="meta">A high school subscription unlocks unlimited video topic requests. Subscribe from the menu to get started.</p>
         </div>
-      )}
+      ))}
     </div>
   )
 }
