@@ -177,9 +177,9 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
             )}
           </div>
         ))}
-               <h3>Homework help requests</h3>
-        {(homeworkRequests || []).length === 0 && <p className="meta">None yet.</p>}
-        {(homeworkRequests || []).map((h: any) => (
+        <h3>Homework help requests</h3>
+        {(homeworkRequests || []).filter((h: any) => h.status !== 'solved').length === 0 && <p className="meta">No open homework requests.</p>}
+        {(homeworkRequests || []).filter((h: any) => h.status !== 'solved').map((h: any) => (
           <div className="panel" key={h.id}>
             <h4>{h.subject}</h4>
             <div className="meta">{h.profiles?.full_name} · {h.profiles?.email}</div>
