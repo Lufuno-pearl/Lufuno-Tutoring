@@ -67,7 +67,23 @@ export default function NotificationsView({ forRole, userId }: { forRole: 'stude
       .then(async reg => {
         setSwReady('ok')
         const sub = await reg.pushManager.getSubscription()
-        setPushEnabled(!!sub && Notification.permission === 'granted')
+        const on = !!sub && Notification.permission === 'granted'
+        setPushEnabled(on)
+        if (on && sub) {
+          try {
+            const res = await fetch('/api/save-subscription', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ subscription: sub, userId, forRole }),
+            })
+            if (!res.ok) {
+              const t = await res.text()
+              setMsg(`Could not save this device (${res.status}): ${t.slice(0, 160)}`)
+            }
+          } catch (e: any) {
+            setMsg('Could not save this device: ' + (e?.message || String(e)))
+          }
+        }
       })
       .catch(() => setSwReady('failed'))
   }, [])
