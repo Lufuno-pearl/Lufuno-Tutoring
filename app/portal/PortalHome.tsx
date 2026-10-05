@@ -185,8 +185,8 @@ function HomeworkBox({ userId, subjectOptions, submitHomework, myRequests }: { u
     </div>
   )
 }
-function VideoTopicBox({ requestVideoTopic, myRequests }: { requestVideoTopic: any; myRequests: any[] }) {
-  const [subject, setSubject] = useState('Mathematics')
+function VideoTopicBox({ subjectOptions, requestVideoTopic, myRequests }: { subjectOptions: string[]; requestVideoTopic: any; myRequests: any[] }) {
+  const [subject, setSubject] = useState(subjectOptions[0] || 'Mathematics')
   const [topic, setTopic] = useState('')
   const [sent, setSent] = useState(false)
   const [sending, setSending] = useState(false)
@@ -212,8 +212,7 @@ function VideoTopicBox({ requestVideoTopic, myRequests }: { requestVideoTopic: a
       <div className="field">
         <label>Subject</label>
         <select value={subject} onChange={e => setSubject(e.target.value)}>
-          <option>Mathematics</option>
-          <option>Physical Sciences</option>
+                    {subjectOptions.map(s => <option key={s}>{s}</option>)}
         </select>
       </div>
       <div className="field">
@@ -315,6 +314,12 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
               <div className="tile-body"><div className="name">Homework Help</div></div>
             </div>
           )}
+                    {tier === 'highschool' && (
+            <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('homework')}>
+              <div className="tile-art" style={{ background: 'linear-gradient(135deg, #E0956F, #C46B3E)' }}><ClipboardList size={36} color="#fff" /></div>
+              <div className="tile-body"><div className="name">Homework Help</div></div>
+            </div>
+          )}
           <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('guide')}>
             <div className="tile-art" style={{ background: 'linear-gradient(135deg, #B98CE0, #8B5FC7)' }}><HelpCircle size={36} color="#fff" /></div>
             <div className="tile-body"><div className="name">How It Works</div></div>
@@ -344,7 +349,8 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
       const result = await createBooking(fd)
       setBookingSubmitting(false)
       if (result?.ok) {
-        form.reset()
+               form.reset()
+        setHsGrade('')
         setThankYou(result.duplicate
           ? `You already have a request for ${result.subject} on that day — check below for payment details.`
           : `Thank you for requesting ${result.subject} on Aid & Ace!`)
@@ -411,15 +417,32 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
         )}
         {tier === 'highschool' && (
           <section>
-            <h3>Subscribe — high school (Gr 10–12)</h3>
+                       <h3>Subscribe — high school (Gr 8–12)</h3>
             <form onSubmit={handleHsSubmit}>
               <div className="field">
-                <label>Which subject(s)?</label>
-                <select name="subjectChoice" required defaultValue="both">
-                  <option value="maths">Mathematics only — R350/month</option>
-                  <option value="physics">Physical Sciences only — R350/month</option>
-                  <option value="both">Both subjects — R600/month</option>
+                <label>Which grade are you in?</label>
+                <select name="grade" required value={hsGrade} onChange={e => setHsGrade(e.target.value)}>
+                  <option value="">Select your grade</option>
+                  {[8, 9, 10, 11, 12].map(g => <option key={g} value={String(g)}>Grade {g}</option>)}
                 </select>
+              </div>
+              <div className="field">
+                <label>Which subject(s)?</label>
+                {hsGrade === '8' || hsGrade === '9' ? (
+                  <>
+                    <input type="hidden" name="subjectChoice" value="maths" />
+                    <select disabled value="maths">
+                      <option value="maths">Mathematics only — R350/month</option>
+                    </select>
+                    <p className="meta" style={{ marginTop: 6 }}>Grades 8 and 9 are Mathematics only.</p>
+                  </>
+                ) : (
+                  <select name="subjectChoice" required defaultValue="both">
+                    <option value="maths">Mathematics only — R350/month</option>
+                    <option value="physics">Physical Sciences only — R350/month</option>
+                    <option value="both">Both subjects — R600/month</option>
+                  </select>
+                )}
               </div>
               <div className="field">
                 <label>Online or physical?</label>
@@ -452,7 +475,7 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
       <button className="btn" onClick={() => setSection('menu')}>← Back</button>
       <h2>Request a Video</h2>
       {hasActiveSub ? (
-        <VideoTopicBox requestVideoTopic={requestVideoTopic} myRequests={videoTopicRequests || []} />
+               <VideoTopicBox subjectOptions={allowedSubjects} requestVideoTopic={requestVideoTopic} myRequests={videoTopicRequests || []} />
       ) : (
         <div className="panel">
           <h4>You're not subscribed</h4>
@@ -553,7 +576,7 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
       <div>
         <Back />
         {hasActiveSub ? (
-          <HomeworkBox userId={actions.userId} subjectOptions={['Mathematics', 'Physical Sciences']} submitHomework={submitHomework} myRequests={homeworkRequests || []} />
+          <HomeworkBox userId={actions.userId} subjectOptions={allowedSubjects} submitHomework={submitHomework} myRequests={homeworkRequests || []} />
         ) : (
           <div className="panel">
             <h4>Homework & assignment help</h4>
@@ -581,7 +604,7 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
         {(subs || []).map((s: any) => (
           <div className="panel" key={s.id}>
             <h4>Monthly subscription — {s.month}</h4>
-            <div className="meta">Maths + Physical Sciences · {s.format === 'physical' ? 'Physical' : 'Online'} · R{s.price}{s.status === 'confirmed' && s.end_date ? ` · Active until ${s.end_date}` : ''}</div>
+                        <div className="meta">{s.subject_choice === 'maths' ? 'Mathematics' : s.subject_choice === 'physics' ? 'Physical Sciences' : 'Maths + Physical Sciences'}{s.grade ? ` · Gr ${s.grade}` : ''} · {s.format === 'physical' ? 'Physical' : 'Online'} · R{s.price}{s.status === 'confirmed' && s.end_date ? ` · Active until ${s.end_date}` : ''}</div>
             <StatusPill status={s.status} />
             {s.status === 'confirmed' && s.format === 'online' && s.meeting_link && <p style={{ marginTop: 8 }}><a href={s.meeting_link} target="_blank">Join session &rarr;</a></p>}
           </div>
