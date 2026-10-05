@@ -1,6 +1,6 @@
 import { createClient } from '../../lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { createBooking, createHsSub, buyPack, markAwaiting, sendMessage, signOut, setTier, requestVideoAccess, requestCustomPack, requestVideoTopic, submitHomework } from './actions'
+import { createBooking, createHsSub, buyPack, markAwaiting, sendMessage, signOut, setTier, requestVideoAccess, requestCustomPack, requestVideoTopic, submitHomework, respondToSession } from './actions'
 import PortalHome from './PortalHome'
 import NotificationBell from '../NotificationBell'
 
@@ -86,7 +86,7 @@ export default async function Portal() {
         myVideoSubjects={Array.from(myVideoSubjects)}
         videoTopicRequests={videoTopicRequests}
         homeworkRequests={homeworkRequests}
-        actions={{ createBooking, createHsSub, buyPack, markAwaiting, sendMessage, requestVideoAccess, requestCustomPack, requestVideoTopic, submitHomework, userId: user.id }}
+        actions={{ createBooking, createHsSub, buyPack, markAwaiting, sendMessage, requestVideoAccess, requestCustomPack, requestVideoTopic, submitHomework, respondToSession, userId: user.id }}
       />
     </div>
   )
