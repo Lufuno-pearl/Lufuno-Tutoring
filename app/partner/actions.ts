@@ -38,7 +38,7 @@ export async function setMeetingLink(table: 'bookings' | 'hs_subscriptions', id:
   revalidatePath('/partner')
 }
 
-export async function markAttendance(studentId: string, status: 'present' | 'absent' | 'rescheduled') {
+export async function markAttendance(studentId: string, status: 'present' | 'absent' | 'tutor_missed' | 'rescheduled') {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   await supabase.from('attendance').insert({ student_id: studentId, marked_by: user?.id, status })
