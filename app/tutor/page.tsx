@@ -13,12 +13,12 @@ export default async function TutorDashboard() {
   if (!user) redirect('/login')
   if (!ADMIN_EMAILS.includes(user.email!)) redirect('/portal')
 
-  const [{ data: bookings }, { data: subs }, { data: orders }, { data: messages }, { data: attendanceRows }, { data: partners }, { data: myProfile }, { data: videoRequests }, { data: customPackRequests }, { data: homeworkRequests }, { data: videoTopicRequests }] = await Promise.all([
+  const [{ data: bookings }, { data: subs }, { data: orders }, { data: messagesDesc }, { data: attendanceRows }, { data: partners }, { data: myProfile }, { data: videoRequests }, { data: customPackRequests }, { data: homeworkRequests }, { data: videoTopicRequests }] = await Promise.all([
     supabase.from('bookings').select('*, profiles:profiles!bookings_student_id_fkey(full_name, email, tier)').order('created_at', { ascending: false }),
     supabase.from('hs_subscriptions').select('*, profiles:profiles!hs_subscriptions_student_id_fkey(full_name, email, tier)').order('created_at', { ascending: false }),
     supabase.from('pack_orders').select('*, profiles(full_name, email, tier)').order('created_at', { ascending: false }),
-    supabase.from('messages').select('*, profiles:profiles!messages_student_id_fkey(full_name, email, tier)').order('created_at', { ascending: true }),
-    supabase.from('attendance').select('*, student:profiles!attendance_student_id_fkey(full_name), tutor:profiles!attendance_marked_by_fkey(full_name)').order('created_at', { ascending: false }),
+    supabase.from('messages').select('*, profiles:profiles!messages_student_id_fkey(full_name, email, tier)').order('created_at', { ascending: false }).limit(500),
+    supabase.from('attendance').select('*, student:profiles!attendance_student_id_fkey(full_name), tutor:profiles!attendance_marked_by_fkey(full_name)').order('created_at', { ascending: false }).limit(300),
     supabase.from('profiles').select('id, full_name, available').eq('role', 'partner'),
     supabase.from('profiles').select('available').eq('id', user.id).single(),
     supabase.from('video_access_requests').select('*, profiles(full_name, email)').order('created_at', { ascending: false }),
@@ -26,6 +26,9 @@ export default async function TutorDashboard() {
     supabase.from('homework_requests').select('*, profiles(full_name, email)').order('created_at', { ascending: false }),
     supabase.from('video_topic_requests').select('*, profiles(full_name, email)').order('created_at', { ascending: false }),
   ])
+
+  // newest 500 messages, shown oldest to newest inside each chat thread
+  const messages = (messagesDesc || []).slice().reverse()
 
   const myClaimedBookings = (bookings || []).filter((b: any) => b.tutor_id === user.id)
   const myClaimedSubs = (subs || []).filter((s: any) => s.tutor_id === user.id)
