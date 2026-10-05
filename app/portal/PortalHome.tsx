@@ -5,6 +5,7 @@ import MaterialsSection from './MaterialsSection'
 import PackDownload from './PackDownload'
 import MyVideos from './MyVideos'
 import FileBox from '../FileBox'
+import StoredVideo from '../StoredVideo'
 
 
 type Section = 'menu' | 'book' | 'packs' | 'chat' | 'bank' | 'history' | 'video' | 'guide' | 'homework'
@@ -194,10 +195,16 @@ function VideoTopicBox({ subjectOptions, requestVideoTopic, myRequests }: { subj
   async function handleSubmit() {
     if (!topic.trim() || sending) return
     setSending(true)
-    await requestVideoTopic(subject, topic.trim())
-    setSending(false)
-    setTopic('')
-    setSent(true)
+    try {
+      await requestVideoTopic(subject, topic.trim())
+      setTopic('')
+      setSent(true)
+    } catch (e) {
+      setSent(false)
+      alert('Something went wrong sending that. Please try again.')
+    } finally {
+      setSending(false)
+    }
   }
 
   return (
@@ -226,7 +233,9 @@ function VideoTopicBox({ subjectOptions, requestVideoTopic, myRequests }: { subj
           {myRequests.map((v: any) => (
             <div className="panel" key={v.id}>
               <h4>{v.subject} — {v.topic}</h4>
-              {v.status === 'ready' && v.video_url ? (
+              {v.status === 'ready' && v.video_path ? (
+                <StoredVideo path={v.video_path} />
+              ) : v.status === 'ready' && v.video_url ? (
                 <p style={{ marginTop: 8 }}><a href={v.video_url} target="_blank">Watch video &rarr;</a></p>
               ) : (
                 <span className="status pending">Being recorded</span>
@@ -660,7 +669,7 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
         <div className="panel">
           {(attendance || []).length === 0 && <p className="meta">No sessions logged yet.</p>}
           {(attendance || []).map((a: any) => (
-            <div key={a.id} className="meta">{a.session_date} — {String(a.status).replace('_', ' ')}</div>
+            <div key={a.id} className="meta">{a.session_date} — {a.status}</div>
           ))}
         </div>
       </div>
