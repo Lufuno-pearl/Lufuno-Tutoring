@@ -108,7 +108,7 @@ export default async function PartnerDashboard() {
         {(openSubs || []).map(s => (
           <div className="panel" key={s.id}>
             <h4>{s.month}</h4>
-            <div className="meta">{s.profiles?.full_name} · Maths & Physical Sciences · {s.format === 'physical' ? 'Physical' : 'Online'}</div>
+            <div className="meta">{s.profiles?.full_name}{s.grade ? ` · Gr ${s.grade}` : ''} · {s.subject_choice === 'maths' ? 'Mathematics' : s.subject_choice === 'physics' ? 'Physical Sciences' : 'Maths & Physical Sciences'} · {s.format === 'physical' ? 'Physical' : 'Online'}</div>
             <form action={async () => { 'use server'; await claim('hs_subscriptions', s.id) }}>
               <button className="btn btn-primary">Claim this student</button>
             </form>
