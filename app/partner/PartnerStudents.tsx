@@ -2,22 +2,56 @@
 import { useState } from 'react'
 import { ChevronRight } from 'lucide-react'
 import AttendanceButtons from '../AttendanceButtons'
+import TutorMaterials from '../tutor/TutorMaterials'
+
+function subjectLabel(choice?: string) {
+  return choice === 'maths' ? 'Mathematics' : choice === 'physics' ? 'Physical Sciences' : 'Maths & Physical Sciences'
+}
 
 export default function PartnerStudents({ myStudentIds, threads, bookingsByStudent, subsByStudent, attendanceByStudent, actions }: any) {
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [search, setSearch] = useState('')
+  const [text, setText] = useState('')
+  const [sending, setSending] = useState(false)
   const { setMeetingLink, sendPartnerMessage, markAttendance } = actions
 
-  if (myStudentIds.length === 0) return <p className="meta">You haven't claimed any students yet.</p>
+  async function handleSend(sid: string) {
+    if (!text.trim() || sending) return
+    const body = text
+    setText('')
+    setSending(true)
+    try {
+      const fd = new FormData()
+      fd.set('body', body)
+      await sendPartnerMessage(sid, fd)
+    } catch (e) {
+      setText(body)
+      alert('Could not send. Please try again.')
+    }
+    setSending(false)
+  }
+
+  if (myStudentIds.length === 0) return <p className="meta">You haven't claimed any students yet. Open "Open Requests" to claim one.</p>
 
   if (!selectedId) {
-    const uniIds = myStudentIds.filter((sid: string) => (subsByStudent[sid] || []).length === 0)
-    const hsIds = myStudentIds.filter((sid: string) => (subsByStudent[sid] || []).length > 0)
+    const q = search.trim().toLowerCase()
+    const matches = (sid: string) => !q || (threads[sid]?.name || 'Student').toLowerCase().includes(q)
+    const uniIds = myStudentIds.filter((sid: string) => (subsByStudent[sid] || []).length === 0 && matches(sid))
+    const hsIds = myStudentIds.filter((sid: string) => (subsByStudent[sid] || []).length > 0 && matches(sid))
 
     const renderRow = (sid: string) => {
-      const thread = threads[sid] || { name: 'Student' }
+      const thread = threads[sid] || { name: 'Student', msgs: [] }
+      const b = (bookingsByStudent[sid] || [])[0]
+      const s = (subsByStudent[sid] || [])[0]
+      const sub = s ? `${subjectLabel(s.subject_choice)}${s.grade ? ` · Gr ${s.grade}` : ''}` : b ? b.subject : ''
+      const last = (thread.msgs || [])[(thread.msgs || []).length - 1]
       return (
-        <div key={sid} className="panel" style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} onClick={() => setSelectedId(sid)}>
-          <h4 style={{ margin: 0 }}>{thread.name}</h4>
+        <div key={sid} className="panel" style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} onClick={() => { setSelectedId(sid); setText('') }}>
+          <div>
+            <h4 style={{ margin: 0 }}>{thread.name}</h4>
+            {sub && <div className="meta" style={{ marginBottom: 0 }}>{sub}</div>}
+            {last && <div className="meta" style={{ marginBottom: 0 }}>{last.sender === 'tutor' ? 'You: ' : ''}{String(last.body).slice(0, 40)}{String(last.body).length > 40 ? '...' : ''}</div>}
+          </div>
           <ChevronRight size={18} color="var(--purple-dark)" />
         </div>
       )
@@ -25,11 +59,14 @@ export default function PartnerStudents({ myStudentIds, threads, bookingsByStude
 
     return (
       <div>
+        <div className="field">
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by student name..." />
+        </div>
         <h3>University</h3>
-        {uniIds.length === 0 && <p className="meta">No students yet.</p>}
+        {uniIds.length === 0 && <p className="meta">{q ? 'No matches.' : 'No students yet.'}</p>}
         {uniIds.map(renderRow)}
         <h3 style={{ marginTop: 20 }}>High School</h3>
-        {hsIds.length === 0 && <p className="meta">No students yet.</p>}
+        {hsIds.length === 0 && <p className="meta">{q ? 'No matches.' : 'No students yet.'}</p>}
         {hsIds.map(renderRow)}
       </div>
     )
@@ -57,7 +94,7 @@ export default function PartnerStudents({ myStudentIds, threads, bookingsByStude
       ))}
       {subsHere.map((s: any) => (
         <div key={s.id} style={{ marginBottom: 8 }}>
-          <div className="meta">{s.month} — {s.subject_choice === 'maths' ? 'Mathematics' : s.subject_choice === 'physics' ? 'Physical Sciences' : 'Maths & Physical Sciences'}{s.grade ? ` · Gr ${s.grade}` : ''} · {s.format === 'physical' ? 'Physical' : 'Online'}</div>
+          <div className="meta">{s.month} — {subjectLabel(s.subject_choice)}{s.grade ? ` · Gr ${s.grade}` : ''} · {s.format === 'physical' ? 'Physical' : 'Online'}</div>
           {s.format === 'online' && (
             <form action={async (formData: FormData) => { await setMeetingLink('hs_subscriptions', s.id, formData.get('url') as string) }} style={{ display: 'flex', gap: 8, marginTop: 4 }}>
               <input name="url" defaultValue={s.meeting_link || ''} placeholder="Google Meet link" style={{ flex: 1, padding: 6, border: '1px solid var(--line)' }} />
@@ -75,10 +112,11 @@ export default function PartnerStudents({ myStudentIds, threads, bookingsByStude
           </div>
         ))}
       </div>
-      <form action={async (formData: FormData) => { await sendPartnerMessage(sid, formData) }} style={{ display: 'flex', gap: 8 }}>
-        <input name="body" placeholder="Reply..." required style={{ flex: 1, padding: 8, border: '1px solid var(--line)' }} />
-        <button className="btn btn-primary">Send</button>
-      </form>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <input value={text} onChange={e => setText(e.target.value)} placeholder="Reply..." style={{ flex: 1, padding: 8, border: '1px solid var(--line)' }} />
+        <button className="btn btn-primary" onClick={() => handleSend(sid)} disabled={sending}>{sending ? 'Sending...' : 'Send'}</button>
+      </div>
+      <TutorMaterials studentId={sid} studentName={thread.name} />
       <div style={{ marginTop: 14, borderTop: '1px solid var(--line)', paddingTop: 12 }}>
         <div className="meta" style={{ marginBottom: 6 }}>Mark today's session</div>
         <div style={{ marginBottom: 10 }}>
