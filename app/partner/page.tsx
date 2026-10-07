@@ -7,6 +7,7 @@ import PartnerStudents from './PartnerStudents'
 import VideoManager from '../tutor/VideoManager'
 import PartnerRequests from './PartnerRequests'
 import AvailabilityBoard from '../AvailabilityBoard'
+import PartnerHome from './PartnerHome'
 
 export default async function PartnerDashboard() {
   const supabase = createClient()
@@ -78,6 +79,33 @@ export default async function PartnerDashboard() {
     }
   })
 
+  const openRequests = (
+    <div>
+      <h4 style={{ marginTop: 12 }}>University</h4>
+      {(openBookings || []).length === 0 && <p className="meta">Nothing open right now.</p>}
+      {(openBookings || []).map(b => (
+        <div className="panel" key={b.id}>
+          <h4>{b.subject}</h4>
+          <div className="meta">{b.profiles?.full_name} · {b.day} at {b.time} · {b.format === 'physical' ? 'Physical' : 'Online'}</div>
+          <form action={async () => { 'use server'; await claim('bookings', b.id) }}>
+            <button className="btn btn-primary">Claim this student</button>
+          </form>
+        </div>
+      ))}
+      <h4 style={{ marginTop: 20 }}>High School</h4>
+      {(openSubs || []).length === 0 && <p className="meta">Nothing open right now.</p>}
+      {(openSubs || []).map(s => (
+        <div className="panel" key={s.id}>
+          <h4>{s.month}</h4>
+          <div className="meta">{s.profiles?.full_name}{s.grade ? ` · Gr ${s.grade}` : ''} · {s.subject_choice === 'maths' ? 'Mathematics' : s.subject_choice === 'physics' ? 'Physical Sciences' : 'Maths & Physical Sciences'} · {s.format === 'physical' ? 'Physical' : 'Online'}</div>
+          <form action={async () => { 'use server'; await claim('hs_subscriptions', s.id) }}>
+            <button className="btn btn-primary">Claim this student</button>
+          </form>
+        </div>
+      ))}
+    </div>
+  )
+
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -89,58 +117,25 @@ export default async function PartnerDashboard() {
       </div>
       <p className="meta">Signed in as {profile.full_name}</p>
 
-      <section>
-        <h3>Your availability</h3>
-        <AvailabilityBoard />
-      </section>
-
-      <section>
-        <h3>Requests needing a tutor</h3>
-        <h4 style={{ marginTop: 12 }}>University</h4>
-        {(openBookings || []).length === 0 && <p className="meta">Nothing open right now.</p>}
-        {(openBookings || []).map(b => (
-          <div className="panel" key={b.id}>
-            <h4>{b.subject}</h4>
-            <div className="meta">{b.profiles?.full_name} · {b.day} at {b.time} · {b.format === 'physical' ? 'Physical' : 'Online'}</div>
-            <form action={async () => { 'use server'; await claim('bookings', b.id) }}>
-              <button className="btn btn-primary">Claim this student</button>
-            </form>
-          </div>
-        ))}
-        <h4 style={{ marginTop: 20 }}>High School</h4>
-        {(openSubs || []).length === 0 && <p className="meta">Nothing open right now.</p>}
-        {(openSubs || []).map(s => (
-          <div className="panel" key={s.id}>
-            <h4>{s.month}</h4>
-            <div className="meta">{s.profiles?.full_name}{s.grade ? ` · Gr ${s.grade}` : ''} · {s.subject_choice === 'maths' ? 'Mathematics' : s.subject_choice === 'physics' ? 'Physical Sciences' : 'Maths & Physical Sciences'} · {s.format === 'physical' ? 'Physical' : 'Online'}</div>
-            <form action={async () => { 'use server'; await claim('hs_subscriptions', s.id) }}>
-              <button className="btn btn-primary">Claim this student</button>
-            </form>
-          </div>
-        ))}
-      </section>
-
-      <section>
-        <h3>Homework & video requests</h3>
-        <PartnerRequests userId={user.id} homework={homework} videos={videos} />
-      </section>
-
-      <section>
-        <h3>Manage videos</h3>
-        <VideoManager />
-      </section>
-
-      <section>
-        <h3>Your students</h3>
-        <PartnerStudents
-          myStudentIds={myStudentIds}
-          threads={threads}
-          bookingsByStudent={bookingsByStudent}
-          subsByStudent={subsByStudent}
-          attendanceByStudent={attendanceByStudent}
-          actions={{ setMeetingLink, sendPartnerMessage, markAttendance }}
-        />
-      </section>
+      <PartnerHome
+        openCount={(openBookings || []).length + (openSubs || []).length}
+        requestCount={homework.filter((h: any) => h.status !== 'solved').length + videos.filter((v: any) => v.status !== 'ready').length}
+        studentCount={myStudentIds.length}
+        availability={<AvailabilityBoard />}
+        open={openRequests}
+        requests={<PartnerRequests userId={user.id} homework={homework} videos={videos} />}
+        students={
+          <PartnerStudents
+            myStudentIds={myStudentIds}
+            threads={threads}
+            bookingsByStudent={bookingsByStudent}
+            subsByStudent={subsByStudent}
+            attendanceByStudent={attendanceByStudent}
+            actions={{ setMeetingLink, sendPartnerMessage, markAttendance }}
+          />
+        }
+        videos={<VideoManager />}
+      />
     </div>
   )
 }
