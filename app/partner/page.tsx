@@ -5,6 +5,7 @@ import { signOut } from '../portal/actions'
 import NotificationBell from '../NotificationBell'
 import PartnerStudents from './PartnerStudents'
 import VideoManager from '../tutor/VideoManager'
+import PartnerRequests from './PartnerRequests'
 
 export default async function PartnerDashboard() {
   const supabase = createClient()
@@ -14,13 +15,24 @@ export default async function PartnerDashboard() {
   const { data: profile } = await supabase.from('profiles').select('role, available, full_name').eq('id', user.id).single()
   if (!profile || profile.role !== 'partner') redirect('/portal')
 
-  const [{ data: openBookings }, { data: openSubs }, { data: myBookings }, { data: mySubs }, { data: attendanceRows }] = await Promise.all([
+  const [{ data: openBookings }, { data: openSubs }, { data: myBookings }, { data: mySubs }, { data: attendanceRows }, { data: homeworkRows }, { data: videoRows }] = await Promise.all([
     supabase.from('bookings').select('*, profiles:profiles!bookings_student_id_fkey(full_name, email)').is('tutor_id', null).order('created_at', { ascending: false }),
     supabase.from('hs_subscriptions').select('*, profiles:profiles!hs_subscriptions_student_id_fkey(full_name, email)').is('tutor_id', null).order('created_at', { ascending: false }),
     supabase.from('bookings').select('*, profiles:profiles!bookings_student_id_fkey(full_name, email)').eq('tutor_id', user.id).order('created_at', { ascending: false }),
     supabase.from('hs_subscriptions').select('*, profiles:profiles!hs_subscriptions_student_id_fkey(full_name, email)').eq('tutor_id', user.id).order('created_at', { ascending: false }),
     supabase.from('attendance').select('*').order('created_at', { ascending: false }),
+    supabase.from('homework_requests').select('*').order('created_at', { ascending: false }),
+    supabase.from('video_topic_requests').select('*').order('created_at', { ascending: false }),
   ])
+
+  // attach student names (looked up separately so it never fails on a table link)
+  const requestStudentIds = Array.from(new Set([...(homeworkRows || []), ...(videoRows || [])].map((r: any) => r.student_id).filter(Boolean)))
+  const { data: requestProfiles } = requestStudentIds.length
+    ? await supabase.from('profiles').select('id, full_name').in('id', requestStudentIds as string[])
+    : { data: [] as any[] }
+  const nameOf = (id: string) => (requestProfiles || []).find((p: any) => p.id === id)?.full_name || null
+  const homework = (homeworkRows || []).map((r: any) => ({ ...r, profiles: { full_name: nameOf(r.student_id) } }))
+  const videos = (videoRows || []).map((r: any) => ({ ...r, profiles: { full_name: nameOf(r.student_id) } }))
 
   const myStudentIds = Array.from(new Set([...(myBookings || []).map(b => b.student_id), ...(mySubs || []).map(s => s.student_id)]))
 
@@ -114,6 +126,11 @@ export default async function PartnerDashboard() {
             </form>
           </div>
         ))}
+      </section>
+
+      <section>
+        <h3>Homework & video requests</h3>
+        <PartnerRequests userId={user.id} homework={homework} videos={videos} />
       </section>
 
       <section>
