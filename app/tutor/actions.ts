@@ -1,7 +1,33 @@
 'use server'
 import { createClient } from '../../lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { sendPushToUser } from '../../lib/push'
+import { sendPushToUser, sendPushToRole } from '../../lib/push'
+
+async function countReferral(supabase: any, studentId: string) {
+  const { data: res, error } = await supabase.rpc('count_referral', { p_student: studentId })
+  if (error || !res) return
+  const { data: ref } = await supabase.from('profiles').select('full_name').eq('id', res.referrer_id).single()
+  const who = ref?.full_name || 'A student'
+  await supabase.from('notifications').insert({
+    student_id: res.referrer_id,
+    for_role: 'student',
+    message: `A friend you referred has paid! You now have ${res.total} counted referrals.`,
+  })
+  await sendPushToUser(res.referrer_id, 'Referral counted', `You now have ${res.total} counted referrals.`, '/portal')
+  if (res.discount) {
+    await supabase.from('notifications').insert({
+      student_id: res.referrer_id,
+      for_role: 'student',
+      message: 'You earned R50 off for referring 5 friends! Lufuno will apply it to your next payment.',
+    })
+    await sendPushToUser(res.referrer_id, 'R50 off earned', 'You referred 5 friends. R50 off your next payment!', '/portal')
+  }
+  if (res.discount || res.payouts > 0) {
+    const text = res.discount ? `${who} earned R50 off (5 referrals).` : `${who} reached ${res.total} referrals: R150 payout due.`
+    await supabase.from('notifications').insert({ student_id: res.referrer_id, for_role: 'staff', message: text })
+    await sendPushToRole('staff', 'Referral reward due', text, '/tutor')
+  }
+}
 
 export async function confirmPayment(table: 'bookings' | 'hs_subscriptions' | 'pack_orders' | 'video_access_requests' | 'other_course_requests', id: string) {
   const supabase = createClient()
@@ -25,6 +51,13 @@ export async function confirmPayment(table: 'bookings' | 'hs_subscriptions' | 'p
       message,
     })
     await sendPushToUser(data.student_id, 'Payment confirmed', message, '/portal')
+    if (table === 'hs_subscriptions' || table === 'bookings' || table === 'video_access_requests') {
+      try {
+        await countReferral(supabase, data.student_id)
+      } catch (e) {
+        console.error('[referral]', e)
+      }
+    }
   }
   revalidatePath('/tutor')
 }
