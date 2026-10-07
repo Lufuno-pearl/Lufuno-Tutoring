@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { BellRing, X } from 'lucide-react'
 import { createClient } from '../../lib/supabase/client'
-import { sendTestPush } from './actions'
+import { sendTestPush, sendRoleTest } from './actions'
 
 const VAPID_PUBLIC_KEY = 'BDoj42hok_Qe_wa48Ppbk0Kp98hr9XeMXrM2wAr8b4SwlCQeCmb6hlYvfRCA-aKPT5KzPuwuV2we8KkznueSLmg'
 
@@ -145,6 +145,27 @@ export default function NotificationsView({ forRole, userId }: { forRole: 'stude
     }
   }
 
+  async function runRoleTest() {
+    if (busy) return
+    setBusy(true)
+    setTestReport('')
+    try {
+      const r = await sendRoleTest(forRole)
+      if (!r) { setTestReport('You are not signed in.'); return }
+      const lines = [
+        'Test of the real alert path (how new requests reach you):',
+        `Server keys ready: ${r.ready ? 'yes' : 'NO'}`,
+        r.lookupError ? `Could not look up devices: ${r.lookupError}` : `Devices found for "${forRole}": ${r.devicesFound}`,
+        ...r.results.map((x: string, i: number) => `Device ${i + 1}: ${x}`),
+      ]
+      setTestReport(lines.join('\n'))
+    } catch (e: any) {
+      setTestReport('Test failed: ' + (e?.message || String(e)))
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const unreadCount = items.filter(n => !n.read).length
 
   async function markRead(id: string) {
@@ -208,6 +229,9 @@ export default function NotificationsView({ forRole, userId }: { forRole: 'stude
             )}
             <button className="btn" style={{ background: 'none', border: '1px solid var(--ink)', padding: '6px 14px', opacity: busy ? 0.6 : 1 }} disabled={busy} onClick={runTest}>
               Send me a test
+            </button>
+            <button className="btn" style={{ background: 'none', border: '1px solid var(--ink)', padding: '6px 14px', opacity: busy ? 0.6 : 1 }} disabled={busy} onClick={runRoleTest}>
+              Test real alerts
             </button>
           </div>
         )}
