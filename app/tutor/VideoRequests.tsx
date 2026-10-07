@@ -5,7 +5,7 @@ import { createClient } from '../../lib/supabase/client'
 import { markVideoReady } from './actions'
 import StoredVideo from '../StoredVideo'
 
-function UploadVideo({ request }: { request: any }) {
+export function UploadVideo({ request, complete, onDone }: { request: any; complete?: (id: string, path: string) => Promise<void>; onDone?: () => void }) {
   const [state, setState] = useState<'idle' | 'uploading' | 'done' | 'error'>('idle')
   const [error, setError] = useState('')
 
@@ -23,8 +23,9 @@ function UploadVideo({ request }: { request: any }) {
         .from('request-videos')
         .upload(path, file, { contentType: file.type || 'video/mp4', upsert: false })
       if (upErr) throw upErr
-      await markVideoReady(request.id, path)
+      await (complete || markVideoReady)(request.id, path)
       setState('done')
+      if (onDone) onDone()
     } catch (err: any) {
       setState('error')
       setError(err?.message || 'Upload failed')
@@ -46,7 +47,7 @@ function UploadVideo({ request }: { request: any }) {
   )
 }
 
-export default function VideoRequests({ requests }: { requests: any[] }) {
+export default function VideoRequests({ requests, partners }: { requests: any[]; partners?: any[] }) {
   const [selected, setSelected] = useState<string | null>(null)
   const all = requests || []
 
@@ -76,6 +77,11 @@ export default function VideoRequests({ requests }: { requests: any[] }) {
             <h4>{r.subject} — {r.topic}</h4>
             <div className="meta">{new Date(r.created_at).toLocaleDateString()}</div>
             <span className={`status ${r.status === 'ready' ? 'confirmed' : 'pending'}`}>{r.status === 'ready' ? 'Sent' : 'Waiting for video'}</span>
+            {r.status !== 'ready' && (
+              <div className="meta" style={{ marginTop: 6 }}>
+                {r.tutor_id ? `Picked up by ${(partners || []).find((p: any) => p.id === r.tutor_id)?.full_name || 'a tutor'}` : 'Not picked up yet'}
+              </div>
+            )}
             {r.status === 'ready' ? (
               r.video_path ? <div style={{ marginTop: 10 }}><StoredVideo path={r.video_path} /></div>
               : r.video_url ? <p style={{ marginTop: 8 }}><a href={r.video_url} target="_blank">Open video link &rarr;</a></p>
