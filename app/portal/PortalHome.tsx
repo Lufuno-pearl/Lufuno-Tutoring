@@ -1,15 +1,16 @@
 'use client'
 import { useState, useEffect, useLayoutEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { CalendarPlus, BookOpen, MessageCircle, Landmark, History, Video, HelpCircle, ClipboardList } from 'lucide-react'
+import { CalendarPlus, BookOpen, MessageCircle, Landmark, History, Video, HelpCircle, ClipboardList, Gift } from 'lucide-react'
 import MaterialsSection from './MaterialsSection'
 import PackDownload from './PackDownload'
 import MyVideos from './MyVideos'
 import FileBox from '../FileBox'
 import StoredVideo from '../StoredVideo'
+import ReferralBox from './ReferralBox'
 
 
-type Section = 'menu' | 'book' | 'packs' | 'chat' | 'bank' | 'history' | 'video' | 'guide' | 'homework'
+type Section = 'menu' | 'book' | 'packs' | 'chat' | 'bank' | 'history' | 'video' | 'guide' | 'homework' | 'referral'
 
 function StatusPill({ status }: { status: string }) {
   const label = status === 'confirmed' ? 'Confirmed' : status === 'awaiting' ? 'Payment submitted — confirming' : 'Awaiting payment'
@@ -390,6 +391,10 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
               <div className="tile-body"><div className="name">Homework Help</div></div>
             </div>
           )}
+          <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('referral')}>
+            <div className="tile-art" style={{ background: 'linear-gradient(135deg, #F2C14E, #D9A32E)' }}><Gift size={36} color="#fff" /></div>
+            <div className="tile-body"><div className="name">Refer & Earn</div></div>
+          </div>
           <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('guide')}>
             <div className="tile-art" style={{ background: 'linear-gradient(135deg, #B98CE0, #8B5FC7)' }}><HelpCircle size={36} color="#fff" /></div>
             <div className="tile-body"><div className="name">How It Works</div></div>
@@ -654,6 +659,15 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
             <p className="meta">This unlocks once you have an active, confirmed subscription. Subscribe from the menu and confirm your payment to access it.</p>
           </div>
         )}
+      </div>
+    )
+  }
+
+  if (section === 'referral') {
+    return (
+      <div>
+        <Back />
+        <ReferralBox />
       </div>
     )
   }
