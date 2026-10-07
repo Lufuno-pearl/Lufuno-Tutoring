@@ -1,14 +1,15 @@
 'use client'
 import { useState, useEffect, useLayoutEffect } from 'react'
-import { Clock, UserCog, BookOpen, ClipboardList, MessageCircle, ChevronRight, Star, Video, Film } from 'lucide-react'
+import { Clock, UserCog, BookOpen, ClipboardList, MessageCircle, ChevronRight, Star, Video, Film, Gift } from 'lucide-react'
 import TutorMaterials from './TutorMaterials'
 import PackUpload from './PackUpload'
 import VideoManager from './VideoManager'
 import VideoRequests from './VideoRequests'
 import FileBox from '../FileBox'
 import AttendanceButtons from '../AttendanceButtons'
+import ReferralAdmin from './ReferralAdmin'
 
-type Section = 'menu' | 'pending' | 'assign' | 'packs' | 'sessions' | 'chat' | 'mytutoring' | 'videos' | 'videoreq'
+type Section = 'menu' | 'pending' | 'assign' | 'packs' | 'sessions' | 'chat' | 'mytutoring' | 'videos' | 'videoreq' | 'referrals'
 
 function subjectLabel(choice?: string) {
   return choice === 'maths' ? 'Mathematics' : choice === 'physics' ? 'Physical Sciences' : 'Maths & Physical Sciences'
@@ -106,6 +107,10 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
               )}
             </div>
             <div className="tile-body"><div className="name">Video Requests</div></div>
+          </div>
+          <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('referrals')}>
+            <div className="tile-art" style={{ background: 'linear-gradient(135deg, #F2C14E, #D9A32E)' }}><Gift size={36} color="#fff" /></div>
+            <div className="tile-body"><div className="name">Referrals</div></div>
           </div>
         </div>
         <div className="panel" style={{ cursor: 'pointer', marginBottom: 12 }} onClick={() => { setSection('chat'); setSelectedStudentId(null) }}>
@@ -299,6 +304,16 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
         <Back />
         <h3>Video requests{pendingVideos > 0 ? ` (${pendingVideos} waiting)` : ''}</h3>
         <VideoRequests requests={videoTopicRequests || []} partners={partners || []} />
+      </div>
+    )
+  }
+
+  if (section === 'referrals') {
+    return (
+      <div>
+        <Back />
+        <h3>Referrals</h3>
+        <ReferralAdmin />
       </div>
     )
   }
