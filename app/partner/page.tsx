@@ -1,11 +1,12 @@
 import { createClient } from '../../lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { toggleAvailable, claim, setMeetingLink, markAttendance, sendPartnerMessage } from './actions'
+import { claim, setMeetingLink, markAttendance, sendPartnerMessage } from './actions'
 import { signOut } from '../portal/actions'
 import NotificationBell from '../NotificationBell'
 import PartnerStudents from './PartnerStudents'
 import VideoManager from '../tutor/VideoManager'
 import PartnerRequests from './PartnerRequests'
+import AvailabilityBoard from '../AvailabilityBoard'
 
 export default async function PartnerDashboard() {
   const supabase = createClient()
@@ -89,17 +90,8 @@ export default async function PartnerDashboard() {
       <p className="meta">Signed in as {profile.full_name}</p>
 
       <section>
-        <div className="panel" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <h4>Your availability</h4>
-            <div className="meta">Students can only be matched to you while you're available.</div>
-          </div>
-          <form action={async () => { 'use server'; await toggleAvailable(profile.available) }}>
-            <button className={profile.available ? 'btn btn-primary' : 'btn'} style={!profile.available ? { background: 'none', border: '1px solid var(--ink)' } : {}}>
-              {profile.available ? 'Available' : 'Not available'}
-            </button>
-          </form>
-        </div>
+        <h3>Your availability</h3>
+        <AvailabilityBoard />
       </section>
 
       <section>
