@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useLayoutEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { CalendarPlus, BookOpen, MessageCircle, Landmark, History, Video, HelpCircle, ClipboardList } from 'lucide-react'
 import MaterialsSection from './MaterialsSection'
 import PackDownload from './PackDownload'
@@ -144,7 +145,9 @@ function HomeworkBox({ userId, subjectOptions, submitHomework, myRequests }: { u
       {sent && (
         <div className="panel" style={{ background: '#DCEEE0', textAlign: 'center' }}>
           <p style={{ margin: 0, fontWeight: 600 }}>Thanks! Upload your document below.</p>
-          {sentId && <FileBox folderPath={`${userId}/${sentId}/question`} uploadLabel="Upload your homework document" />}
+          {sentId
+            ? <FileBox folderPath={`${userId}/${sentId}/question`} uploadLabel="Upload your homework document" />
+            : <p className="meta" style={{ marginTop: 8 }}>Scroll down to your new request and tap "Upload / replace your document".</p>}
         </div>
       )}
       {error && (
@@ -271,19 +274,29 @@ function ChatBox({ sendMessage }: { sendMessage: any }) {
   )
 }
 
-function SessionConfirm({ rows, respondToSession }: { rows: any[]; respondToSession: any }) {
-  const [done, setDone] = useState<string[]>([])
+function SessionConfirm({ rows, respondToSession, onAnswered }: { rows: any[]; respondToSession: any; onAnswered: (id: string) => void }) {
+  const router = useRouter()
   const [busy, setBusy] = useState<string | null>(null)
 
   async function answer(id: string, response: 'yes' | 'no') {
     if (busy) return
     setBusy(id)
-    const result = await respondToSession(id, response)
-    setBusy(null)
-    if (result?.ok) setDone(d => [...d, id])
+    try {
+      const result = await respondToSession(id, response)
+      if (result?.ok) {
+        onAnswered(id)
+        router.refresh()
+      } else {
+        alert('Could not save your answer. Please try again.')
+      }
+    } catch (e) {
+      alert('Could not save your answer. Please try again.')
+    } finally {
+      setBusy(null)
+    }
   }
 
-  const open = rows.filter(r => !done.includes(r.id))
+  const open = rows
   if (open.length === 0) return null
 
   return (
@@ -323,6 +336,7 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
   const [bookingSubmitting, setBookingSubmitting] = useState(false)
   const [thankYou, setThankYou] = useState('')
   const [hsGrade, setHsGrade] = useState('')
+  const [answered, setAnswered] = useState<string[]>([])
   const { createBooking, createHsSub, buyPack, markAwaiting, sendMessage, requestCustomPack, requestVideoAccess, submitHomework, requestVideoTopic, respondToSession } = actions
 
   const todayISO = new Date().toISOString().slice(0, 10)
@@ -334,6 +348,7 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
   const allowedSubjects = subjectsFromSubs.length > 0 ? subjectsFromSubs : ['Mathematics', 'Physical Sciences']
   const toConfirm = (attendance || []).filter((a: any) => {
     if (a.student_response) return false
+    if (answered.includes(a.id)) return false
     if (a.status !== 'present' && a.status !== 'absent') return false
     const ageDays = (Date.now() - new Date(a.session_date + 'T00:00:00').getTime()) / 86400000
     return ageDays <= 14
@@ -345,7 +360,7 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
       <div>
         <h2 style={{ marginBottom: 4 }}>Welcome{firstName ? `, ${firstName}` : ''}!</h2>
         <p className="meta" style={{ marginBottom: 20 }}>Great to see you — what would you like to do today?</p>
-        <SessionConfirm rows={toConfirm} respondToSession={respondToSession} />
+        <SessionConfirm rows={toConfirm} respondToSession={respondToSession} onAnswered={(id: string) => setAnswered(a => [...a, id])} />
         <div className="card-grid">
           <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('book')}>
             <div className="tile-art" style={{ background: 'linear-gradient(135deg, #8B6FD9, #6E4FC7)' }}><CalendarPlus size={36} color="#fff" /></div>
