@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useLayoutEffect } from 'react'
-import { Clock, UserCog, BookOpen, ClipboardList, MessageCircle, ChevronRight, Star, Video, Film, Gift } from 'lucide-react'
+import { Clock, UserCog, BookOpen, ClipboardList, MessageCircle, ChevronRight, Star, Video, Film, Gift, Calendar } from 'lucide-react'
 import TutorMaterials from './TutorMaterials'
 import PackUpload from './PackUpload'
 import VideoManager from './VideoManager'
@@ -8,8 +8,10 @@ import VideoRequests from './VideoRequests'
 import FileBox from '../FileBox'
 import AttendanceButtons from '../AttendanceButtons'
 import ReferralAdmin from './ReferralAdmin'
+import AvailabilityBoard from '../AvailabilityBoard'
+import AvailabilityOverview from './AvailabilityOverview'
 
-type Section = 'menu' | 'pending' | 'assign' | 'packs' | 'sessions' | 'chat' | 'mytutoring' | 'videos' | 'videoreq' | 'referrals'
+type Section = 'menu' | 'pending' | 'assign' | 'packs' | 'sessions' | 'chat' | 'mytutoring' | 'videos' | 'videoreq' | 'referrals' | 'availability'
 
 function subjectLabel(choice?: string) {
   return choice === 'maths' ? 'Mathematics' : choice === 'physics' ? 'Physical Sciences' : 'Maths & Physical Sciences'
@@ -111,6 +113,10 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
           <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('referrals')}>
             <div className="tile-art" style={{ background: 'linear-gradient(135deg, #F2C14E, #D9A32E)' }}><Gift size={36} color="#fff" /></div>
             <div className="tile-body"><div className="name">Referrals</div></div>
+          </div>
+          <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('availability')}>
+            <div className="tile-art" style={{ background: 'linear-gradient(135deg, #6E4FC7, #4B2FA0)' }}><Calendar size={36} color="#fff" /></div>
+            <div className="tile-body"><div className="name">Tutor Availability</div></div>
           </div>
         </div>
         <div className="panel" style={{ cursor: 'pointer', marginBottom: 12 }} onClick={() => { setSection('chat'); setSelectedStudentId(null) }}>
@@ -318,6 +324,16 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
     )
   }
 
+  if (section === 'availability') {
+    return (
+      <div>
+        <Back />
+        <h3>Tutor availability</h3>
+        <AvailabilityOverview />
+      </div>
+    )
+  }
+
   if (section === 'sessions') {
     return (
       <div>
@@ -421,17 +437,8 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
     return (
       <div>
         <Back />
-        <div className="panel" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <h4>Your availability</h4>
-            <div className="meta">Students can only be matched to you while you're available.</div>
-          </div>
-          <form action={async () => { await toggleAvailable(myAvailable) }}>
-            <button className={myAvailable ? 'btn btn-primary' : 'btn'} style={!myAvailable ? { background: 'none', border: '1px solid var(--ink)' } : {}}>
-              {myAvailable ? 'Available' : 'Not available'}
-            </button>
-          </form>
-        </div>
+        <h3>Your availability</h3>
+        <AvailabilityBoard />
 
         <h3>Requests needing a tutor</h3>
         <h4 style={{ marginTop: 12 }}>University</h4>
