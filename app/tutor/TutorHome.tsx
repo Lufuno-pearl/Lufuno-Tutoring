@@ -194,6 +194,7 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
           <div className="panel" key={h.id}>
             <h4>{h.subject}</h4>
             <div className="meta">{h.profiles?.full_name} · {h.profiles?.email}</div>
+            <div className="meta">{h.tutor_id ? `Picked up by ${(partners || []).find((p: any) => p.id === h.tutor_id)?.full_name || 'a tutor'}` : 'Not picked up yet'}</div>
             {h.description && <p className="meta">{h.description}</p>}
             <span className={`status ${h.status === 'solved' ? 'confirmed' : 'pending'}`}>{h.status === 'solved' ? 'Solved' : 'Pending'}</span>
             <div className="meta" style={{ marginTop: 8, fontWeight: 600 }}>Their document</div>
@@ -297,7 +298,7 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
       <div>
         <Back />
         <h3>Video requests{pendingVideos > 0 ? ` (${pendingVideos} waiting)` : ''}</h3>
-        <VideoRequests requests={videoTopicRequests || []} />
+        <VideoRequests requests={videoTopicRequests || []} partners={partners || []} />
       </div>
     )
   }
