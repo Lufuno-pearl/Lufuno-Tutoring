@@ -20,13 +20,22 @@ export default async function TutorDashboard() {
     supabase.from('pack_orders').select('*, profiles(full_name, email, tier)').order('created_at', { ascending: false }),
     supabase.from('messages').select('*, profiles:profiles!messages_student_id_fkey(full_name, email, tier)').order('created_at', { ascending: false }).limit(500),
     supabase.from('attendance').select('*, student:profiles!attendance_student_id_fkey(full_name), tutor:profiles!attendance_marked_by_fkey(full_name)').order('created_at', { ascending: false }).limit(300),
-    supabase.from('profiles').select('id, full_name, available').eq('role', 'partner'),
+    supabase.from('profiles').select('id, full_name, available, takes_one_on_one').eq('role', 'partner'),
     supabase.from('profiles').select('available').eq('id', user.id).single(),
     supabase.from('video_access_requests').select('*, profiles(full_name, email)').order('created_at', { ascending: false }),
     supabase.from('other_course_requests').select('*, profiles(full_name, email)').order('created_at', { ascending: false }),
     supabase.from('homework_requests').select('*, profiles(full_name, email)').order('created_at', { ascending: false }),
     supabase.from('video_topic_requests').select('*').order('created_at', { ascending: false }),
   ])
+
+  // each tutor's areas and how many group students they already have
+  const { data: areaRows } = await supabase.from('tutor_areas').select('tutor_id, name')
+  const todayISO = new Date().toISOString().slice(0, 10)
+  const partnersFull = (partners || []).map((p: any) => ({
+    ...p,
+    areas: (areaRows || []).filter((a: any) => a.tutor_id === p.id).map((a: any) => a.name),
+    group_count: (subs || []).filter((s: any) => s.tutor_id === p.id && s.session_type !== 'one_on_one' && ['pending', 'awaiting', 'confirmed'].includes(s.status) && (!s.end_date || s.end_date >= todayISO)).length,
+  }))
 
   // attach student names to video topic requests (done separately so it never fails on a missing table link)
   const topicStudentIds = Array.from(new Set((videoTopicRequestsRaw || []).map((v: any) => v.student_id).filter(Boolean)))
@@ -79,7 +88,7 @@ export default async function TutorDashboard() {
         bookings={bookings}
         subs={subs}
         orders={orders}
-        partners={partners || []}
+        partners={partnersFull}
         threadsByStudent={threadsByStudent}
         attendanceRows={attendanceRows}
         myAvailable={myProfile?.available ?? true}

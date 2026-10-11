@@ -39,3 +39,22 @@ export async function removeArea(id: string): Promise<{ ok: boolean; message: st
   revalidatePath('/tutor')
   return { ok: true, message: 'Area removed.' }
 }
+
+export async function getOneOnOne(): Promise<boolean> {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return false
+  const { data } = await supabase.from('profiles').select('takes_one_on_one').eq('id', user.id).single()
+  return !!data?.takes_one_on_one
+}
+
+export async function setOneOnOne(value: boolean): Promise<{ ok: boolean; message: string }> {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, message: 'Please sign in again.' }
+  const { error } = await supabase.from('profiles').update({ takes_one_on_one: value }).eq('id', user.id)
+  if (error) return { ok: false, message: error.message }
+  revalidatePath('/partner')
+  revalidatePath('/tutor')
+  return { ok: true, message: value ? 'Saved. You take one-on-one students.' : 'Saved. You do not take one-on-one students.' }
+}
