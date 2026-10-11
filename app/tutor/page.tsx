@@ -53,6 +53,14 @@ export default async function TutorDashboard() {
   const marksByStudent: Record<string, any[]> = {}
   ;(marksRows || []).forEach((m: any) => { (marksByStudent[m.student_id] = marksByStudent[m.student_id] || []).push(m) })
 
+  // schools (read separately so the dashboard still loads before the school columns exist)
+  const hsStudentIds = Array.from(new Set((subs || []).map((x: any) => x.student_id).filter(Boolean)))
+  const { data: schoolRows } = hsStudentIds.length
+    ? await supabase.from('profiles').select('id, school, province').in('id', hsStudentIds as string[])
+    : { data: [] as any[] }
+  const schoolByStudent: Record<string, { school: string; province: string }> = {}
+  ;(schoolRows || []).forEach((r: any) => { if (r.school) schoolByStudent[r.id] = { school: r.school, province: r.province || '' } })
+
   // newest 500 messages, shown oldest to newest inside each chat thread
   const messages = (messagesDesc || []).slice().reverse()
 
@@ -105,6 +113,7 @@ export default async function TutorDashboard() {
         moduleRequests={moduleRequests}
         testPreps={testPreps || []}
         marksByStudent={marksByStudent}
+        schoolByStudent={schoolByStudent}
         actions={{ signOut, answerModuleRequest, confirmPayment, setMeetingLink, assignTutor, markAttendance, sendTutorMessage, toggleAvailable, claim, setCustomPackLink, markHomeworkSolved, setVideoTopicLink }}
       />
     </div>

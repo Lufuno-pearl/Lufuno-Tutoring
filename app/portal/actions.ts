@@ -550,3 +550,21 @@ export async function deleteTestPrep(id: string) {
   revalidatePath('/partner')
   revalidatePath('/tutor')
 }
+
+export async function saveSchool(formData: FormData): Promise<{ ok: boolean; message: string }> {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, message: 'Please sign in again.' }
+  const school = String(formData.get('school') || '').trim().slice(0, 120)
+  const province = String(formData.get('province') || '').trim().slice(0, 60)
+  if (school.length < 2) return { ok: false, message: 'Please enter your school name.' }
+  if (!province) return { ok: false, message: 'Please choose your province.' }
+  const { error } = await supabase.from('profiles').update({ school, province }).eq('id', user.id)
+  if (error) {
+    console.error('[saveSchool]', error.message)
+    return { ok: false, message: 'Could not save. Please try again.' }
+  }
+  revalidatePath('/portal')
+  revalidatePath('/tutor')
+  return { ok: true, message: 'Saved. Thank you!' }
+}

@@ -43,6 +43,9 @@ export default async function Portal({ searchParams }: { searchParams?: { view?:
     supabase.from('marks').select('*').eq('student_id', user.id).order('taken_on', { ascending: true }),
   ])
 
+  // school is read separately so the portal still loads if the school columns are not set up yet
+  const { data: schoolRow } = await supabase.from('profiles').select('school').eq('id', user.id).single()
+
   if (!profile?.tier) {
     return (
       <div>

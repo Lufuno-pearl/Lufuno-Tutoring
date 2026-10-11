@@ -9,6 +9,7 @@ import FileBox from '../FileBox'
 import StoredVideo from '../StoredVideo'
 import ReferralBox from './ReferralBox'
 import MarksView from '../MarksView'
+import SchoolCard from './SchoolCard'
 import ModuleFinder from './ModuleFinder'
 import NextSession from './NextSession'
 import TestPrep from './TestPrep'
@@ -395,7 +396,7 @@ function SessionConfirm({ rows, respondToSession, onAnswered }: { rows: any[]; r
   )
 }
 
-function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visiblePacks, bookings, subs, orders, messages, attendance, videoRequests, myVideoSubjects, homeworkRequests, videoTopicRequests, moduleRequests, testPreps, canTestPrep, marks, actions }: any) {
+function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visiblePacks, bookings, subs, orders, messages, attendance, videoRequests, myVideoSubjects, homeworkRequests, videoTopicRequests, moduleRequests, testPreps, canTestPrep, marks, hasSchool, actions }: any) {
   const router = useRouter()
   const [bookingSubmitting, setBookingSubmitting] = useState(false)
   const [thankYou, setThankYou] = useState('')
@@ -497,6 +498,7 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
       return (
         <div>
           <Hero name={name || ''} />
+          {tier === 'highschool' && !hasSchool && <SchoolCard />}
           {payWaiting}
           <SessionConfirm rows={toConfirm} respondToSession={respondToSession} onAnswered={(id: string) => setAnswered(a => [...a, id])} />
           <GetStarted hasRequested={hasRequested} hasTutor={false} onRequest={() => setSection('book')} />
@@ -511,6 +513,7 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
     return (
       <div>
         <NextSession name={name || ''} bookings={bookings || []} subs={subs || []} onRequest={() => setSection('book')} />
+        {tier === 'highschool' && !hasSchool && <SchoolCard />}
         {payWaiting}
         <SessionConfirm rows={toConfirm} respondToSession={respondToSession} onAnswered={(id: string) => setAnswered(a => [...a, id])} />
         <StreakCard attendance={attendance || []} />
