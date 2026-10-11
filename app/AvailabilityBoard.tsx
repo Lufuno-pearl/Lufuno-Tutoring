@@ -95,7 +95,7 @@ export default function AvailabilityBoard() {
             Week of {weekLabel(weekStart)} · {checkedIn ? 'checked in' : 'not checked in yet'}
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '62px repeat(7, minmax(0, 1fr))', gap: 4, alignItems: 'center' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '54px repeat(7, minmax(0, 1fr))', gap: 3, width: '100%', maxWidth: '100%', alignItems: 'center' }}>
             <div />
             {DAYS.map(d => <div key={d} className="meta" style={{ textAlign: 'center', margin: 0, fontWeight: 600, fontSize: '0.75rem' }}>{d}</div>)}
             {BLOCKS.map((b, bi) => (
@@ -116,6 +116,8 @@ export default function AvailabilityBoard() {
                       onClick={() => toggle(key)}
                       style={{
                         height: 42,
+                        width: '100%',
+                        minWidth: 0,
                         padding: 0,
                         borderRadius: 6,
                         border: on ? '2px solid var(--purple-dark)' : '1px solid var(--line)',
