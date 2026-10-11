@@ -11,11 +11,16 @@ import ReferralAdmin from './ReferralAdmin'
 import AvailabilityBoard from '../AvailabilityBoard'
 import TutorAreas from '../TutorAreas'
 import AvailabilityOverview from './AvailabilityOverview'
+import { GROUP_MAX } from '../../lib/pricing'
 
 type Section = 'menu' | 'pending' | 'assign' | 'packs' | 'sessions' | 'chat' | 'mytutoring' | 'videos' | 'videoreq' | 'referrals' | 'availability'
 
 function subjectLabel(choice?: string) {
   return choice === 'maths' ? 'Mathematics' : choice === 'physics' ? 'Physical Sciences' : 'Maths & Physical Sciences'
+}
+
+function kindLabel(x: any) {
+  return `${x.session_type === 'one_on_one' ? 'One-on-one' : 'Group'}${x.format === 'physical' ? ` · Physical${x.area ? ` (${x.area})` : ''}` : ' · Online'}`
 }
 
 function StatusPill({ status }: { status: string }) {
@@ -152,7 +157,7 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
         {(bookings || []).map((b: any) => (
           <div className="panel" key={b.id}>
             <h4>{b.subject} — {b.day} {b.time}</h4>
-            <div className="meta">{b.profiles?.full_name} · {b.profiles?.email} · {b.format === 'physical' ? 'Physical' : 'Online'} · R{b.price}{b.reference ? ` · Ref: ${b.reference}` : ''}</div>
+            <div className="meta">{b.profiles?.full_name} · {b.profiles?.email} · {kindLabel(b)} · R{b.price}{b.reference ? ` · Ref: ${b.reference}` : ''}</div>
             <StatusPill status={b.status} />
             {b.status !== 'confirmed' && (
               <form action={async () => { await confirmPayment('bookings', b.id) }} style={{ marginTop: 8 }}>
@@ -171,7 +176,7 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
         {(subs || []).map((s: any) => (
           <div className="panel" key={s.id}>
             <h4>{s.month}</h4>
-            <div className="meta">{s.profiles?.full_name} · {s.profiles?.email}{s.grade ? ` · Gr ${s.grade}` : ''} · {subjectLabel(s.subject_choice)} · {s.format === 'physical' ? 'Physical' : 'Online'} · R{s.price}{s.reference ? ` · Ref: ${s.reference}` : ''}{s.status === 'confirmed' && s.end_date ? ` · Active until ${s.end_date}` : ''}</div>
+            <div className="meta">{s.profiles?.full_name} · {s.profiles?.email}{s.grade ? ` · Gr ${s.grade}` : ''} · {subjectLabel(s.subject_choice)} · {kindLabel(s)} · R{s.price}{s.reference ? ` · Ref: ${s.reference}` : ''}{s.status === 'confirmed' && s.end_date ? ` · Active until ${s.end_date}` : ''}</div>
             <StatusPill status={s.status} />
             {s.status !== 'confirmed' && (
               <form action={async () => { await confirmPayment('hs_subscriptions', s.id) }} style={{ marginTop: 8 }}>
@@ -227,14 +232,31 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
   if (section === 'assign') {
     const uniItems = (bookings || []).map((b: any) => ({ ...b, kind: 'bookings', label: `${b.subject} — ${b.day} ${b.time}` }))
     const hsItems = (subs || []).map((s: any) => ({ ...s, kind: 'hs_subscriptions', label: `${s.month} — High School${s.grade ? ` Gr ${s.grade}` : ''} · ${subjectLabel(s.subject_choice)}` }))
+    const optionsFor = (r: any) => {
+      const wantsArea = r.format === 'physical' && r.area ? String(r.area).toLowerCase() : ''
+      const oneOnOne = r.session_type === 'one_on_one'
+      const countGroups = r.kind === 'hs_subscriptions' && !oneOnOne
+      return (partners || []).map((p: any) => {
+        const areaOk = !wantsArea || (p.areas || []).some((a: string) => a.toLowerCase() === wantsArea)
+        const oneOk = !oneOnOne || !!p.takes_one_on_one
+        const notes: string[] = []
+        if (wantsArea) notes.push(areaOk ? `covers ${r.area}` : `not in ${r.area}`)
+        if (oneOnOne) notes.push(p.takes_one_on_one ? 'takes 1-on-1' : 'no 1-on-1')
+        if (countGroups) notes.push(`${p.group_count || 0}/${GROUP_MAX} group students`)
+        if (!p.available) notes.push('not available')
+        const good = areaOk && oneOk
+        return { id: p.id as string, good, label: `${good ? '✓ ' : ''}${p.full_name}${notes.length ? ` — ${notes.join(', ')}` : ''}` }
+      }).sort((a: any, b: any) => Number(b.good) - Number(a.good))
+    }
     const renderItem = (r: any) => (
       <div className="panel" key={r.id}>
         <h4>{r.label}</h4>
+        <div className="meta">{kindLabel(r)}</div>
         <div className="meta">{r.profiles?.full_name} · currently: {r.tutor_id ? (partners.find((p: any) => p.id === r.tutor_id)?.full_name || 'a tutor') : 'unassigned'}</div>
         <form action={async (formData: FormData) => { await assignTutor(r.kind, r.id, formData.get('tutorId') as string) }} style={{ display: 'flex', gap: 8, marginTop: 8 }}>
           <select name="tutorId" defaultValue={r.tutor_id || ''} style={{ flex: 1, padding: 8, border: '1px solid var(--line)', borderRadius: 100 }}>
             <option value="">Unassigned</option>
-            {partners.map((p: any) => <option key={p.id} value={p.id}>{p.full_name}{p.available ? '' : ' (not available)'}</option>)}
+            {optionsFor(r).map((o: any) => <option key={o.id} value={o.id}>{o.label}</option>)}
           </select>
           <button className="btn btn-primary">Save</button>
         </form>
@@ -408,7 +430,7 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
           <h3>{thread.name}</h3>
           {bookingsHere.map((b: any) => (
             <div key={b.id} style={{ marginBottom: 8 }}>
-              <div className="meta">{b.subject} — {b.day} {b.time} · {b.format === 'physical' ? 'Physical' : 'Online'}</div>
+              <div className="meta">{b.subject} — {b.day} {b.time} · {kindLabel(b)}</div>
               {b.format === 'online' && (
                 <form action={async (formData: FormData) => { await setMeetingLink('bookings', b.id, formData.get('url') as string) }} style={{ display: 'flex', gap: 8, marginTop: 4 }}>
                   <input name="url" defaultValue={b.meeting_link || ''} placeholder="Google Meet link" style={{ flex: 1, padding: 6, border: '1px solid var(--line)' }} />
@@ -419,7 +441,7 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
           ))}
           {subsHere.map((s: any) => (
             <div key={s.id} style={{ marginBottom: 8 }}>
-              <div className="meta">{s.month} — {subjectLabel(s.subject_choice)}{s.grade ? ` · Gr ${s.grade}` : ''} · {s.format === 'physical' ? 'Physical' : 'Online'}</div>
+              <div className="meta">{s.month} — {subjectLabel(s.subject_choice)}{s.grade ? ` · Gr ${s.grade}` : ''} · {kindLabel(s)}</div>
               {s.format === 'online' && (
                 <form action={async (formData: FormData) => { await setMeetingLink('hs_subscriptions', s.id, formData.get('url') as string) }} style={{ display: 'flex', gap: 8, marginTop: 4 }}>
                   <input name="url" defaultValue={s.meeting_link || ''} placeholder="Google Meet link" style={{ flex: 1, padding: 6, border: '1px solid var(--line)' }} />
@@ -450,7 +472,7 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
         {(openBookings || []).map((b: any) => (
           <div className="panel" key={b.id}>
             <h4>{b.subject}</h4>
-            <div className="meta">{b.profiles?.full_name} · {b.day} at {b.time} · {b.format === 'physical' ? 'Physical' : 'Online'}</div>
+            <div className="meta">{b.profiles?.full_name} · {b.day} at {b.time} · {kindLabel(b)}</div>
             <form action={async () => { await claim('bookings', b.id) }}>
               <button className="btn btn-primary">Claim this student</button>
             </form>
@@ -461,7 +483,7 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
         {(openSubs || []).map((s: any) => (
           <div className="panel" key={s.id}>
             <h4>{s.month}</h4>
-            <div className="meta">{s.profiles?.full_name}{s.grade ? ` · Gr ${s.grade}` : ''} · {subjectLabel(s.subject_choice)} · {s.format === 'physical' ? 'Physical' : 'Online'}</div>
+            <div className="meta">{s.profiles?.full_name}{s.grade ? ` · Gr ${s.grade}` : ''} · {subjectLabel(s.subject_choice)} · {kindLabel(s)}</div>
             <form action={async () => { await claim('hs_subscriptions', s.id) }}>
               <button className="btn btn-primary">Claim this student</button>
             </form>

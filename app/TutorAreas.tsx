@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { getMyAreas, addArea, removeArea } from './areaActions'
+import { getMyAreas, addArea, removeArea, getOneOnOne, setOneOnOne } from './areaActions'
 
 export default function TutorAreas() {
   const [areas, setAreas] = useState<{ id: string; name: string }[]>([])
@@ -9,6 +9,7 @@ export default function TutorAreas() {
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
   const [msgOk, setMsgOk] = useState(true)
+  const [oneOnOne, setOneOnOneState] = useState(false)
 
   async function load() {
     try {
@@ -21,7 +22,21 @@ export default function TutorAreas() {
     }
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    load()
+    getOneOnOne().then(v => setOneOnOneState(v)).catch(() => {})
+  }, [])
+
+  async function handleTick(next: boolean) {
+    if (busy) return
+    setBusy(true)
+    setMsg('')
+    setOneOnOneState(next)
+    const r = await setOneOnOne(next)
+    if (!r.ok) { setOneOnOneState(!next); setMsgOk(false) } else { setMsgOk(true) }
+    setMsg(r.message)
+    setBusy(false)
+  }
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault()
@@ -50,6 +65,10 @@ export default function TutorAreas() {
 
   return (
     <div>
+      <label style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, cursor: 'pointer' }}>
+        <input type="checkbox" checked={oneOnOne} disabled={busy} onChange={e => handleTick(e.target.checked)} style={{ width: 20, height: 20 }} />
+        <span style={{ fontWeight: 600 }}>I take one-on-one students</span>
+      </label>
       <p className="meta">Add the areas where you can meet students in person. Students will only see these areas when they book a physical session.</p>
 
       <form onSubmit={handleAdd} style={{ display: 'flex', gap: 8, marginTop: 12 }}>
