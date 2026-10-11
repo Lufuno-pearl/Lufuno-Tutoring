@@ -43,7 +43,7 @@ export default async function TutorPayPage({ searchParams }: { searchParams: { m
 
   const [{ data: att }, { data: subs }] = await Promise.all([
     supabase.from('attendance').select('id, student_id, marked_by, session_date, status').gte('session_date', first).lt('session_date', next).limit(5000),
-    supabase.from('hs_subscriptions').select('id, student_id, tutor_id, price, subject_choice, grade, start_date, end_date').eq('status', 'confirmed').limit(5000),
+    supabase.from('hs_subscriptions').select('id, student_id, tutor_id, price, subject_choice, session_type, grade, start_date, end_date').eq('status', 'confirmed').limit(5000),
   ])
 
   const { lines, unmatched } = computePay((att || []) as any[], (subs || []) as any[])
@@ -124,7 +124,7 @@ export default async function TutorPayPage({ searchParams }: { searchParams: { m
                 {t.lines.map(l => (
                   <tr key={l.tutorId + l.subId}>
                     <td style={td}>{nameOf[l.studentId] || 'Student'}</td>
-                    <td style={td}>{l.choice === 'both' ? 'Both' : l.choice === 'physics' ? 'Physics' : 'Maths'}{l.grade ? ` · Gr ${l.grade}` : ''} ({l.included})</td>
+                    <td style={td}>{l.choice === 'both' ? 'Both' : l.choice === 'physics' ? 'Physics' : 'Maths'}{l.grade ? ` · Gr ${l.grade}` : ''}{l.sessionType === 'one_on_one' ? ' · 1-on-1' : ''} ({l.included})</td>
                     <td style={td}>{money(l.rate)}</td>
                     <td style={td}>{l.present}</td>
                     <td style={td}>{l.noShow}</td>
@@ -149,7 +149,7 @@ export default async function TutorPayPage({ searchParams }: { searchParams: { m
       )}
 
       <p className="meta" style={{ marginTop: 16 }}>
-        Pay per session = 90% of what the student paid, divided by the sessions included (10 for one subject, 18 for both). Present and student no-show both count as paid. Rescheduled and tutor-missed sessions are not paid. A student's paid sessions are capped at the sessions included in their plan.
+        Pay per session = 90% of what the student paid, divided by the sessions included (group: 10 for one subject, 18 for both; one-on-one: 7 for one subject, 14 for both). Present and student no-show both count as paid. Rescheduled and tutor-missed sessions are not paid. A student's paid sessions are capped at the sessions included in their plan.
       </p>
     </div>
   )
