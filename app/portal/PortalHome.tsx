@@ -9,6 +9,7 @@ import FileBox from '../FileBox'
 import StoredVideo from '../StoredVideo'
 import ReferralBox from './ReferralBox'
 import ModuleFinder from './ModuleFinder'
+import NextSession from './NextSession'
 import { getAreas } from './actions'
 import { hsPrice, hsSessions, UNI_PRICE_PER_2H, GROUP_MAX, SessionType } from '../../lib/pricing'
 
@@ -395,11 +396,9 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
   })
 
   if (section === 'menu') {
-    const firstName = (name || '').split(' ')[0]
     return (
       <div>
-        <h2 style={{ marginBottom: 4 }}>Welcome{firstName ? `, ${firstName}` : ''}!</h2>
-        <p className="meta" style={{ marginBottom: 20 }}>Great to see you — what would you like to do today?</p>
+        <NextSession name={name || ''} bookings={bookings || []} subs={subs || []} onRequest={() => setSection('book')} />
         <SessionConfirm rows={toConfirm} respondToSession={respondToSession} onAnswered={(id: string) => setAnswered(a => [...a, id])} />
         <div className="card-grid">
           <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('book')}>
