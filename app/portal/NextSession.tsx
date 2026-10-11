@@ -69,7 +69,7 @@ export default function NextSession({ name, bookings, subs, scheduled, onRequest
             {next.b.format !== 'physical' && !next.b.meeting_link && !classLink?.meeting_link && <div className="meta" style={{ marginTop: 10, marginBottom: 0 }}>Your tutor will add the meeting link here.</div>}
             {next.b.note && <div className="meta" style={{ marginTop: 8, marginBottom: 0 }}>📝 {next.b.note}</div>}
             {rest.length > 0 && (
-              <div style={{ marginTop: 14, borderTop: '1px solid rgba(255,255,255,.25)', paddingTop: 10 }}>
+              <div style={{ marginTop: 14, borderTop: '1px solid var(--line)', paddingTop: 10 }}>
                 <div style={{ fontSize: '0.78rem', opacity: 0.8, marginBottom: 4 }}>Coming up</div>
                 {rest.map(x => (
                   <div key={x.b.id} style={{ fontSize: '0.88rem', padding: '2px 0' }}>{x.b.subject} · {when(x.at, now)}</div>
