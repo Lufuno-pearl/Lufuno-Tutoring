@@ -8,9 +8,33 @@ import MyVideos from './MyVideos'
 import FileBox from '../FileBox'
 import StoredVideo from '../StoredVideo'
 import ReferralBox from './ReferralBox'
+import { getAreas } from './actions'
+import { hsPrice, hsSessions, UNI_PRICE_PER_2H, GROUP_MAX, SessionType } from '../../lib/pricing'
 
 
 type Section = 'menu' | 'book' | 'packs' | 'chat' | 'bank' | 'history' | 'video' | 'guide' | 'homework' | 'referral'
+
+function AreaPicker({ areas, value, onChange, notListedHelp, onChooseOnline }: { areas: string[]; value: string; onChange: (v: string) => void; notListedHelp: string; onChooseOnline?: () => void }) {
+  if (areas.length === 0) return null
+  const notListed = value === '__none__'
+  return (
+    <div className="field">
+      <label>Which area are you in?</label>
+      <select name={notListed ? undefined : 'area'} value={value} onChange={e => onChange(e.target.value)} required>
+        <option value="">Select your area</option>
+        {areas.map(a => <option key={a} value={a}>{a}</option>)}
+        <option value="__none__">My area is not listed</option>
+      </select>
+      {notListed && (
+        <div className="panel" style={{ background: '#F3E6C7', marginTop: 8 }}>
+          <p style={{ margin: 0, fontWeight: 600 }}>We don't have a tutor in your area yet.</p>
+          <p className="meta" style={{ margin: '4px 0 0' }}>{notListedHelp}</p>
+          {onChooseOnline && <button type="button" className="btn btn-primary" style={{ marginTop: 8 }} onClick={onChooseOnline}>Switch to Online</button>}
+        </div>
+      )}
+    </div>
+  )
+}
 
 function StatusPill({ status }: { status: string }) {
   const label = status === 'confirmed' ? 'Confirmed' : status === 'awaiting' ? 'Payment submitted — confirming' : 'Awaiting payment'
@@ -338,6 +362,19 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
   const [thankYou, setThankYou] = useState('')
   const [hsGrade, setHsGrade] = useState('')
   const [answered, setAnswered] = useState<string[]>([])
+  const [areas, setAreas] = useState<string[]>([])
+  const [formError, setFormError] = useState('')
+  const [hsType, setHsType] = useState<SessionType>('group')
+  const [hsChoice, setHsChoice] = useState('both')
+  const [hsFormat, setHsFormat] = useState('online')
+  const [hsArea, setHsArea] = useState('')
+  const [uniType, setUniType] = useState<SessionType>('group')
+  const [uniArea, setUniArea] = useState('')
+  useEffect(() => {
+    if (section === 'book' && areas.length === 0) {
+      getAreas().then(a => setAreas(a)).catch(() => {})
+    }
+  }, [section])
   const { createBooking, createHsSub, buyPack, markAwaiting, sendMessage, requestCustomPack, requestVideoAccess, submitHomework, requestVideoTopic, respondToSession } = actions
 
   const todayISO = new Date().toISOString().slice(0, 10)
@@ -419,12 +456,20 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
       e.preventDefault()
       if (bookingSubmitting) return
       setBookingSubmitting(true)
+      setFormError('')
+      setThankYou('')
       const form = e.currentTarget
       const fd = new FormData(form)
       const result = await createBooking(fd)
       setBookingSubmitting(false)
+      if (!result?.ok) {
+        setFormError(result?.message || 'Something went wrong. Please try again.')
+        return
+      }
       if (result?.ok) {
         form.reset()
+        setUniType('group')
+        setUniArea('')
         setThankYou(result.duplicate
           ? `You already have a request for ${result.subject} on that day — check below for payment details.`
           : `Thank you for requesting ${result.subject} on Aid & Ace!`)
@@ -434,13 +479,23 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
       e.preventDefault()
       if (bookingSubmitting) return
       setBookingSubmitting(true)
+      setFormError('')
+      setThankYou('')
       const form = e.currentTarget
       const fd = new FormData(form)
       const result = await createHsSub(fd)
       setBookingSubmitting(false)
+      if (!result?.ok) {
+        setFormError(result?.message || 'Something went wrong. Please try again.')
+        return
+      }
       if (result?.ok) {
         form.reset()
         setHsGrade('')
+        setHsType('group')
+        setHsChoice('both')
+        setHsFormat('online')
+        setHsArea('')
         setThankYou(result.duplicate
           ? `You already have an active or pending subscription — check below for payment details.`
           : `Thank you for subscribing on Aid & Ace!`)
@@ -452,6 +507,11 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
         {thankYou && (
           <div className="panel" style={{ background: '#DCEEE0', textAlign: 'center' }}>
             <p style={{ margin: 0, fontWeight: 600 }}>{thankYou}</p>
+          </div>
+        )}
+        {formError && (
+          <div className="panel" style={{ background: '#F3D6D0', textAlign: 'center' }}>
+            <p style={{ margin: 0, fontWeight: 600 }}>{formError}</p>
           </div>
         )}
 
@@ -468,7 +528,7 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
 
             <section style={{ marginTop: 24 }}>
               <h3>Prefer a physical session?</h3>
-              <p className="meta">R150 per 2 hours, paid upfront — arranged directly with Lufuno once requested.</p>
+              <p className="meta">R{UNI_PRICE_PER_2H.group} per 2 hours in a group (up to {GROUP_MAX} students), or R{UNI_PRICE_PER_2H.one_on_one} per 2 hours one-on-one. Paid upfront — arranged with Lufuno once requested.</p>
               <form onSubmit={handleBookingSubmit}>
                 <div className="field">
                   <label>Subject</label>
@@ -476,9 +536,17 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
                     {uniSubjects.map((s: string) => <option key={s}>{s}</option>)}
                   </select>
                 </div>
+                <div className="field">
+                  <label>Group or one-on-one?</label>
+                  <select name="sessionType" value={uniType} onChange={e => setUniType(e.target.value as SessionType)}>
+                    <option value="group">Group (up to {GROUP_MAX} students) — R{UNI_PRICE_PER_2H.group} per 2 hours</option>
+                    <option value="one_on_one">One-on-one — R{UNI_PRICE_PER_2H.one_on_one} per 2 hours</option>
+                  </select>
+                </div>
+                <AreaPicker areas={areas} value={uniArea} onChange={setUniArea} notListedHelp="Video lessons work from anywhere, so we suggest those instead." />
                 <div className="field"><label>Preferred day</label><input type="date" name="day" required /></div>
                 <div className="field"><label>Preferred time</label><input type="time" name="time" required /></div>
-                <button className="btn btn-primary" disabled={bookingSubmitting} style={{ opacity: bookingSubmitting ? 0.6 : 1 }}>
+                <button className="btn btn-primary" disabled={bookingSubmitting || uniArea === '__none__'} style={{ opacity: bookingSubmitting || uniArea === '__none__' ? 0.6 : 1 }}>
                   {bookingSubmitting ? 'Requesting...' : 'Request & get payment details'}
                 </button>
               </form>
@@ -497,32 +565,56 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
                 </select>
               </div>
               <div className="field">
+                <label>Group or one-on-one?</label>
+                <select name="sessionType" value={hsType} onChange={e => setHsType(e.target.value as SessionType)}>
+                  <option value="group">Group (up to {GROUP_MAX} students)</option>
+                  <option value="one_on_one">One-on-one</option>
+                </select>
+                <p className="meta" style={{ marginTop: 6 }}>
+                  {hsType === 'group'
+                    ? `Groups have up to ${GROUP_MAX} students. Some groups will have fewer, but never more.`
+                    : 'Just you and your tutor.'}
+                </p>
+              </div>
+              <div className="field">
                 <label>Which subject(s)?</label>
                 {hsGrade === '8' || hsGrade === '9' ? (
                   <>
                     <input type="hidden" name="subjectChoice" value="maths" />
                     <select disabled value="maths">
-                      <option value="maths">Mathematics only — R350/month</option>
+                      <option value="maths">Mathematics only — R{hsPrice('maths', hsType)}/month</option>
                     </select>
                     <p className="meta" style={{ marginTop: 6 }}>Grades 8 and 9 are Mathematics only.</p>
                   </>
                 ) : (
-                  <select name="subjectChoice" required defaultValue="both">
-                    <option value="maths">Mathematics only — R350/month</option>
-                    <option value="physics">Physical Sciences only — R350/month</option>
-                    <option value="both">Both subjects — R600/month</option>
+                  <select name="subjectChoice" required value={hsChoice} onChange={e => setHsChoice(e.target.value)}>
+                    <option value="maths">Mathematics only — R{hsPrice('maths', hsType)}/month</option>
+                    <option value="physics">Physical Sciences only — R{hsPrice('physics', hsType)}/month</option>
+                    <option value="both">Both subjects — R{hsPrice('both', hsType)}/month</option>
                   </select>
                 )}
+                <p className="meta" style={{ marginTop: 6 }}>
+                  {(() => {
+                    const c = hsGrade === '8' || hsGrade === '9' ? 'maths' : hsChoice
+                    const n = hsSessions(c, hsType)
+                    return c === 'both'
+                      ? `${n} sessions a month in total (${n / 2} for each subject).`
+                      : `${n} sessions a month.`
+                  })()}
+                </p>
               </div>
               <div className="field">
                 <label>Online or physical?</label>
-                <select name="format" required defaultValue="online">
+                <select name="format" required value={hsFormat} onChange={e => setHsFormat(e.target.value)}>
                   <option value="online">Online</option>
                   <option value="physical">Physical</option>
                 </select>
-                <p className="meta" style={{ marginTop: 6 }}>Physical sessions for high school only run in June, December and February.</p>
+                <p className="meta" style={{ marginTop: 6 }}>Online and physical cost the same. Physical sessions happen in your area with a tutor who lives nearby.</p>
               </div>
-              <button className="btn btn-primary" disabled={bookingSubmitting} style={{ opacity: bookingSubmitting ? 0.6 : 1 }}>
+              {hsFormat === 'physical' && (
+                <AreaPicker areas={areas} value={hsArea} onChange={setHsArea} notListedHelp="Online sessions work just as well, so we suggest choosing Online." onChooseOnline={() => { setHsFormat('online'); setHsArea('') }} />
+              )}
+              <button className="btn btn-primary" disabled={bookingSubmitting || (hsFormat === 'physical' && hsArea === '__none__')} style={{ opacity: bookingSubmitting || (hsFormat === 'physical' && hsArea === '__none__') ? 0.6 : 1 }}>
                 {bookingSubmitting ? 'Submitting...' : 'Subscribe & get payment details'}
               </button>
             </form>
@@ -681,7 +773,7 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
         {(bookings || []).map((b: any) => (
           <div className="panel" key={b.id}>
             <h4>{b.subject}</h4>
-            <div className="meta">{b.day} at {b.time} · {b.format === 'physical' ? 'Physical' : 'Online'} · R{b.price}</div>
+            <div className="meta">{b.day} at {b.time} · {b.format === 'physical' ? 'Physical' : 'Online'}{b.session_type === 'one_on_one' ? ' · One-on-one' : ' · Group'}{b.area ? ` · ${b.area}` : ''} · R{b.price}</div>
             <StatusPill status={b.status} />
             {b.status === 'confirmed' && b.format === 'online' && b.meeting_link && <p style={{ marginTop: 8 }}><a href={b.meeting_link} target="_blank">Join session &rarr;</a></p>}
           </div>
@@ -689,7 +781,7 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
         {(subs || []).map((s: any) => (
           <div className="panel" key={s.id}>
             <h4>Monthly subscription — {s.month}</h4>
-            <div className="meta">{s.subject_choice === 'maths' ? 'Mathematics' : s.subject_choice === 'physics' ? 'Physical Sciences' : 'Maths + Physical Sciences'}{s.grade ? ` · Gr ${s.grade}` : ''} · {s.format === 'physical' ? 'Physical' : 'Online'} · R{s.price}{s.status === 'confirmed' && s.end_date ? ` · Active until ${s.end_date}` : ''}</div>
+            <div className="meta">{s.subject_choice === 'maths' ? 'Mathematics' : s.subject_choice === 'physics' ? 'Physical Sciences' : 'Maths + Physical Sciences'}{s.grade ? ` · Gr ${s.grade}` : ''} · {s.format === 'physical' ? 'Physical' : 'Online'}{s.session_type === 'one_on_one' ? ' · One-on-one' : ' · Group'}{s.area ? ` · ${s.area}` : ''} · R{s.price}{s.status === 'confirmed' && s.end_date ? ` · Active until ${s.end_date}` : ''}</div>
             <StatusPill status={s.status} />
             {s.status === 'confirmed' && s.format === 'online' && s.meeting_link && <p style={{ marginTop: 8 }}><a href={s.meeting_link} target="_blank">Join session &rarr;</a></p>}
           </div>
