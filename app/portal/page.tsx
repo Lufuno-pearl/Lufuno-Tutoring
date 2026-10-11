@@ -28,7 +28,7 @@ export default async function Portal({ searchParams }: { searchParams?: { view?:
   const isAdmin = isAdminEmail(user.email)
   if (isAdmin && searchParams?.view !== 'student') redirect('/tutor')
 
-  const [{ data: profile }, { data: bookings }, { data: subs }, { data: orders }, { data: messages }, { data: attendance }, { data: videoRequests }, { data: videoTopicRequests }, { data: homeworkRequests }, { data: moduleRequests }, { data: testPreps }, { data: marks }] = await Promise.all([
+  const [{ data: profile }, { data: bookings }, { data: subs }, { data: orders }, { data: messages }, { data: attendance }, { data: videoRequests }, { data: videoTopicRequests }, { data: homeworkRequests }, { data: moduleRequests }, { data: testPreps }, { data: marks }, { data: scheduled }] = await Promise.all([
     supabase.from('profiles').select('tier, full_name').eq('id', user.id).single(),
     supabase.from('bookings').select('*').eq('student_id', user.id).order('created_at', { ascending: false }),
     supabase.from('hs_subscriptions').select('*').eq('student_id', user.id).order('created_at', { ascending: false }),
@@ -41,6 +41,7 @@ export default async function Portal({ searchParams }: { searchParams?: { view?:
     supabase.from('module_requests').select('*, module:uni_modules(id, name, university, year, field)').eq('student_id', user.id).order('created_at', { ascending: false }),
     supabase.from('test_prep').select('*').eq('student_id', user.id).order('test_date', { ascending: true }),
     supabase.from('marks').select('*').eq('student_id', user.id).order('taken_on', { ascending: true }),
+    supabase.from('scheduled_sessions').select('*').eq('student_id', user.id).order('session_date', { ascending: true }),
   ])
 
   // school is read separately so the portal still loads if the school columns are not set up yet
@@ -103,6 +104,7 @@ export default async function Portal({ searchParams }: { searchParams?: { view?:
         moduleRequests={moduleRequests}
         testPreps={testPreps || []}
         marks={marks || []}
+        scheduled={scheduled || []}
         canTestPrep={hasTutorAccess(subs, bookings)}
         actions={{ createBooking, createHsSub, buyPack, markAwaiting, sendMessage, requestVideoAccess, requestCustomPack, requestVideoTopic, submitHomework, respondToSession, userId: user.id }}
       />
