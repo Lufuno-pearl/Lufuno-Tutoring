@@ -4,13 +4,13 @@ import { ChevronRight } from 'lucide-react'
 import AttendanceButtons from '../AttendanceButtons'
 import TutorMaterials from '../tutor/TutorMaterials'
 import MarksView from '../MarksView'
-import ScheduleManager, { studentFormat, studentAlternate } from '../ScheduleManager'
+import ScheduleManager, { studentFormat, studentAlternate, classmatesOf } from '../ScheduleManager'
 
 function subjectLabel(choice?: string) {
   return choice === 'maths' ? 'Mathematics' : choice === 'physics' ? 'Physical Sciences' : 'Maths & Physical Sciences'
 }
 
-export default function PartnerStudents({ scheduleByStudent, marksByStudent, myStudentIds, threads, bookingsByStudent, subsByStudent, attendanceByStudent, actions }: any) {
+export default function PartnerStudents({ allSubs, scheduleByStudent, marksByStudent, myStudentIds, threads, bookingsByStudent, subsByStudent, attendanceByStudent, actions }: any) {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [text, setText] = useState('')
@@ -120,7 +120,7 @@ export default function PartnerStudents({ scheduleByStudent, marksByStudent, myS
       </div>
       <div style={{ marginTop: 14, borderTop: '1px solid var(--line)', paddingTop: 12 }}>
         <h4 style={{ marginTop: 0 }}>Schedule</h4>
-        <ScheduleManager studentId={sid} rows={(scheduleByStudent || {})[sid] || []} defaultFormat={studentFormat(sid, bookingsHere, subsHere)} alternateDefault={studentAlternate(sid, bookingsHere, subsHere)} />
+        <ScheduleManager studentId={sid} rows={(scheduleByStudent || {})[sid] || []} defaultFormat={studentFormat(sid, bookingsHere, subsHere)} alternateDefault={studentAlternate(sid, bookingsHere, subsHere)} classmates={classmatesOf(sid, allSubs || [])} />
       </div>
       <TutorMaterials studentId={sid} studentName={thread.name} />
       <div style={{ marginTop: 14, borderTop: '1px solid var(--line)', paddingTop: 12 }}>

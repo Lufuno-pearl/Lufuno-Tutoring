@@ -14,7 +14,7 @@ import TutorAreas from '../TutorAreas'
 import AvailabilityOverview from './AvailabilityOverview'
 import { GROUP_MAX, UNI_PRICE_PER_2H } from '../../lib/pricing'
 import MarksView from '../MarksView'
-import ScheduleManager, { studentFormat, studentAlternate } from '../ScheduleManager'
+import ScheduleManager, { studentFormat, studentAlternate, classmatesOf } from '../ScheduleManager'
 import TestList, { daysUntil } from '../TestList'
 
 type Tab = 'home' | 'requests' | 'students' | 'chat' | 'more'
@@ -33,7 +33,7 @@ function StatusPill({ status }: { status: string }) {
   return <span className={`status ${status}`}>{label}</span>
 }
 
-function ChatThread({ studentId, thread, actions, marks, schedule, format, alternate }: { studentId: string; thread: any; actions: any; marks?: any[]; schedule?: any[]; format?: 'online' | 'physical'; alternate?: boolean }) {
+function ChatThread({ studentId, thread, actions, marks, schedule, format, alternate, classmates }: { studentId: string; thread: any; actions: any; marks?: any[]; schedule?: any[]; format?: 'online' | 'physical'; alternate?: boolean; classmates?: { id: string; name: string }[] }) {
   const { markAttendance, sendTutorMessage } = actions
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
@@ -66,7 +66,7 @@ function ChatThread({ studentId, thread, actions, marks, schedule, format, alter
       </div>
       <div style={{ marginTop: 14, borderTop: '1px solid var(--line)', paddingTop: 12 }}>
         <h4 style={{ marginTop: 0 }}>Schedule</h4>
-        <ScheduleManager studentId={studentId} rows={schedule || []} defaultFormat={format || 'online'} alternateDefault={!!alternate} />
+        <ScheduleManager studentId={studentId} rows={schedule || []} defaultFormat={format || 'online'} alternateDefault={!!alternate} classmates={classmates || []} />
       </div>
       <TutorMaterials studentId={studentId} studentName={thread.name} />
       <div style={{ marginTop: 14, borderTop: '1px solid var(--line)', paddingTop: 12 }}>
@@ -94,6 +94,10 @@ function MonthSummary({ subs, schoolByStudent }: { subs: any[]; schoolByStudent:
   const group = rows.filter((x: any) => !isOne(x))
   const one = rows.filter(isOne)
   const paid = rows.filter((x: any) => x.status === 'confirmed').length
+  const todayISO = sa.toISOString().slice(0, 10)
+  const active = (subs || []).filter((x: any) => x.status === 'confirmed' && x.end_date && x.end_date >= todayISO)
+  const activeGroup = active.filter((x: any) => !isOne(x)).length
+  const activeOne = active.length - activeGroup
 
   const subjects: [string, string[]][] = [['Mathematics', ['maths', 'both']], ['Physical Sciences', ['physics', 'both']]]
   const forSubject = (list: any[], keys: string[]) => list.filter((x: any) => keys.includes(x.subject_choice) || (!x.subject_choice && keys.includes('both'))).length
@@ -122,6 +126,7 @@ function MonthSummary({ subs, schoolByStudent }: { subs: any[]; schoolByStudent:
           {months.map(m => <option key={m} value={m}>{m}</option>)}
         </select>
       </div>
+      <div className="meta" style={{ margin: '8px 0 0', fontWeight: 600 }}>Active right now (paid, 30 days not over): {active.length} · {activeGroup} group · {activeOne} one-on-one</div>
       <div style={{ display: 'flex', gap: 8, margin: '12px 0' }}>
         {stat(rows.length, 'Total')}
         {stat(group.length, 'Group')}
@@ -572,7 +577,7 @@ function TutorInner({ section, setSection, tab, bookings, subs, orders, partners
           <Back onClick={() => setSelectedStudentId(null)} />
           <h3>{thread.name}</h3>
           <div className="meta" style={{ marginBottom: 10 }}>{thread.email}</div>
-          <ChatThread studentId={selectedStudentId} thread={thread} actions={actions} marks={(marksByStudent || {})[selectedStudentId]} schedule={(scheduleByStudent || {})[selectedStudentId]} format={studentFormat(selectedStudentId, bookings || [], subs || [])} alternate={studentAlternate(selectedStudentId, bookings || [], subs || [])} />
+          <ChatThread studentId={selectedStudentId} thread={thread} actions={actions} marks={(marksByStudent || {})[selectedStudentId]} schedule={(scheduleByStudent || {})[selectedStudentId]} format={studentFormat(selectedStudentId, bookings || [], subs || [])} alternate={studentAlternate(selectedStudentId, bookings || [], subs || [])} classmates={classmatesOf(selectedStudentId, subs || [])} />
         </div>
       )
     }
@@ -641,7 +646,7 @@ function TutorInner({ section, setSection, tab, bookings, subs, orders, partners
               )}
             </div>
           ))}
-          <ChatThread studentId={myStudentId} thread={thread} actions={{ markAttendance, sendTutorMessage }} marks={(marksByStudent || {})[myStudentId]} schedule={(scheduleByStudent || {})[myStudentId]} format={studentFormat(myStudentId, bookings || [], subs || [])} alternate={studentAlternate(myStudentId, bookings || [], subs || [])} />
+          <ChatThread studentId={myStudentId} thread={thread} actions={{ markAttendance, sendTutorMessage }} marks={(marksByStudent || {})[myStudentId]} schedule={(scheduleByStudent || {})[myStudentId]} format={studentFormat(myStudentId, bookings || [], subs || [])} alternate={studentAlternate(myStudentId, bookings || [], subs || [])} classmates={classmatesOf(myStudentId, subs || [])} />
         </div>
       )
     }
