@@ -177,13 +177,13 @@ export function PriceStrip({ tier, onRequest }: { tier: string; onRequest: () =>
   )
 }
 
-export function ReferBanner({ onOpen }: { onOpen: () => void }) {
+export function ReferBanner({ onOpen, subscribed }: { onOpen: () => void; subscribed: boolean }) {
   return (
     <div className="panel refer" onClick={onOpen} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12 }}>
       <Gift size={26} color="#8a6410" />
       <div>
         <div style={{ fontWeight: 700 }}>Bring a friend, earn rewards</div>
-        <div className="meta" style={{ marginBottom: 0 }}>Share your code with friends. Tap to see how.</div>
+        <div className="meta" style={{ marginBottom: 0 }}>{subscribed ? 'Share your code with friends. Tap to see how.' : 'Get R50 off when you subscribe and friends join. Tap to see how.'}</div>
       </div>
     </div>
   )

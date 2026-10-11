@@ -21,15 +21,6 @@ import { hsPrice, hsSessions, UNI_PRICE_PER_2H, GROUP_MAX, SessionType } from '.
 type Section = 'menu' | 'book' | 'packs' | 'chat' | 'history' | 'video' | 'guide' | 'homework' | 'referral' | 'testprep' | 'qotd'
 type Tab = 'home' | 'tutoring' | 'chat' | 'learn' | 'more'
 
-// which bottom tab a screen belongs to
-function tabOf(section: Section): Tab | null {
-  if (section === 'book' || section === 'history' || section === 'testprep') return 'tutoring'
-  if (section === 'chat') return 'chat'
-  if (section === 'packs' || section === 'video' || section === 'homework' || section === 'qotd') return 'learn'
-  if (section === 'referral' || section === 'guide') return 'more'
-  return null
-}
-
 function AreaPicker({ areas, value, onChange, notListedHelp, onChooseOnline }: { areas: string[]; value: string; onChange: (v: string) => void; notListedHelp: string; onChooseOnline?: () => void }) {
   if (areas.length === 0) return null
   const notListed = value === '__none__'
@@ -444,7 +435,7 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
 
     const tile = (label: string, icon: any, gradient: string, onClick: () => void) => (
       <div className="tile" style={{ cursor: 'pointer' }} onClick={onClick}>
-        <div className="tile-art" style={{ background: gradient }}>{icon}</div>
+        <div className="tile-art" style={{ background: gradient }}><span style={{ fontSize: '3rem', lineHeight: 1, filter: 'drop-shadow(0 3px 6px rgba(0,0,0,.25))' }}>{icon}</span></div>
         <div className="tile-body"><div className="name">{label}</div></div>
       </div>
     )
@@ -454,9 +445,9 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
         <div>
           <h3 style={{ marginTop: 0 }}>Tutoring</h3>
           <div className="card-grid">
-            {tile('Request Tutoring', <CalendarPlus size={36} color="#fff" />, 'linear-gradient(135deg, #8B6FD9, #6E4FC7)', () => setSection('book'))}
-            {tile('My Bookings & Attendance', <History size={36} color="#fff" />, 'linear-gradient(135deg, #9B7FE8, #7A5FD0)', () => setSection('history'))}
-            {tile('Test & Exam Prep', <Target size={36} color="#fff" />, 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('testprep'))}
+            {tile('Request Tutoring', '🙋', 'linear-gradient(135deg, #8B6FD9, #6E4FC7)', () => setSection('book'))}
+            {tile('My Bookings & Attendance', '🗓️', 'linear-gradient(135deg, #9B7FE8, #7A5FD0)', () => setSection('history'))}
+            {tile('Test & Exam Prep', '🎯', 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('testprep'))}
           </div>
         </div>
       )
@@ -467,10 +458,10 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
         <div>
           <h3 style={{ marginTop: 0 }}>Learn</h3>
           <div className="card-grid">
-            {tile('Question of the Day', <Target size={36} color="#fff" />, 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('qotd'))}
-            {tile('Study Packs', <BookOpen size={36} color="#fff" />, 'linear-gradient(135deg, #C89B3C, #A87D24)', () => setSection('packs'))}
-            {tile('Video Lessons', <Video size={36} color="#fff" />, 'linear-gradient(135deg, #1FB6A3, #17897B)', () => setSection('video'))}
-            {tier === 'highschool' && tile('Homework Help', <ClipboardList size={36} color="#fff" />, 'linear-gradient(135deg, #E0956F, #C46B3E)', () => setSection('homework'))}
+            {tile(canTestPrep ? 'Question of the Day' : 'Question of the Day 🔒', '💡', 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('qotd'))}
+            {tile('Study Packs', '📚', 'linear-gradient(135deg, #C89B3C, #A87D24)', () => setSection('packs'))}
+            {tile('Video Lessons', '🎬', 'linear-gradient(135deg, #1FB6A3, #17897B)', () => setSection('video'))}
+            {tier === 'highschool' && tile('Homework Help', '📝', 'linear-gradient(135deg, #E0956F, #C46B3E)', () => setSection('homework'))}
           </div>
         </div>
       )
@@ -481,9 +472,9 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
         <div>
           <h3 style={{ marginTop: 0 }}>More</h3>
           <div className="card-grid">
-            {tile('Refer & Earn', <Gift size={36} color="#fff" />, 'linear-gradient(135deg, #F2C14E, #D9A32E)', () => setSection('referral'))}
-            {tile('How It Works', <HelpCircle size={36} color="#fff" />, 'linear-gradient(135deg, #B98CE0, #8B5FC7)', () => setSection('guide'))}
-            {tile('Terms & Conditions', <ScrollText size={36} color="#fff" />, 'linear-gradient(135deg, #7A8FB0, #566B8F)', () => router.push('/terms'))}
+            {tile('Refer & Earn', '🎁', 'linear-gradient(135deg, #F2C14E, #D9A32E)', () => setSection('referral'))}
+            {tile('How It Works', '❓', 'linear-gradient(135deg, #B98CE0, #8B5FC7)', () => setSection('guide'))}
+            {tile('Terms & Conditions', '📜', 'linear-gradient(135deg, #7A8FB0, #566B8F)', () => router.push('/terms'))}
           </div>
         </div>
       )
@@ -509,12 +500,7 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
           <GetStarted hasRequested={hasRequested} hasTutor={false} onRequest={() => setSection('book')} />
           <WhatYouGet tier={tier} />
           <PriceStrip tier={tier} onRequest={() => setSection('book')} />
-          <div className="panel" style={{ cursor: 'pointer' }} onClick={() => setSection('qotd')}>
-            <div className="meta" style={{ marginBottom: 2 }}>Free for everyone</div>
-            <h4 style={{ margin: 0 }}>Try today's question</h4>
-            <div className="meta" style={{ marginBottom: 0 }}>A new Maths or Science question every day. Tap to try it.</div>
-          </div>
-          <ReferBanner onOpen={() => setSection('referral')} />
+          <ReferBanner subscribed={!!canTestPrep} onOpen={() => setSection('referral')} />
           <HelpButton />
         </div>
       )
@@ -528,7 +514,7 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
         <StreakCard attendance={attendance || []} />
         <CountdownCard tests={testPreps || []} onOpen={() => setSection('testprep')} />
         <PlanCard subs={subs || []} attendance={attendance || []} />
-        <ReferBanner onOpen={() => setSection('referral')} />
+        <ReferBanner subscribed={!!canTestPrep} onOpen={() => setSection('referral')} />
       </div>
     )
   }
@@ -814,7 +800,7 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
     return (
       <div>
         <Back />
-        <ReferralBox />
+        <ReferralBox subscribed={!!canTestPrep} onRequest={() => setSection('book')} />
       </div>
     )
   }
@@ -824,7 +810,15 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
       <div>
         <Back />
         <h3>Question of the Day</h3>
-        <QuestionOfDay tier={tier} />
+        {canTestPrep ? (
+          <QuestionOfDay tier={tier} />
+        ) : (
+          <div className="panel">
+            <h4 style={{ marginTop: 0 }}>🔒 For subscribers</h4>
+            <p className="meta">A new Maths or Science question every day is a perk for students who are subscribed and have a tutor. Request tutoring to unlock it.</p>
+            <button className="btn btn-primary" onClick={() => setSection('book')}>Request tutoring</button>
+          </div>
+        )}
       </div>
     )
   }
@@ -904,14 +898,12 @@ export default function PortalHome(props: any) {
   }, [])
   useEffect(() => {
     try { sessionStorage.setItem('portalSection', section) } catch (e) {}
-    const owner = tabOf(section)
-    if (owner) setTab(owner)
   }, [section])
   useEffect(() => {
     try { sessionStorage.setItem('portalTab', tab) } catch (e) {}
   }, [tab])
 
-  const current: Tab = tabOf(section) || tab
+  const current: Tab = tab
   function go(t: Tab) {
     setTab(t)
     setSection(t === 'chat' ? 'chat' : 'menu')
