@@ -186,6 +186,8 @@ function TutorInner({ section, setSection, tab, bookings, subs, orders, partners
     )
     const pendingCount = (bookings || []).filter((b: any) => b.status === 'awaiting').length + (subs || []).filter((x: any) => x.status === 'awaiting').length
     const unassigned = (openBookings || []).length + (openSubs || []).length
+    const packsWaiting = (orders || []).filter((o: any) => o.status === 'awaiting').length + (customPackRequests || []).filter((c: any) => c.status === 'awaiting').length
+    const packsNew = (orders || []).filter((o: any) => o.status === 'pending').length + (customPackRequests || []).filter((c: any) => c.status === 'pending').length
 
     if (tab === 'requests') {
       return (
@@ -196,6 +198,7 @@ function TutorInner({ section, setSection, tab, bookings, subs, orders, partners
             {tile('Assign Tutor', '🧑‍🏫', 'linear-gradient(135deg, #7C6FE0, #5B4FC0)', () => setSection('assign'), unassigned)}
             {tile('Module Requests', '🎓', 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('modules'), pendingModules)}
             {tile('Video Requests', '🎞️', 'linear-gradient(135deg, #E0956F, #C46B3E)', () => setSection('videoreq'), pendingVideos)}
+            {tile('Study Pack Orders', '📚', 'linear-gradient(135deg, #C89B3C, #A87D24)', () => setSection('packs'), packsWaiting + packsNew)}
           </div>
         </div>
       )
@@ -233,7 +236,7 @@ function TutorInner({ section, setSection, tab, bookings, subs, orders, partners
 
     // home: what needs the owner's attention
     const today = new Date().toISOString().slice(0, 10)
-    const needsAttention = pendingCount + unassigned + pendingModules + pendingVideos + soonTests
+    const needsAttention = pendingCount + unassigned + pendingModules + pendingVideos + soonTests + packsWaiting
     return (
       <div>
         <div className="hero">
@@ -245,6 +248,12 @@ function TutorInner({ section, setSection, tab, bookings, subs, orders, partners
           <div className="panel" style={{ cursor: 'pointer', borderLeft: '5px solid #F2C14E' }} onClick={() => setSection('pending')}>
             <h4 style={{ margin: 0 }}>{pendingCount} payment{pendingCount === 1 ? '' : 's'} to confirm</h4>
             <div className="meta" style={{ marginBottom: 0 }}>Tap to review.</div>
+          </div>
+        )}
+        {packsWaiting > 0 && (
+          <div className="panel" style={{ cursor: 'pointer', borderLeft: '5px solid #C89B3C' }} onClick={() => setSection('packs')}>
+            <h4 style={{ margin: 0 }}>{packsWaiting} study pack payment{packsWaiting === 1 ? '' : 's'} to confirm</h4>
+            <div className="meta" style={{ marginBottom: 0 }}>Tap to review and send the pack.</div>
           </div>
         )}
         {unassigned > 0 && (
@@ -417,7 +426,7 @@ function TutorInner({ section, setSection, tab, bookings, subs, orders, partners
         {(orders || []).map((o: any) => (
           <div className="panel" key={o.id}>
             <h4>{o.pack_name}</h4>
-            <div className="meta">{o.profiles?.full_name} · {o.profiles?.email} · R{o.price}{o.reference ? ` · Ref: ${o.reference}` : ''}</div>
+            <div className="meta">{o.profiles?.full_name || 'Student'} · {o.profiles?.email} · R{o.price}{o.reference ? ` · Ref: ${o.reference}` : ''}</div>
             <StatusPill status={o.status} />
             {o.status !== 'confirmed' && (
               <form action={async () => { await confirmPayment('pack_orders', o.id) }} style={{ marginTop: 8 }}>
