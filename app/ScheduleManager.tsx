@@ -10,7 +10,11 @@ export function studentFormat(studentId: string, bookings: any[], subs: any[]): 
 
 type Row = { id: string; subject: string; session_date: string; session_time: string; format: string; note?: string | null }
 
-export default function ScheduleManager({ studentId, rows, defaultFormat = 'online' }: { studentId: string; rows: Row[]; defaultFormat?: 'online' | 'physical' }) {
+export function studentAlternate(studentId: string, bookings: any[], subs: any[]): boolean {
+  return (subs || []).some((x: any) => x.student_id === studentId && x.alternate && x.status !== 'cancelled' && x.status !== 'rejected')
+}
+
+export default function ScheduleManager({ studentId, rows, defaultFormat = 'online', alternateDefault = false }: { studentId: string; rows: Row[]; defaultFormat?: 'online' | 'physical'; alternateDefault?: boolean }) {
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
   const [ok, setOk] = useState(false)
@@ -66,10 +70,10 @@ export default function ScheduleManager({ studentId, rows, defaultFormat = 'onli
             </select>
           </div>
         </div>
-        <p className="meta" style={{ marginTop: 0 }}>{defaultFormat === 'physical' ? 'This student chose in-person sessions. You can switch any single session to online with "Make online" above.' : 'This student chose online sessions.'}</p>
+        <p className="meta" style={{ marginTop: 0 }}>{defaultFormat === 'physical' ? `This student chose ${alternateDefault ? 'in-person and online (both)' : 'in-person'} sessions. You can switch any single session to online with "Make online" above.` : 'This student chose online sessions.'}</p>
         {defaultFormat === 'physical' && (
           <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.88rem', marginBottom: 10 }}>
-            <input type="checkbox" name="alternate" /> Alternate: every second week online
+            <input type="checkbox" name="alternate" defaultChecked={alternateDefault} /> Alternate: every second week online
           </label>
         )}
         <div className="field"><label>Note (optional)</label><input name="note" placeholder="e.g. Bring your Test 1 paper" /></div>

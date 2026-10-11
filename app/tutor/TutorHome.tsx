@@ -14,7 +14,7 @@ import TutorAreas from '../TutorAreas'
 import AvailabilityOverview from './AvailabilityOverview'
 import { GROUP_MAX, UNI_PRICE_PER_2H } from '../../lib/pricing'
 import MarksView from '../MarksView'
-import ScheduleManager, { studentFormat } from '../ScheduleManager'
+import ScheduleManager, { studentFormat, studentAlternate } from '../ScheduleManager'
 import TestList, { daysUntil } from '../TestList'
 
 type Tab = 'home' | 'requests' | 'students' | 'chat' | 'more'
@@ -25,7 +25,7 @@ function subjectLabel(choice?: string) {
 }
 
 function kindLabel(x: any) {
-  return `${x.session_type === 'one_on_one' ? 'One-on-one' : 'Group'}${x.format === 'physical' ? ` · Physical${x.area ? ` (${x.area})` : ''}` : ' · Online'}`
+  return `${x.session_type === 'one_on_one' ? 'One-on-one' : 'Group'}${x.format === 'physical' ? ` · ${x.alternate ? 'In person + online' : 'Physical'}${x.area ? ` (${x.area})` : ''}` : ' · Online'}`
 }
 
 function StatusPill({ status }: { status: string }) {
@@ -33,7 +33,7 @@ function StatusPill({ status }: { status: string }) {
   return <span className={`status ${status}`}>{label}</span>
 }
 
-function ChatThread({ studentId, thread, actions, marks, schedule, format }: { studentId: string; thread: any; actions: any; marks?: any[]; schedule?: any[]; format?: 'online' | 'physical' }) {
+function ChatThread({ studentId, thread, actions, marks, schedule, format, alternate }: { studentId: string; thread: any; actions: any; marks?: any[]; schedule?: any[]; format?: 'online' | 'physical'; alternate?: boolean }) {
   const { markAttendance, sendTutorMessage } = actions
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
@@ -66,7 +66,7 @@ function ChatThread({ studentId, thread, actions, marks, schedule, format }: { s
       </div>
       <div style={{ marginTop: 14, borderTop: '1px solid var(--line)', paddingTop: 12 }}>
         <h4 style={{ marginTop: 0 }}>Schedule</h4>
-        <ScheduleManager studentId={studentId} rows={schedule || []} defaultFormat={format || 'online'} />
+        <ScheduleManager studentId={studentId} rows={schedule || []} defaultFormat={format || 'online'} alternateDefault={!!alternate} />
       </div>
       <TutorMaterials studentId={studentId} studentName={thread.name} />
       <div style={{ marginTop: 14, borderTop: '1px solid var(--line)', paddingTop: 12 }}>
@@ -572,7 +572,7 @@ function TutorInner({ section, setSection, tab, bookings, subs, orders, partners
           <Back onClick={() => setSelectedStudentId(null)} />
           <h3>{thread.name}</h3>
           <div className="meta" style={{ marginBottom: 10 }}>{thread.email}</div>
-          <ChatThread studentId={selectedStudentId} thread={thread} actions={actions} marks={(marksByStudent || {})[selectedStudentId]} schedule={(scheduleByStudent || {})[selectedStudentId]} format={studentFormat(selectedStudentId, bookings || [], subs || [])} />
+          <ChatThread studentId={selectedStudentId} thread={thread} actions={actions} marks={(marksByStudent || {})[selectedStudentId]} schedule={(scheduleByStudent || {})[selectedStudentId]} format={studentFormat(selectedStudentId, bookings || [], subs || [])} alternate={studentAlternate(selectedStudentId, bookings || [], subs || [])} />
         </div>
       )
     }
@@ -641,7 +641,7 @@ function TutorInner({ section, setSection, tab, bookings, subs, orders, partners
               )}
             </div>
           ))}
-          <ChatThread studentId={myStudentId} thread={thread} actions={{ markAttendance, sendTutorMessage }} marks={(marksByStudent || {})[myStudentId]} schedule={(scheduleByStudent || {})[myStudentId]} format={studentFormat(myStudentId, bookings || [], subs || [])} />
+          <ChatThread studentId={myStudentId} thread={thread} actions={{ markAttendance, sendTutorMessage }} marks={(marksByStudent || {})[myStudentId]} schedule={(scheduleByStudent || {})[myStudentId]} format={studentFormat(myStudentId, bookings || [], subs || [])} alternate={studentAlternate(myStudentId, bookings || [], subs || [])} />
         </div>
       )
     }

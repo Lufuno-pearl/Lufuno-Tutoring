@@ -221,7 +221,10 @@ export async function createHsSub(formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { ok: false }
 
-  const format = formData.get('format') as string
+  const rawFormat = formData.get('format') as string
+  // "both" means in person with some sessions online: stored as physical plus an alternate flag
+  const alternate = rawFormat === 'both'
+  const format = alternate ? 'physical' : rawFormat
   const grade = parseInt(formData.get('grade') as string, 10)
   if (!grade || grade < 8 || grade > 12) return { ok: false, message: 'Please choose your grade.' }
   // Grades 8 and 9 are Mathematics only
@@ -276,12 +279,13 @@ export async function createHsSub(formData: FormData) {
     area,
     price,
     reference,
+    ...(alternate ? { alternate: true } : {}),
   })
   if (insertError) return { ok: false, message: 'Something went wrong. Please try again.' }
   await supabase.from('notifications').insert({
     student_id: user.id,
     for_role: 'staff',
-    message: `New high school subscription request (Gr ${grade}, ${subjectChoice}, ${sessionType === 'one_on_one' ? 'one-on-one' : 'group'}, ${format}${area ? `, ${area}` : ''})`,
+    message: `New high school subscription request (Gr ${grade}, ${subjectChoice}, ${sessionType === 'one_on_one' ? 'one-on-one' : 'group'}, ${alternate ? 'in person with some online' : format}${area ? `, ${area}` : ''})`,
   })
   await sendPushToRole('staff', 'New subscription request', `${subjectChoice} subscription`, '/tutor')
   revalidatePath('/portal')

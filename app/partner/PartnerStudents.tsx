@@ -4,7 +4,7 @@ import { ChevronRight } from 'lucide-react'
 import AttendanceButtons from '../AttendanceButtons'
 import TutorMaterials from '../tutor/TutorMaterials'
 import MarksView from '../MarksView'
-import ScheduleManager, { studentFormat } from '../ScheduleManager'
+import ScheduleManager, { studentFormat, studentAlternate } from '../ScheduleManager'
 
 function subjectLabel(choice?: string) {
   return choice === 'maths' ? 'Mathematics' : choice === 'physics' ? 'Physical Sciences' : 'Maths & Physical Sciences'
@@ -120,7 +120,7 @@ export default function PartnerStudents({ scheduleByStudent, marksByStudent, myS
       </div>
       <div style={{ marginTop: 14, borderTop: '1px solid var(--line)', paddingTop: 12 }}>
         <h4 style={{ marginTop: 0 }}>Schedule</h4>
-        <ScheduleManager studentId={sid} rows={(scheduleByStudent || {})[sid] || []} defaultFormat={studentFormat(sid, bookingsHere, subsHere)} />
+        <ScheduleManager studentId={sid} rows={(scheduleByStudent || {})[sid] || []} defaultFormat={studentFormat(sid, bookingsHere, subsHere)} alternateDefault={studentAlternate(sid, bookingsHere, subsHere)} />
       </div>
       <TutorMaterials studentId={sid} studentName={thread.name} />
       <div style={{ marginTop: 14, borderTop: '1px solid var(--line)', paddingTop: 12 }}>

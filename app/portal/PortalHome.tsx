@@ -20,7 +20,7 @@ import { getAreas } from './actions'
 import { hsPrice, hsSessions, UNI_PRICE_PER_2H, GROUP_MAX, SessionType } from '../../lib/pricing'
 
 
-type Section = 'menu' | 'book' | 'packs' | 'chat' | 'history' | 'video' | 'guide' | 'homework' | 'referral' | 'testprep' | 'qotd' | 'marks'
+type Section = 'menu' | 'book' | 'packs' | 'chat' | 'history' | 'video' | 'guide' | 'homework' | 'referral' | 'testprep' | 'qotd' | 'marks' | 'school'
 type Tab = 'home' | 'tutoring' | 'chat' | 'learn' | 'more'
 
 function AreaPicker({ areas, value, onChange, notListedHelp, onChooseOnline }: { areas: string[]; value: string; onChange: (v: string) => void; notListedHelp: string; onChooseOnline?: () => void }) {
@@ -396,7 +396,7 @@ function SessionConfirm({ rows, respondToSession, onAnswered }: { rows: any[]; r
   )
 }
 
-function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visiblePacks, bookings, subs, orders, messages, attendance, videoRequests, myVideoSubjects, homeworkRequests, videoTopicRequests, moduleRequests, testPreps, canTestPrep, marks, scheduled, hasSchool, actions }: any) {
+function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visiblePacks, bookings, subs, orders, messages, attendance, videoRequests, myVideoSubjects, homeworkRequests, videoTopicRequests, moduleRequests, testPreps, canTestPrep, marks, scheduled, hasSchool, mySchool, myProvince, actions }: any) {
   const router = useRouter()
   const [bookingSubmitting, setBookingSubmitting] = useState(false)
   const [thankYou, setThankYou] = useState('')
@@ -476,6 +476,7 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
           <h3 style={{ marginTop: 0 }}>More</h3>
           <div className="card-grid">
             {tile('Refer & Earn', '🎁', 'linear-gradient(135deg, #F2C14E, #D9A32E)', () => setSection('referral'))}
+            {tier === 'highschool' && tile('My School', '🏫', 'linear-gradient(135deg, #5FA3D9, #3F7FB8)', () => setSection('school'))}
             {tile('How It Works', '❓', 'linear-gradient(135deg, #B98CE0, #8B5FC7)', () => setSection('guide'))}
             {tile('Terms & Conditions', '📜', 'linear-gradient(135deg, #7A8FB0, #566B8F)', () => router.push('/terms'))}
           </div>
@@ -660,13 +661,14 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
                 <select name="format" required value={hsFormat} onChange={e => setHsFormat(e.target.value)}>
                   <option value="online">Online</option>
                   <option value="physical">Physical</option>
+                  <option value="both">Both (some in person, some online)</option>
                 </select>
-                <p className="meta" style={{ marginTop: 6 }}>Online and physical cost the same. Physical sessions happen in your area with a tutor who lives nearby. Prefer meeting in person but sometimes can't make it? Choose Physical. On any day you can't come, your tutor can switch that one session to online.</p>
+                <p className="meta" style={{ marginTop: 6 }}>Online and physical cost the same. Physical sessions happen in your area with a tutor who lives nearby. Prefer meeting in person but sometimes can't make it? Choose Both and your tutor will alternate some sessions in person and some online. On any day you can't come, your tutor can switch that one session to online.</p>
               </div>
-              {hsFormat === 'physical' && (
+              {(hsFormat === 'physical' || hsFormat === 'both') && (
                 <AreaPicker areas={areas} value={hsArea} onChange={setHsArea} notListedHelp="Online sessions work just as well, so we suggest choosing Online." onChooseOnline={() => { setHsFormat('online'); setHsArea('') }} />
               )}
-              <button className="btn btn-primary" disabled={bookingSubmitting || (hsFormat === 'physical' && hsArea === '__none__')} style={{ opacity: bookingSubmitting || (hsFormat === 'physical' && hsArea === '__none__') ? 0.6 : 1 }}>
+              <button className="btn btn-primary" disabled={bookingSubmitting || ((hsFormat === 'physical' || hsFormat === 'both') && hsArea === '__none__')} style={{ opacity: bookingSubmitting || ((hsFormat === 'physical' || hsFormat === 'both') && hsArea === '__none__') ? 0.6 : 1 }}>
                 {bookingSubmitting ? 'Submitting...' : 'Subscribe & get payment details'}
               </button>
             </form>
@@ -801,6 +803,16 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
     )
   }
 
+  if (section === 'school') {
+    return (
+      <div>
+        <Back />
+        <h3>My School</h3>
+        <SchoolCard editing initialSchool={mySchool || ''} initialProvince={myProvince || ''} />
+      </div>
+    )
+  }
+
   if (section === 'referral') {
     return (
       <div>
@@ -888,7 +900,7 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
         {(subs || []).map((s: any) => (
           <div className="panel" key={s.id}>
             <h4>Monthly subscription — {s.month}</h4>
-            <div className="meta">{s.subject_choice === 'maths' ? 'Mathematics' : s.subject_choice === 'physics' ? 'Physical Sciences' : 'Maths + Physical Sciences'}{s.grade ? ` · Gr ${s.grade}` : ''} · {s.format === 'physical' ? 'Physical' : 'Online'}{s.session_type === 'one_on_one' ? ' · One-on-one' : ' · Group'}{s.area ? ` · ${s.area}` : ''} · R{s.price}{s.status === 'confirmed' && s.end_date ? ` · Active until ${s.end_date}` : ''}</div>
+            <div className="meta">{s.subject_choice === 'maths' ? 'Mathematics' : s.subject_choice === 'physics' ? 'Physical Sciences' : 'Maths + Physical Sciences'}{s.grade ? ` · Gr ${s.grade}` : ''} · {s.format === 'physical' ? (s.alternate ? 'In person + online' : 'Physical') : 'Online'}{s.session_type === 'one_on_one' ? ' · One-on-one' : ' · Group'}{s.area ? ` · ${s.area}` : ''} · R{s.price}{s.status === 'confirmed' && s.end_date ? ` · Active until ${s.end_date}` : ''}</div>
             <StatusPill status={s.status} />
             <PaySteps status={s.status} />
             {s.status === 'confirmed' && s.format === 'online' && s.meeting_link && <p style={{ marginTop: 8 }}><a href={s.meeting_link} target="_blank">Join session &rarr;</a></p>}
@@ -916,7 +928,7 @@ export default function PortalHome(props: any) {
     try {
       const saved = sessionStorage.getItem('portalSection') as Section | null
       const savedTab = sessionStorage.getItem('portalTab') as Tab | null
-      const sections: Section[] = ['menu', 'book', 'packs', 'chat', 'history', 'video', 'guide', 'homework', 'referral', 'testprep', 'qotd', 'marks']
+      const sections: Section[] = ['menu', 'book', 'packs', 'chat', 'history', 'video', 'guide', 'homework', 'referral', 'testprep', 'qotd', 'marks', 'school']
       const tabs: Tab[] = ['home', 'tutoring', 'chat', 'learn', 'more']
       if (saved && sections.includes(saved)) setSection(saved)
       if (savedTab && tabs.includes(savedTab)) setTab(savedTab)

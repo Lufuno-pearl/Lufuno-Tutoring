@@ -94,7 +94,7 @@ export function PlanCard({ subs, attendance }: { subs: any[]; attendance: any[] 
     <div className="panel">
       <div className="meta" style={{ marginBottom: 2 }}>My plan</div>
       <h4 style={{ margin: 0 }}>{subject}</h4>
-      <div className="meta">{type === 'one_on_one' ? 'One-on-one' : 'Group'} · {sub.format === 'physical' ? 'In person' : 'Online'} · active until {sub.end_date}</div>
+      <div className="meta">{type === 'one_on_one' ? 'One-on-one' : 'Group'} · {sub.format === 'physical' ? (sub.alternate ? 'In person + online' : 'In person') : 'Online'} · active until {sub.end_date}</div>
       <div className="bar"><div className="bar-fill" style={{ width: `${pct}%` }} /></div>
       <div className="meta" style={{ marginBottom: 0 }}>{Math.min(used, total)} of {total} sessions used this month</div>
     </div>
