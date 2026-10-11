@@ -118,6 +118,13 @@ export default async function PartnerDashboard() {
     </div>
   )
 
+  // confirmed one-off sessions that are today (South Africa is UTC+2)
+  const saToday = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString().slice(0, 10)
+  const todaySessions = (myBookings || [])
+    .filter((b: any) => b.status === 'confirmed' && b.day === saToday)
+    .sort((a: any, b: any) => String(a.time).localeCompare(String(b.time)))
+    .map((b: any) => ({ id: b.id, subject: b.subject, time: b.time, format: b.format, area: b.area, meeting_link: b.meeting_link, studentName: b.profiles?.full_name || 'Student' }))
+
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -130,6 +137,8 @@ export default async function PartnerDashboard() {
       <p className="meta">Signed in as {profile.full_name}</p>
 
       <PartnerHome
+        name={profile.full_name || ''}
+        today={todaySessions}
         openCount={(openBookings || []).length + (openSubs || []).length}
         requestCount={homework.filter((h: any) => h.status !== 'solved').length + videos.filter((v: any) => v.status !== 'ready').length}
         studentCount={myStudentIds.length}
