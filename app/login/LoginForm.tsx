@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Eye, EyeOff } from 'lucide-react'
 import { createClient } from '../../lib/supabase/client'
+import { isAdminEmail } from '../../lib/admin'
 
 export default function LoginForm() {
   const [mode, setMode] = useState<'signup' | 'signin'>('signup')
@@ -21,7 +22,7 @@ export default function LoginForm() {
 
   async function afterAuth(user: any, supabase: any) {
     if (!user) { router.push('/portal'); return }
-    if (user.email === 'pearllufunomoyo@gmail.com') { router.push('/tutor'); return }
+    if (isAdminEmail(user.email)) { router.push('/tutor'); return }
     const { data: profile } = await supabase.from('profiles').select('role, tier').eq('id', user.id).single()
     if (profile?.role === 'partner') { router.push('/partner'); return }
     if (!profile?.tier && (tier === 'university' || tier === 'highschool')) {
