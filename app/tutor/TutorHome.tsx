@@ -13,6 +13,7 @@ import AvailabilityBoard from '../AvailabilityBoard'
 import TutorAreas from '../TutorAreas'
 import AvailabilityOverview from './AvailabilityOverview'
 import { GROUP_MAX, UNI_PRICE_PER_2H } from '../../lib/pricing'
+import MarksView from '../MarksView'
 import TestList, { daysUntil } from '../TestList'
 
 type Tab = 'home' | 'requests' | 'students' | 'chat' | 'more'
@@ -31,7 +32,7 @@ function StatusPill({ status }: { status: string }) {
   return <span className={`status ${status}`}>{label}</span>
 }
 
-function ChatThread({ studentId, thread, actions }: { studentId: string; thread: any; actions: any }) {
+function ChatThread({ studentId, thread, actions, marks }: { studentId: string; thread: any; actions: any; marks?: any[] }) {
   const { markAttendance, sendTutorMessage } = actions
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
@@ -64,6 +65,10 @@ function ChatThread({ studentId, thread, actions }: { studentId: string; thread:
       </div>
       <TutorMaterials studentId={studentId} studentName={thread.name} />
       <div style={{ marginTop: 14, borderTop: '1px solid var(--line)', paddingTop: 12 }}>
+        <h4 style={{ marginTop: 0 }}>Marks</h4>
+        <MarksView marks={marks || []} subjects={[]} mode="tutor" studentId={studentId} />
+      </div>
+      <div style={{ marginTop: 14, borderTop: '1px solid var(--line)', paddingTop: 12 }}>
         <div className="meta" style={{ marginBottom: 6 }}>Mark today's session</div>
         <AttendanceButtons studentId={studentId} markAttendance={markAttendance} />
       </div>
@@ -71,7 +76,7 @@ function ChatThread({ studentId, thread, actions }: { studentId: string; thread:
   )
 }
 
-function TutorInner({ section, setSection, tab, bookings, subs, orders, partners, threadsByStudent, attendanceRows, myAvailable, openBookings, openSubs, myClaimedBookings, myClaimedSubs, videoRequests, customPackRequests, homeworkRequests, videoTopicRequests, moduleRequests, testPreps, actions }: any) {
+function TutorInner({ section, setSection, tab, bookings, subs, orders, partners, threadsByStudent, attendanceRows, myAvailable, openBookings, openSubs, myClaimedBookings, myClaimedSubs, videoRequests, customPackRequests, homeworkRequests, videoTopicRequests, moduleRequests, testPreps, marksByStudent, actions }: any) {
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null)
   const [chatSearch, setChatSearch] = useState('')
   const [myStudentId, setMyStudentId] = useState<string | null>(null)
@@ -478,7 +483,7 @@ function TutorInner({ section, setSection, tab, bookings, subs, orders, partners
           <Back onClick={() => setSelectedStudentId(null)} />
           <h3>{thread.name}</h3>
           <div className="meta" style={{ marginBottom: 10 }}>{thread.email}</div>
-          <ChatThread studentId={selectedStudentId} thread={thread} actions={actions} />
+          <ChatThread studentId={selectedStudentId} thread={thread} actions={actions} marks={(marksByStudent || {})[selectedStudentId]} />
         </div>
       )
     }
@@ -547,7 +552,7 @@ function TutorInner({ section, setSection, tab, bookings, subs, orders, partners
               )}
             </div>
           ))}
-          <ChatThread studentId={myStudentId} thread={thread} actions={{ markAttendance, sendTutorMessage }} />
+          <ChatThread studentId={myStudentId} thread={thread} actions={{ markAttendance, sendTutorMessage }} marks={(marksByStudent || {})[myStudentId]} />
         </div>
       )
     }

@@ -14,7 +14,7 @@ export default async function TutorDashboard() {
   if (!user) redirect('/login')
   if (!ADMIN_EMAILS.includes(user.email!)) redirect('/portal')
 
-  const [{ data: bookings }, { data: subs }, { data: orders }, { data: messagesDesc }, { data: attendanceRows }, { data: partners }, { data: myProfile }, { data: videoRequests }, { data: customPackRequests }, { data: homeworkRequests }, { data: videoTopicRequestsRaw }, { data: areaRows }, { data: moduleRequests }, { data: testPreps }] = await Promise.all([
+  const [{ data: bookings }, { data: subs }, { data: orders }, { data: messagesDesc }, { data: attendanceRows }, { data: partners }, { data: myProfile }, { data: videoRequests }, { data: customPackRequests }, { data: homeworkRequests }, { data: videoTopicRequestsRaw }, { data: areaRows }, { data: moduleRequests }, { data: testPreps }, { data: marksRows }] = await Promise.all([
     supabase.from('bookings').select('*, profiles:profiles!bookings_student_id_fkey(full_name, email, tier)').order('created_at', { ascending: false }),
     supabase.from('hs_subscriptions').select('*, profiles:profiles!hs_subscriptions_student_id_fkey(full_name, email, tier)').order('created_at', { ascending: false }),
     supabase.from('pack_orders').select('*, profiles(full_name, email, tier)').order('created_at', { ascending: false }),
@@ -29,6 +29,7 @@ export default async function TutorDashboard() {
     supabase.from('tutor_areas').select('tutor_id, name'),
     supabase.from('module_requests').select('*, module:uni_modules(id, name, university, year, field), profiles(full_name, email)').order('created_at', { ascending: false }).limit(300),
     supabase.from('test_prep').select('*, profiles(full_name, email)').eq('status', 'upcoming').order('test_date', { ascending: true }),
+    supabase.from('marks').select('*').order('taken_on', { ascending: true }).limit(2000),
   ])
 
   // each tutor's areas and how many group students they already have
@@ -48,6 +49,9 @@ export default async function TutorDashboard() {
     ...v,
     profiles: (topicProfiles || []).find((p: any) => p.id === v.student_id) || null,
   }))
+
+  const marksByStudent: Record<string, any[]> = {}
+  ;(marksRows || []).forEach((m: any) => { (marksByStudent[m.student_id] = marksByStudent[m.student_id] || []).push(m) })
 
   // newest 500 messages, shown oldest to newest inside each chat thread
   const messages = (messagesDesc || []).slice().reverse()
@@ -100,6 +104,7 @@ export default async function TutorDashboard() {
         videoTopicRequests={videoTopicRequests}
         moduleRequests={moduleRequests}
         testPreps={testPreps || []}
+        marksByStudent={marksByStudent}
         actions={{ signOut, answerModuleRequest, confirmPayment, setMeetingLink, assignTutor, markAttendance, sendTutorMessage, toggleAvailable, claim, setCustomPackLink, markHomeworkSolved, setVideoTopicLink }}
       />
     </div>

@@ -8,6 +8,7 @@ import MyVideos from './MyVideos'
 import FileBox from '../FileBox'
 import StoredVideo from '../StoredVideo'
 import ReferralBox from './ReferralBox'
+import MarksView from '../MarksView'
 import ModuleFinder from './ModuleFinder'
 import NextSession from './NextSession'
 import TestPrep from './TestPrep'
@@ -18,7 +19,7 @@ import { getAreas } from './actions'
 import { hsPrice, hsSessions, UNI_PRICE_PER_2H, GROUP_MAX, SessionType } from '../../lib/pricing'
 
 
-type Section = 'menu' | 'book' | 'packs' | 'chat' | 'history' | 'video' | 'guide' | 'homework' | 'referral' | 'testprep' | 'qotd'
+type Section = 'menu' | 'book' | 'packs' | 'chat' | 'history' | 'video' | 'guide' | 'homework' | 'referral' | 'testprep' | 'qotd' | 'marks'
 type Tab = 'home' | 'tutoring' | 'chat' | 'learn' | 'more'
 
 function AreaPicker({ areas, value, onChange, notListedHelp, onChooseOnline }: { areas: string[]; value: string; onChange: (v: string) => void; notListedHelp: string; onChooseOnline?: () => void }) {
@@ -394,7 +395,7 @@ function SessionConfirm({ rows, respondToSession, onAnswered }: { rows: any[]; r
   )
 }
 
-function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visiblePacks, bookings, subs, orders, messages, attendance, videoRequests, myVideoSubjects, homeworkRequests, videoTopicRequests, moduleRequests, testPreps, canTestPrep, actions }: any) {
+function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visiblePacks, bookings, subs, orders, messages, attendance, videoRequests, myVideoSubjects, homeworkRequests, videoTopicRequests, moduleRequests, testPreps, canTestPrep, marks, actions }: any) {
   const router = useRouter()
   const [bookingSubmitting, setBookingSubmitting] = useState(false)
   const [thankYou, setThankYou] = useState('')
@@ -447,6 +448,7 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
           <div className="card-grid">
             {tile('Request Tutoring', '🙋', 'linear-gradient(135deg, #8B6FD9, #6E4FC7)', () => setSection('book'))}
             {tile('My Bookings & Attendance', '🗓️', 'linear-gradient(135deg, #9B7FE8, #7A5FD0)', () => setSection('history'))}
+            {tile('My Marks', '📈', 'linear-gradient(135deg, #2E7D4F, #1F5C38)', () => setSection('marks'))}
             {tile('Test & Exam Prep', '🎯', 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('testprep'))}
           </div>
         </div>
@@ -823,6 +825,27 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
     )
   }
 
+  if (section === 'marks') {
+    const markSubjects: string[] = tier === 'highschool'
+      ? ['Mathematics', 'Physical Sciences']
+      : Array.from(new Set<string>([...(uniSubjects || []), ...((moduleRequests || []).map((m: any) => m.module?.name).filter(Boolean))]))
+    return (
+      <div>
+        <Back />
+        <h3>My Marks</h3>
+        {canTestPrep ? (
+          <MarksView marks={marks || []} subjects={markSubjects} mode="student" />
+        ) : (
+          <div className="panel">
+            <h4 style={{ marginTop: 0 }}>🔒 Available once you have a tutor</h4>
+            <p className="meta">Track your test marks and see your progress over time. It unlocks once you are subscribed and a tutor is assigned to you.</p>
+            <button className="btn btn-primary" onClick={() => setSection('book')}>Request tutoring</button>
+          </div>
+        )}
+      </div>
+    )
+  }
+
   if (section === 'testprep') {
     const subjectOptions: string[] = tier === 'highschool'
       ? ['Mathematics', 'Physical Sciences']
@@ -890,7 +913,7 @@ export default function PortalHome(props: any) {
     try {
       const saved = sessionStorage.getItem('portalSection') as Section | null
       const savedTab = sessionStorage.getItem('portalTab') as Tab | null
-      const sections: Section[] = ['menu', 'book', 'packs', 'chat', 'history', 'video', 'guide', 'homework', 'referral', 'testprep', 'qotd']
+      const sections: Section[] = ['menu', 'book', 'packs', 'chat', 'history', 'video', 'guide', 'homework', 'referral', 'testprep', 'qotd', 'marks']
       const tabs: Tab[] = ['home', 'tutoring', 'chat', 'learn', 'more']
       if (saved && sections.includes(saved)) setSection(saved)
       if (savedTab && tabs.includes(savedTab)) setTab(savedTab)
