@@ -2,8 +2,8 @@
 import { useEffect, useState } from 'react'
 import { CalendarClock, Video, MapPin } from 'lucide-react'
 
-type Booking = { id: string; subject: string; day: string | null; time: string | null; format: string | null; area?: string | null; status: string; meeting_link?: string | null }
-type Sub = { id: string; subject_choice: string; format: string | null; status: string; meeting_link?: string | null; end_date?: string | null }
+type Booking = { id: string; tutor_id?: string | null; subject: string; day: string | null; time: string | null; format: string | null; area?: string | null; status: string; meeting_link?: string | null }
+type Sub = { id: string; tutor_id?: string | null; subject_choice: string; format: string | null; status: string; meeting_link?: string | null; end_date?: string | null }
 
 function when(d: Date, now: Date) {
   const startOf = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime()
@@ -69,13 +69,34 @@ export default function NextSession({ name, bookings, subs, onRequest }: { name:
             <a className="btn btn-gold" href={classLink.meeting_link!} target="_blank" rel="noopener noreferrer" style={{ marginTop: 12 }}>Join class</a>
           </>
         )}
-        {now && !next && !classLink && (
-          <>
-            <div className="next-title">Nothing booked yet</div>
-            <div className="next-when">Request a tutor and your sessions will show up here.</div>
-            <button className="btn btn-gold" style={{ marginTop: 12 }} onClick={onRequest}>Request tutoring</button>
-          </>
-        )}
+        {now && !next && !classLink && (() => {
+          const mine = [...(subs || []), ...(bookings || [])].filter((x: any) => x.status !== 'cancelled' && x.status !== 'rejected')
+          const confirmed = mine.filter((x: any) => x.status === 'confirmed')
+          const hasTutor = confirmed.some((x: any) => x.tutor_id)
+          if (confirmed.length > 0) {
+            return (
+              <>
+                <div className="next-title">{hasTutor ? 'Your tutor will set your session times' : 'Finding your tutor'}</div>
+                <div className="next-when">{hasTutor ? "You're all set. Your day and time will show up here as soon as your tutor schedules it." : "You're subscribed. We're assigning a tutor to you and will let you know."}</div>
+              </>
+            )
+          }
+          if (mine.length > 0) {
+            return (
+              <>
+                <div className="next-title">Request received</div>
+                <div className="next-when">Once your payment is confirmed, your tutor will be assigned and your sessions will show up here.</div>
+              </>
+            )
+          }
+          return (
+            <>
+              <div className="next-title">Nothing booked yet</div>
+              <div className="next-when">Request a tutor and your sessions will show up here.</div>
+              <button className="btn btn-gold" style={{ marginTop: 12 }} onClick={onRequest}>Request tutoring</button>
+            </>
+          )
+        })()}
       </div>
     </div>
   )
