@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useLayoutEffect } from 'react'
-import { Clock, UserCog, BookOpen, ClipboardList, MessageCircle, ChevronRight, Star, Video, Film, Gift, Calendar, GraduationCap } from 'lucide-react'
+import { Clock, UserCog, BookOpen, ClipboardList, MessageCircle, ChevronRight, Star, Video, Film, Gift, Calendar, GraduationCap, Target } from 'lucide-react'
 import TutorMaterials from './TutorMaterials'
 import PackUpload from './PackUpload'
 import VideoManager from './VideoManager'
@@ -12,8 +12,9 @@ import AvailabilityBoard from '../AvailabilityBoard'
 import TutorAreas from '../TutorAreas'
 import AvailabilityOverview from './AvailabilityOverview'
 import { GROUP_MAX, UNI_PRICE_PER_2H } from '../../lib/pricing'
+import TestList, { daysUntil } from '../TestList'
 
-type Section = 'menu' | 'pending' | 'assign' | 'packs' | 'sessions' | 'chat' | 'mytutoring' | 'videos' | 'videoreq' | 'referrals' | 'availability' | 'modules'
+type Section = 'menu' | 'pending' | 'assign' | 'packs' | 'sessions' | 'chat' | 'mytutoring' | 'videos' | 'videoreq' | 'referrals' | 'availability' | 'modules' | 'tests'
 
 function subjectLabel(choice?: string) {
   return choice === 'maths' ? 'Mathematics' : choice === 'physics' ? 'Physical Sciences' : 'Maths & Physical Sciences'
@@ -68,7 +69,7 @@ function ChatThread({ studentId, thread, actions }: { studentId: string; thread:
   )
 }
 
-export default function TutorHome({ bookings, subs, orders, partners, threadsByStudent, attendanceRows, myAvailable, openBookings, openSubs, myClaimedBookings, myClaimedSubs, videoRequests, customPackRequests, homeworkRequests, videoTopicRequests, moduleRequests, actions }: any) {
+export default function TutorHome({ bookings, subs, orders, partners, threadsByStudent, attendanceRows, myAvailable, openBookings, openSubs, myClaimedBookings, myClaimedSubs, videoRequests, customPackRequests, homeworkRequests, videoTopicRequests, moduleRequests, testPreps, actions }: any) {
   const [section, setSection] = useState<Section>('menu')
   useLayoutEffect(() => {
     const saved = sessionStorage.getItem('tutorSection') as Section | null
@@ -81,6 +82,7 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
   const [chatSearch, setChatSearch] = useState('')
   const [myStudentId, setMyStudentId] = useState<string | null>(null)
   const pendingModules = (moduleRequests || []).filter((m: any) => m.status === 'requested').length
+  const soonTests = (testPreps || []).filter((t: any) => daysUntil(t.test_date) >= 0 && daysUntil(t.test_date) <= 7).length
   const pendingVideos = (videoTopicRequests || []).filter((v: any) => v.status !== 'ready').length
   const { answerModuleRequest, confirmPayment, setMeetingLink, assignTutor, toggleAvailable, claim, markAttendance, sendTutorMessage, setCustomPackLink, markHomeworkSolved, setVideoTopicLink } = actions
 
@@ -125,6 +127,15 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
               )}
             </div>
             <div className="tile-body"><div className="name">Module Requests</div></div>
+          </div>
+          <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('tests')}>
+            <div className="tile-art" style={{ background: 'linear-gradient(135deg, #D96F8B, #B54767)', position: 'relative' }}>
+              <Target size={36} color="#fff" />
+              {soonTests > 0 && (
+                <span style={{ position: 'absolute', top: 10, right: 12, background: '#A6443A', color: '#fff', fontSize: '0.75rem', borderRadius: 100, minWidth: 22, height: 22, padding: '0 5px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{soonTests}</span>
+              )}
+            </div>
+            <div className="tile-body"><div className="name">Upcoming Tests</div></div>
           </div>
           <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('referrals')}>
             <div className="tile-art" style={{ background: 'linear-gradient(135deg, #F2C14E, #D9A32E)' }}><Gift size={36} color="#fff" /></div>
@@ -394,6 +405,17 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
             <div className="meta">{r.profiles?.full_name} · {r.module?.university} · {r.status === 'available' ? `Available${r.tutor_id ? ` · ${(partners || []).find((p: any) => p.id === r.tutor_id)?.full_name || 'tutor'}` : ''}` : 'No tutor yet'}</div>
           </div>
         ))}
+      </div>
+    )
+  }
+
+  if (section === 'tests') {
+    return (
+      <div>
+        <Back />
+        <h3>Upcoming tests & exams</h3>
+        <p className="meta">Topics students told us to prepare for, soonest first.</p>
+        <TestList rows={testPreps || []} showStudent empty="No upcoming tests or exams yet." />
       </div>
     )
   }

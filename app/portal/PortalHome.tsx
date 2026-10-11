@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useLayoutEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { CalendarPlus, BookOpen, MessageCircle, Landmark, History, Video, HelpCircle, ClipboardList, Gift, ScrollText } from 'lucide-react'
+import { CalendarPlus, BookOpen, MessageCircle, Landmark, History, Video, HelpCircle, ClipboardList, Gift, ScrollText, Target } from 'lucide-react'
 import MaterialsSection from './MaterialsSection'
 import PackDownload from './PackDownload'
 import MyVideos from './MyVideos'
@@ -10,11 +10,13 @@ import StoredVideo from '../StoredVideo'
 import ReferralBox from './ReferralBox'
 import ModuleFinder from './ModuleFinder'
 import NextSession from './NextSession'
+import TestPrep from './TestPrep'
+import { daysUntil, whenLabel } from '../TestList'
 import { getAreas } from './actions'
 import { hsPrice, hsSessions, UNI_PRICE_PER_2H, GROUP_MAX, SessionType } from '../../lib/pricing'
 
 
-type Section = 'menu' | 'book' | 'packs' | 'chat' | 'bank' | 'history' | 'video' | 'guide' | 'homework' | 'referral'
+type Section = 'menu' | 'book' | 'packs' | 'chat' | 'bank' | 'history' | 'video' | 'guide' | 'homework' | 'referral' | 'testprep'
 
 function AreaPicker({ areas, value, onChange, notListedHelp, onChooseOnline }: { areas: string[]; value: string; onChange: (v: string) => void; notListedHelp: string; onChooseOnline?: () => void }) {
   if (areas.length === 0) return null
@@ -351,7 +353,7 @@ function SessionConfirm({ rows, respondToSession, onAnswered }: { rows: any[]; r
   )
 }
 
-export default function PortalHome({ name, tier, uniSubjects, visiblePacks, bookings, subs, orders, messages, attendance, videoRequests, myVideoSubjects, homeworkRequests, videoTopicRequests, moduleRequests, actions }: any) {
+export default function PortalHome({ name, tier, uniSubjects, visiblePacks, bookings, subs, orders, messages, attendance, videoRequests, myVideoSubjects, homeworkRequests, videoTopicRequests, moduleRequests, testPreps, actions }: any) {
   const [section, setSection] = useState<Section>('menu')
   const router = useRouter()
   useLayoutEffect(() => {
@@ -399,6 +401,19 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
     return (
       <div>
         <NextSession name={name || ''} bookings={bookings || []} subs={subs || []} onRequest={() => setSection('book')} />
+        {(() => {
+          const soon = (testPreps || [])
+            .filter((t: any) => t.status === 'upcoming' && daysUntil(t.test_date) >= 0 && daysUntil(t.test_date) <= 14)
+            .sort((a: any, b: any) => (a.test_date < b.test_date ? -1 : 1))[0]
+          if (!soon) return null
+          return (
+            <div className="panel" style={{ cursor: 'pointer', borderLeft: '5px solid #A6443A' }} onClick={() => setSection('testprep')}>
+              <div className="meta" style={{ marginBottom: 2 }}>Coming up</div>
+              <h4 style={{ margin: 0 }}>{soon.subject} {soon.kind === 'exam' ? 'exam' : 'test'} {whenLabel(soon.test_date)}</h4>
+              <div className="meta" style={{ marginBottom: 0 }}>Tap to see or change your topics.</div>
+            </div>
+          )
+        })()}
         <SessionConfirm rows={toConfirm} respondToSession={respondToSession} onAnswered={(id: string) => setAnswered(a => [...a, id])} />
         <div className="card-grid">
           <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('book')}>
@@ -429,6 +444,10 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
               <div className="tile-body"><div className="name">Homework Help</div></div>
             </div>
           )}
+          <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('testprep')}>
+            <div className="tile-art" style={{ background: 'linear-gradient(135deg, #D96F8B, #B54767)' }}><Target size={36} color="#fff" /></div>
+            <div className="tile-body"><div className="name">Test & Exam Prep</div></div>
+          </div>
           <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('referral')}>
             <div className="tile-art" style={{ background: 'linear-gradient(135deg, #F2C14E, #D9A32E)' }}><Gift size={36} color="#fff" /></div>
             <div className="tile-body"><div className="name">Refer & Earn</div></div>
@@ -743,6 +762,19 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
       <div>
         <Back />
         <ReferralBox />
+      </div>
+    )
+  }
+
+  if (section === 'testprep') {
+    const subjectOptions: string[] = tier === 'highschool'
+      ? ['Mathematics', 'Physical Sciences']
+      : Array.from(new Set<string>([...(uniSubjects || []), ...((moduleRequests || []).map((m: any) => m.module?.name).filter(Boolean))]))
+    return (
+      <div>
+        <Back />
+        <h3>Test & Exam Prep</h3>
+        <TestPrep rows={testPreps || []} subjects={subjectOptions} />
       </div>
     )
   }

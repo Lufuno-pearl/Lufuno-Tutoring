@@ -9,6 +9,7 @@ import PartnerRequests from './PartnerRequests'
 import AvailabilityBoard from '../AvailabilityBoard'
 import PartnerHome from './PartnerHome'
 import TutorAreas from '../TutorAreas'
+import TestList, { daysUntil } from '../TestList'
 
 function kindLabel(x: any) {
   return `${x.session_type === 'one_on_one' ? 'One-on-one' : 'Group'}${x.format === 'physical' ? ` · Physical${x.area ? ` (${x.area})` : ''}` : ' · Online'}`
@@ -22,7 +23,7 @@ export default async function PartnerDashboard() {
   const { data: profile } = await supabase.from('profiles').select('role, available, full_name').eq('id', user.id).single()
   if (!profile || profile.role !== 'partner') redirect('/portal')
 
-  const [{ data: openBookings }, { data: openSubs }, { data: myBookings }, { data: mySubs }, { data: attendanceRows }, { data: homeworkRows }, { data: videoRows }] = await Promise.all([
+  const [{ data: openBookings }, { data: openSubs }, { data: myBookings }, { data: mySubs }, { data: attendanceRows }, { data: homeworkRows }, { data: videoRows }, { data: testRows }] = await Promise.all([
     supabase.from('bookings').select('*, profiles:profiles!bookings_student_id_fkey(full_name, email)').is('tutor_id', null).order('created_at', { ascending: false }),
     supabase.from('hs_subscriptions').select('*, profiles:profiles!hs_subscriptions_student_id_fkey(full_name, email)').is('tutor_id', null).order('created_at', { ascending: false }),
     supabase.from('bookings').select('*, profiles:profiles!bookings_student_id_fkey(full_name, email)').eq('tutor_id', user.id).order('created_at', { ascending: false }),
@@ -30,10 +31,11 @@ export default async function PartnerDashboard() {
     supabase.from('attendance').select('*').order('created_at', { ascending: false }),
     supabase.from('homework_requests').select('*').order('created_at', { ascending: false }),
     supabase.from('video_topic_requests').select('*').order('created_at', { ascending: false }),
+    supabase.from('test_prep').select('*').eq('status', 'upcoming').order('test_date', { ascending: true }),
   ])
 
   // attach student names (looked up separately so it never fails on a table link)
-  const requestStudentIds = Array.from(new Set([...(homeworkRows || []), ...(videoRows || [])].map((r: any) => r.student_id).filter(Boolean)))
+  const requestStudentIds = Array.from(new Set([...(homeworkRows || []), ...(videoRows || []), ...(testRows || [])].map((r: any) => r.student_id).filter(Boolean)))
   const { data: requestProfiles } = requestStudentIds.length
     ? await supabase.from('profiles').select('id, full_name').in('id', requestStudentIds as string[])
     : { data: [] as any[] }
@@ -42,6 +44,11 @@ export default async function PartnerDashboard() {
   const videos = (videoRows || []).map((r: any) => ({ ...r, profiles: { full_name: nameOf(r.student_id) } }))
 
   const myStudentIds = Array.from(new Set([...(myBookings || []).map(b => b.student_id), ...(mySubs || []).map(s => s.student_id)]))
+
+  // upcoming tests and exams for this tutor's own students
+  const myTests = (testRows || [])
+    .filter((t: any) => myStudentIds.includes(t.student_id) && daysUntil(t.test_date) >= 0)
+    .map((t: any) => ({ ...t, profiles: { full_name: nameOf(t.student_id) } }))
 
   let threads: Record<string, { name: string; msgs: any[] }> = {}
   if (myStudentIds.length > 0) {
@@ -126,6 +133,8 @@ export default async function PartnerDashboard() {
         openCount={(openBookings || []).length + (openSubs || []).length}
         requestCount={homework.filter((h: any) => h.status !== 'solved').length + videos.filter((v: any) => v.status !== 'ready').length}
         studentCount={myStudentIds.length}
+        testCount={myTests.filter((t: any) => daysUntil(t.test_date) <= 7).length}
+        tests={<TestList rows={myTests} showStudent empty="No upcoming tests or exams for your students." />}
         availability={<AvailabilityBoard />}
         open={openRequests}
         requests={<PartnerRequests userId={user.id} homework={homework} videos={videos} />}

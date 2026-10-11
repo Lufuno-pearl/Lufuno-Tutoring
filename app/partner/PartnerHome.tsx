@@ -1,14 +1,16 @@
 'use client'
 import { useState, useEffect, useLayoutEffect, ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
-import { Calendar, Inbox, Film, Users, Video, MapPin, ScrollText } from 'lucide-react'
+import { Calendar, Inbox, Film, Users, Video, MapPin, ScrollText, Target } from 'lucide-react'
 
-type Section = 'menu' | 'availability' | 'open' | 'requests' | 'students' | 'videos' | 'areas'
+type Section = 'menu' | 'availability' | 'open' | 'requests' | 'students' | 'videos' | 'areas' | 'tests'
 
 type Props = {
   openCount: number
   requestCount: number
   studentCount: number
+  testCount: number
+  tests: ReactNode
   availability: ReactNode
   open: ReactNode
   requests: ReactNode
@@ -24,7 +26,7 @@ function Badge({ n }: { n: number }) {
   )
 }
 
-export default function PartnerHome({ openCount, requestCount, studentCount, availability, open, requests, students, videos, areas }: Props) {
+export default function PartnerHome({ openCount, requestCount, studentCount, testCount, tests, availability, open, requests, students, videos, areas }: Props) {
   const [section, setSection] = useState<Section>('menu')
   const router = useRouter()
 
@@ -63,6 +65,13 @@ export default function PartnerHome({ openCount, requestCount, studentCount, ava
             </div>
             <div className="tile-body"><div className="name">Homework & Video Requests</div></div>
           </div>
+          <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('tests')}>
+            <div className="tile-art" style={{ background: 'linear-gradient(135deg, #D96F8B, #B54767)', position: 'relative' }}>
+              <Target size={36} color="#fff" />
+              <Badge n={testCount} />
+            </div>
+            <div className="tile-body"><div className="name">Upcoming Tests</div></div>
+          </div>
           <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('availability')}>
             <div className="tile-art" style={{ background: 'linear-gradient(135deg, #6E4FC7, #4B2FA0)' }}><Calendar size={36} color="#fff" /></div>
             <div className="tile-body"><div className="name">My Availability</div></div>
@@ -99,6 +108,9 @@ export default function PartnerHome({ openCount, requestCount, studentCount, ava
   }
   if (section === 'availability') {
     return <div><Back /><h3>My availability</h3>{availability}</div>
+  }
+  if (section === 'tests') {
+    return <div><Back /><h3>Upcoming tests & exams</h3><p className="meta">Topics your students told us to prepare for.</p>{tests}</div>
   }
   if (section === 'areas') {
     return <div><Back /><h3>My areas</h3>{areas}</div>
