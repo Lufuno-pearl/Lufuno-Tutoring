@@ -113,7 +113,6 @@ function PayBlock({ kind, id, label, price, reference, markAwaiting }: { kind: '
       <div className="meta">Pay for: {label}</div>
       <div className="amount">R{price}</div>
       <div className="pay-line"><span>Bank</span><span>GoTyme Bank</span></div>
-      <div className="pay-line"><span>Account holder</span><span>Lufuno Pearl Moyo</span></div>
       <div className="pay-line"><span>Account number</span><span className="copy-row">51129677073 <CopyButton text="51129677073" /></span></div>
       <div className="pay-line"><span>Branch code</span><span className="copy-row">678910 <CopyButton text="678910" /></span></div>
       <div className="pay-line"><span>Reference</span><span className="copy-row">{ref} <CopyButton text={ref} /></span></div>
