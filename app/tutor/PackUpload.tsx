@@ -29,9 +29,22 @@ export default function PackUpload({ orderId, studentId }: { orderId: string; st
     }
   }
 
+  async function handleDelete(name: string) {
+    if (!confirm(`Delete ${name}? The student will no longer be able to download it.`)) return
+    setError('')
+    const { data, error } = await supabase.storage.from('study-packs').remove([`${orderId}/${name}`])
+    if (error || !data || data.length === 0) { setError('Could not delete that file.'); return }
+    loadFiles()
+  }
+
   return (
     <div style={{ marginTop: 10 }}>
-      {files.map(f => <div key={f.name} className="meta">Uploaded: {f.name}</div>)}
+      {files.map(f => (
+        <div key={f.name} className="meta" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>Uploaded: {f.name}</span>
+          <span style={{ color: '#A6443A', cursor: 'pointer', fontWeight: 600 }} onClick={() => handleDelete(f.name)}>Delete</span>
+        </div>
+      ))}
       <ConfirmFile label="Upload the pack file" confirmText="Yes, send the pack" busy={uploading} onConfirm={handleUpload} />
       {uploading && <p className="meta">Uploading...</p>}
       {error && <p style={{ color: '#A6443A', fontSize: '0.85rem' }}>{error}</p>}

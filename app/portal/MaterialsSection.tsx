@@ -25,6 +25,14 @@ export default function MaterialsSection({ userId }: { userId: string }) {
     else loadFiles()
   }
 
+  async function handleDelete(name: string) {
+    if (!confirm(`Delete ${name}?`)) return
+    setError('')
+    const { data, error } = await supabase.storage.from('materials').remove([`${userId}/${name}`])
+    if (error || !data || data.length === 0) { setError('Could not delete that file.'); return }
+    loadFiles()
+  }
+
   async function handleDownload(name: string) {
     const { data, error } = await supabase.storage.from('materials').download(`${userId}/${name}`)
     if (error || !data) { setError('Could not download that file.'); return }
@@ -44,7 +52,10 @@ export default function MaterialsSection({ userId }: { userId: string }) {
         {files.map(f => (
           <div key={f.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--line)' }}>
             <span>{f.name}</span>
-            <button className="btn" style={{ background: 'none', border: '1px solid var(--line)', padding: '6px 12px' }} onClick={() => handleDownload(f.name)}>Download</button>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <button className="btn" style={{ background: 'none', border: '1px solid var(--line)', padding: '6px 12px' }} onClick={() => handleDownload(f.name)}>Download</button>
+              <button className="btn" style={{ background: 'none', border: '1px solid #A6443A', color: '#A6443A', padding: '6px 12px' }} onClick={() => handleDelete(f.name)}>Delete</button>
+            </div>
           </div>
         ))}
       </div>

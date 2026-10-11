@@ -36,13 +36,24 @@ export default function FileBox({ folderPath, uploadLabel, allowUpload = true }:
     URL.revokeObjectURL(url)
   }
 
+  async function handleDelete(name: string) {
+    if (!confirm(`Delete ${name}?`)) return
+    setError('')
+    const { data, error } = await supabase.storage.from('homework').remove([`${folderPath}/${name}`])
+    if (error || !data || data.length === 0) { setError('Could not delete that file.'); return }
+    loadFiles()
+  }
+
   return (
     <div style={{ marginTop: 6 }}>
       {files.length === 0 && !allowUpload && <p className="meta" style={{ marginBottom: 4 }}>Nothing uploaded yet.</p>}
       {files.map(f => (
         <div key={f.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: '1px solid var(--line)' }}>
           <span style={{ fontSize: '0.85rem' }}>{f.name}</span>
-          <button className="btn" style={{ background: 'none', border: '1px solid var(--line)', padding: '4px 10px', fontSize: '0.8rem' }} onClick={() => handleDownload(f.name)}>Download</button>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <button className="btn" style={{ background: 'none', border: '1px solid var(--line)', padding: '4px 10px', fontSize: '0.8rem' }} onClick={() => handleDownload(f.name)}>Download</button>
+            {allowUpload && <button className="btn" style={{ background: 'none', border: '1px solid #A6443A', color: '#A6443A', padding: '4px 10px', fontSize: '0.8rem' }} onClick={() => handleDelete(f.name)}>Delete</button>}
+          </div>
         </div>
       ))}
       {allowUpload && (
