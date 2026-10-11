@@ -8,6 +8,7 @@ import VideoManager from '../tutor/VideoManager'
 import PartnerRequests from './PartnerRequests'
 import AvailabilityBoard from '../AvailabilityBoard'
 import PartnerHome from './PartnerHome'
+import TutorAreas from '../TutorAreas'
 
 export default async function PartnerDashboard() {
   const supabase = createClient()
@@ -86,7 +87,7 @@ export default async function PartnerDashboard() {
       {(openBookings || []).map(b => (
         <div className="panel" key={b.id}>
           <h4>{b.subject}</h4>
-          <div className="meta">{b.profiles?.full_name} · {b.day} at {b.time} · {b.format === 'physical' ? 'Physical' : 'Online'}</div>
+          <div className="meta">{b.profiles?.full_name} · {b.day} at {b.time} · {b.format === 'physical' ? 'Physical' : 'Online'}{b.format === 'physical' && b.area ? ` · ${b.area}` : ''}</div>
           <form action={async () => { 'use server'; await claim('bookings', b.id) }}>
             <button className="btn btn-primary">Claim this student</button>
           </form>
@@ -97,7 +98,7 @@ export default async function PartnerDashboard() {
       {(openSubs || []).map(s => (
         <div className="panel" key={s.id}>
           <h4>{s.month}</h4>
-          <div className="meta">{s.profiles?.full_name}{s.grade ? ` · Gr ${s.grade}` : ''} · {s.subject_choice === 'maths' ? 'Mathematics' : s.subject_choice === 'physics' ? 'Physical Sciences' : 'Maths & Physical Sciences'} · {s.format === 'physical' ? 'Physical' : 'Online'}</div>
+          <div className="meta">{s.profiles?.full_name}{s.grade ? ` · Gr ${s.grade}` : ''} · {s.subject_choice === 'maths' ? 'Mathematics' : s.subject_choice === 'physics' ? 'Physical Sciences' : 'Maths & Physical Sciences'} · {s.format === 'physical' ? 'Physical' : 'Online'}{s.format === 'physical' && s.area ? ` · ${s.area}` : ''}</div>
           <form action={async () => { 'use server'; await claim('hs_subscriptions', s.id) }}>
             <button className="btn btn-primary">Claim this student</button>
           </form>
@@ -135,6 +136,7 @@ export default async function PartnerDashboard() {
           />
         }
         videos={<VideoManager />}
+        areas={<TutorAreas />}
       />
     </div>
   )

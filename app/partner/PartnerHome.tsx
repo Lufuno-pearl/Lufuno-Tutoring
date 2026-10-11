@@ -1,8 +1,8 @@
 'use client'
 import { useState, useEffect, useLayoutEffect, ReactNode } from 'react'
-import { Calendar, Inbox, Film, Users, Video } from 'lucide-react'
+import { Calendar, Inbox, Film, Users, Video, MapPin } from 'lucide-react'
 
-type Section = 'menu' | 'availability' | 'open' | 'requests' | 'students' | 'videos'
+type Section = 'menu' | 'availability' | 'open' | 'requests' | 'students' | 'videos' | 'areas'
 
 type Props = {
   openCount: number
@@ -13,6 +13,7 @@ type Props = {
   requests: ReactNode
   students: ReactNode
   videos: ReactNode
+  areas: ReactNode
 }
 
 function Badge({ n }: { n: number }) {
@@ -22,7 +23,7 @@ function Badge({ n }: { n: number }) {
   )
 }
 
-export default function PartnerHome({ openCount, requestCount, studentCount, availability, open, requests, students, videos }: Props) {
+export default function PartnerHome({ openCount, requestCount, studentCount, availability, open, requests, students, videos, areas }: Props) {
   const [section, setSection] = useState<Section>('menu')
 
   useLayoutEffect(() => {
@@ -68,6 +69,10 @@ export default function PartnerHome({ openCount, requestCount, studentCount, ava
             <div className="tile-art" style={{ background: 'linear-gradient(135deg, #1FB6A3, #17897B)' }}><Video size={36} color="#fff" /></div>
             <div className="tile-body"><div className="name">Manage Videos</div></div>
           </div>
+          <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('areas')}>
+            <div className="tile-art" style={{ background: 'linear-gradient(135deg, #D96F8B, #B54767)' }}><MapPin size={36} color="#fff" /></div>
+            <div className="tile-body"><div className="name">My Areas</div></div>
+          </div>
         </div>
       </div>
     )
@@ -88,6 +93,9 @@ export default function PartnerHome({ openCount, requestCount, studentCount, ava
   }
   if (section === 'availability') {
     return <div><Back /><h3>My availability</h3>{availability}</div>
+  }
+  if (section === 'areas') {
+    return <div><Back /><h3>My areas</h3>{areas}</div>
   }
   if (section === 'videos') {
     return <div><Back /><h3>Manage videos</h3>{videos}</div>
