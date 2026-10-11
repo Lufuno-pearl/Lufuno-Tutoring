@@ -21,7 +21,7 @@ export default async function Portal() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const [{ data: profile }, { data: bookings }, { data: subs }, { data: orders }, { data: messages }, { data: attendance }, { data: videoRequests }, { data: videoTopicRequests }, { data: homeworkRequests }, { data: moduleRequests }] = await Promise.all([
+  const [{ data: profile }, { data: bookings }, { data: subs }, { data: orders }, { data: messages }, { data: attendance }, { data: videoRequests }, { data: videoTopicRequests }, { data: homeworkRequests }, { data: moduleRequests }, { data: testPreps }] = await Promise.all([
     supabase.from('profiles').select('tier, full_name').eq('id', user.id).single(),
     supabase.from('bookings').select('*').eq('student_id', user.id).order('created_at', { ascending: false }),
     supabase.from('hs_subscriptions').select('*').eq('student_id', user.id).order('created_at', { ascending: false }),
@@ -32,6 +32,7 @@ export default async function Portal() {
     supabase.from('video_topic_requests').select('*').eq('student_id', user.id).order('created_at', { ascending: false }),
     supabase.from('homework_requests').select('*').eq('student_id', user.id).order('created_at', { ascending: false }),
     supabase.from('module_requests').select('*, module:uni_modules(id, name, university, year, field)').eq('student_id', user.id).order('created_at', { ascending: false }),
+    supabase.from('test_prep').select('*').eq('student_id', user.id).order('test_date', { ascending: true }),
   ])
 
   if (!profile?.tier) {
@@ -88,6 +89,7 @@ export default async function Portal() {
         videoTopicRequests={videoTopicRequests}
         homeworkRequests={homeworkRequests}
         moduleRequests={moduleRequests}
+        testPreps={testPreps || []}
         actions={{ createBooking, createHsSub, buyPack, markAwaiting, sendMessage, requestVideoAccess, requestCustomPack, requestVideoTopic, submitHomework, respondToSession, userId: user.id }}
       />
     </div>

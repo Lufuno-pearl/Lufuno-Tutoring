@@ -1,7 +1,7 @@
 'use server'
 import { createClient } from '../../lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { sendPushToRole } from '../../lib/push'
+import { sendPushToRole, sendPushToUser } from '../../lib/push'
 import { hsPrice, toSessionType, UNI_PRICE_PER_2H } from '../../lib/pricing'
 
 function makeReference(name: string) {
@@ -467,4 +467,76 @@ export async function respondToSession(attendanceId: string, response: 'yes' | '
   }
   revalidatePath('/portal')
   return { ok: true }
+}
+
+export async function addTestPrep(formData: FormData): Promise<{ ok: boolean; message: string }> {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, message: 'Please sign in again.' }
+
+  const subject = String(formData.get('subject') || '').trim().slice(0, 120)
+  const kind = formData.get('kind') === 'exam' ? 'exam' : 'test'
+  const testDate = String(formData.get('test_date') || '')
+  const topics = String(formData.get('topics') || '').trim().slice(0, 2000)
+  const notes = String(formData.get('notes') || '').trim().slice(0, 500)
+
+  if (subject.length < 2) return { ok: false, message: 'Please enter the subject.' }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(testDate)) return { ok: false, message: 'Please pick the date.' }
+  const today = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString().slice(0, 10)
+  if (testDate < today) return { ok: false, message: 'That date has already passed.' }
+  if (topics.length < 3) return { ok: false, message: 'Please list the topics that will be covered.' }
+
+  const { error } = await supabase.from('test_prep').insert({
+    student_id: user.id,
+    subject,
+    kind,
+    test_date: testDate,
+    topics,
+    notes: notes || null,
+  })
+  if (error) return { ok: false, message: error.message }
+
+  const { data: me } = await supabase.from('profiles').select('full_name').eq('id', user.id).single()
+  const who = me?.full_name || 'A student'
+  const label = `${subject} ${kind}`
+  const summary = `${who} has a ${label} on ${testDate}. Topics: ${topics.replace(/\s*\n\s*/g, ', ').slice(0, 160)}`
+
+  // the student's own tutors, from their bookings and monthly plans
+  const [{ data: b }, { data: s }] = await Promise.all([
+    supabase.from('bookings').select('tutor_id').eq('student_id', user.id).not('tutor_id', 'is', null),
+    supabase.from('hs_subscriptions').select('tutor_id').eq('student_id', user.id).not('tutor_id', 'is', null),
+  ])
+  const tutorIds = Array.from(new Set([...(b || []), ...(s || [])].map((r: any) => r.tutor_id).filter(Boolean))) as string[]
+
+  await supabase.from('notifications').insert({ student_id: user.id, for_role: 'staff', message: summary })
+  if (tutorIds.length > 0) {
+    await Promise.all(tutorIds.map(id => sendPushToUser(id, 'Test coming up', summary, '/partner')))
+  } else {
+    await sendPushToRole('staff', 'Test coming up', summary, '/tutor')
+  }
+
+  revalidatePath('/portal')
+  revalidatePath('/partner')
+  revalidatePath('/tutor')
+  return { ok: true, message: 'Saved. Your tutor can now see the topics.' }
+}
+
+export async function setTestPrepDone(id: string) {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
+  await supabase.from('test_prep').update({ status: 'done' }).eq('id', id).eq('student_id', user.id)
+  revalidatePath('/portal')
+  revalidatePath('/partner')
+  revalidatePath('/tutor')
+}
+
+export async function deleteTestPrep(id: string) {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
+  await supabase.from('test_prep').delete().eq('id', id).eq('student_id', user.id)
+  revalidatePath('/portal')
+  revalidatePath('/partner')
+  revalidatePath('/tutor')
 }
