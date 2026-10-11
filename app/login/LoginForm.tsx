@@ -14,6 +14,7 @@ export default function LoginForm() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [loading, setLoading] = useState(false)
+  const [agreed, setAgreed] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
   const tier = searchParams.get('tier')
@@ -34,12 +35,13 @@ export default function LoginForm() {
     if (!email || !name || !password || !confirmPassword) { setError('Please fill in all fields.'); return }
     if (password.length < 6) { setError('Password must be at least 6 characters.'); return }
     if (password !== confirmPassword) { setError('Passwords do not match.'); return }
+    if (!agreed) { setError('Please agree to the Terms and Conditions to continue.'); return }
     setLoading(true)
     const supabase = createClient()
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: name } },
+      options: { data: { full_name: name, accepted_terms_at: new Date().toISOString() } },
     })
     if (error) { setLoading(false); setError(error.message); return }
     await supabase.auth.signOut()
@@ -97,6 +99,16 @@ export default function LoginForm() {
             placeholder="Type your password again"
           />
         </div>
+      )}
+      {mode === 'signup' && (
+        <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start', margin: '4px 0 12px', fontSize: '0.9rem' }}>
+          <input type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)} style={{ marginTop: 3, width: 18, height: 18, flex: '0 0 auto' }} />
+          <span>
+            I have read and agree to the{' '}
+            <a href="/terms" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--purple-dark)', fontWeight: 600 }}>Terms and Conditions</a>.
+            {' '}If I am under 18, my parent or guardian agrees too.
+          </span>
+        </label>
       )}
       {error && <p style={{ color: '#A6443A', fontSize: '0.85rem' }}>{error}</p>}
       {mode === 'signup' ? (

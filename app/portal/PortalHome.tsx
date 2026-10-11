@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useLayoutEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { CalendarPlus, BookOpen, MessageCircle, Landmark, History, Video, HelpCircle, ClipboardList, Gift } from 'lucide-react'
+import { CalendarPlus, BookOpen, MessageCircle, Landmark, History, Video, HelpCircle, ClipboardList, Gift, ScrollText } from 'lucide-react'
 import MaterialsSection from './MaterialsSection'
 import PackDownload from './PackDownload'
 import MyVideos from './MyVideos'
@@ -352,6 +352,7 @@ function SessionConfirm({ rows, respondToSession, onAnswered }: { rows: any[]; r
 
 export default function PortalHome({ name, tier, uniSubjects, visiblePacks, bookings, subs, orders, messages, attendance, videoRequests, myVideoSubjects, homeworkRequests, videoTopicRequests, moduleRequests, actions }: any) {
   const [section, setSection] = useState<Section>('menu')
+  const router = useRouter()
   useLayoutEffect(() => {
     const saved = sessionStorage.getItem('portalSection') as Section | null
     if (saved) setSection(saved)
@@ -436,6 +437,10 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
           <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('guide')}>
             <div className="tile-art" style={{ background: 'linear-gradient(135deg, #B98CE0, #8B5FC7)' }}><HelpCircle size={36} color="#fff" /></div>
             <div className="tile-body"><div className="name">How It Works</div></div>
+          </div>
+          <div className="tile" style={{ cursor: 'pointer' }} onClick={() => router.push('/terms')}>
+            <div className="tile-art" style={{ background: 'linear-gradient(135deg, #7A8FB0, #566B8F)' }}><ScrollText size={36} color="#fff" /></div>
+            <div className="tile-body"><div className="name">Terms & Conditions</div></div>
           </div>
         </div>
         <div className="panel" style={{ cursor: 'pointer' }} onClick={() => setSection('history')}>
