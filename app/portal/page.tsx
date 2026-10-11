@@ -21,7 +21,7 @@ export default async function Portal() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const [{ data: profile }, { data: bookings }, { data: subs }, { data: orders }, { data: messages }, { data: attendance }, { data: videoRequests }, { data: videoTopicRequests }, { data: homeworkRequests }] = await Promise.all([
+  const [{ data: profile }, { data: bookings }, { data: subs }, { data: orders }, { data: messages }, { data: attendance }, { data: videoRequests }, { data: videoTopicRequests }, { data: homeworkRequests }, { data: moduleRequests }] = await Promise.all([
     supabase.from('profiles').select('tier, full_name').eq('id', user.id).single(),
     supabase.from('bookings').select('*').eq('student_id', user.id).order('created_at', { ascending: false }),
     supabase.from('hs_subscriptions').select('*').eq('student_id', user.id).order('created_at', { ascending: false }),
@@ -31,15 +31,8 @@ export default async function Portal() {
     supabase.from('video_access_requests').select('*').eq('student_id', user.id).order('created_at', { ascending: false }),
     supabase.from('video_topic_requests').select('*').eq('student_id', user.id).order('created_at', { ascending: false }),
     supabase.from('homework_requests').select('*').eq('student_id', user.id).order('created_at', { ascending: false }),
+    supabase.from('module_requests').select('*, module:uni_modules(id, name, university, year, field)').eq('student_id', user.id).order('created_at', { ascending: false }),
   ])
-
-  // the student's module requests, with the module details attached
-  const { data: moduleRequestsRaw } = await supabase.from('module_requests').select('*').eq('student_id', user.id).order('created_at', { ascending: false })
-  const moduleIds = Array.from(new Set((moduleRequestsRaw || []).map((r: any) => r.module_id).filter(Boolean)))
-  const { data: moduleRows } = moduleIds.length
-    ? await supabase.from('uni_modules').select('id, name, university, year, field').in('id', moduleIds as string[])
-    : { data: [] as any[] }
-  const moduleRequests = (moduleRequestsRaw || []).map((r: any) => ({ ...r, module: (moduleRows || []).find((m: any) => m.id === r.module_id) || null }))
 
   if (!profile?.tier) {
     return (

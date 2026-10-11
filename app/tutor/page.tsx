@@ -14,7 +14,7 @@ export default async function TutorDashboard() {
   if (!user) redirect('/login')
   if (!ADMIN_EMAILS.includes(user.email!)) redirect('/portal')
 
-  const [{ data: bookings }, { data: subs }, { data: orders }, { data: messagesDesc }, { data: attendanceRows }, { data: partners }, { data: myProfile }, { data: videoRequests }, { data: customPackRequests }, { data: homeworkRequests }, { data: videoTopicRequestsRaw }] = await Promise.all([
+  const [{ data: bookings }, { data: subs }, { data: orders }, { data: messagesDesc }, { data: attendanceRows }, { data: partners }, { data: myProfile }, { data: videoRequests }, { data: customPackRequests }, { data: homeworkRequests }, { data: videoTopicRequestsRaw }, { data: areaRows }, { data: moduleRequests }] = await Promise.all([
     supabase.from('bookings').select('*, profiles:profiles!bookings_student_id_fkey(full_name, email, tier)').order('created_at', { ascending: false }),
     supabase.from('hs_subscriptions').select('*, profiles:profiles!hs_subscriptions_student_id_fkey(full_name, email, tier)').order('created_at', { ascending: false }),
     supabase.from('pack_orders').select('*, profiles(full_name, email, tier)').order('created_at', { ascending: false }),
@@ -26,31 +26,16 @@ export default async function TutorDashboard() {
     supabase.from('other_course_requests').select('*, profiles(full_name, email)').order('created_at', { ascending: false }),
     supabase.from('homework_requests').select('*, profiles(full_name, email)').order('created_at', { ascending: false }),
     supabase.from('video_topic_requests').select('*').order('created_at', { ascending: false }),
+    supabase.from('tutor_areas').select('tutor_id, name'),
+    supabase.from('module_requests').select('*, module:uni_modules(id, name, university, year, field), profiles(full_name, email)').order('created_at', { ascending: false }).limit(300),
   ])
 
   // each tutor's areas and how many group students they already have
-  const { data: areaRows } = await supabase.from('tutor_areas').select('tutor_id, name')
   const todayISO = new Date().toISOString().slice(0, 10)
   const partnersFull = (partners || []).map((p: any) => ({
     ...p,
     areas: (areaRows || []).filter((a: any) => a.tutor_id === p.id).map((a: any) => a.name),
     group_count: (subs || []).filter((s: any) => s.tutor_id === p.id && s.session_type !== 'one_on_one' && ['pending', 'awaiting', 'confirmed'].includes(s.status) && (!s.end_date || s.end_date >= todayISO)).length,
-  }))
-
-  // university module requests, with module and student details attached
-  const { data: modReqRaw } = await supabase.from('module_requests').select('*').order('created_at', { ascending: false }).limit(300)
-  const modIds = Array.from(new Set((modReqRaw || []).map((r: any) => r.module_id).filter(Boolean)))
-  const modStudentIds = Array.from(new Set((modReqRaw || []).map((r: any) => r.student_id).filter(Boolean)))
-  const { data: modRows } = modIds.length
-    ? await supabase.from('uni_modules').select('id, name, university, year, field').in('id', modIds as string[])
-    : { data: [] as any[] }
-  const { data: modStudents } = modStudentIds.length
-    ? await supabase.from('profiles').select('id, full_name, email').in('id', modStudentIds as string[])
-    : { data: [] as any[] }
-  const moduleRequests = (modReqRaw || []).map((r: any) => ({
-    ...r,
-    module: (modRows || []).find((m: any) => m.id === r.module_id) || null,
-    profiles: (modStudents || []).find((p: any) => p.id === r.student_id) || null,
   }))
 
   // attach student names to video topic requests (done separately so it never fails on a missing table link)
