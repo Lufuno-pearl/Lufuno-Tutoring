@@ -11,22 +11,25 @@ export async function GET(req: Request) {
   const supabase = createClient()
   const now = new Date()
 
-  const windowStart = new Date(now.getTime() + 55 * 60 * 1000)
-  const windowEnd = new Date(now.getTime() + 65 * 60 * 1000)
+  // The job runs once a day (07:00 South African time), so it reminds students and tutors
+  // about every confirmed session that is today. South Africa is UTC+2 all year.
+  const saToday = new Date(now.getTime() + 2 * 60 * 60 * 1000).toISOString().slice(0, 10)
 
   const { data: bookings } = await supabase
     .from('bookings')
-    .select('id, student_id, subject, day, time, format, meeting_link')
+    .select('id, student_id, tutor_id, subject, day, time, format, meeting_link')
     .eq('status', 'confirmed')
     .eq('reminder_sent', false)
+    .eq('day', saToday)
 
   for (const b of bookings || []) {
-    const sessionTime = new Date(`${b.day}T${b.time}`)
-    if (sessionTime >= windowStart && sessionTime <= windowEnd) {
-      const where = b.format === 'physical' ? 'in person' : (b.meeting_link ? 'online — check your portal for the link' : 'online')
-      await sendPushToUser(b.student_id, 'Session starting soon', `Your ${b.subject} session starts in about an hour, ${where}.`, '/portal')
-      await supabase.from('bookings').update({ reminder_sent: true }).eq('id', b.id)
+    const time = String(b.time || '').slice(0, 5)
+    const where = b.format === 'physical' ? 'in person' : (b.meeting_link ? 'online. Your join link is in the app' : 'online')
+    await sendPushToUser(b.student_id, 'Session today', `You have ${b.subject} today at ${time}, ${where}.`, '/portal')
+    if (b.tutor_id) {
+      await sendPushToUser(b.tutor_id, 'Session today', `You teach ${b.subject} today at ${time}, ${where}.`, '/partner')
     }
+    await supabase.from('bookings').update({ reminder_sent: true }).eq('id', b.id)
   }
 
   const todayISO = now.toISOString().slice(0, 10)

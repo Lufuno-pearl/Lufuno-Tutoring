@@ -85,3 +85,15 @@ nav{background:linear-gradient(135deg,#2B1766,#6E4FC7);}
 .next-skeleton{height:58px;border-radius:12px;margin-top:10px;background:linear-gradient(90deg,#EFE9FB,#F8F5FF,#EFE9FB);background-size:200% 100%;animation:aa-shimmer 1.2s linear infinite;}
 @keyframes aa-shimmer{to{background-position:-200% 0;}}
 @media (prefers-reduced-motion:reduce){.wrap>*,.next-skeleton{animation:none;}.tile,.btn{transition:none;}}
+
+/* Payment steps and copy buttons */
+.steps{display:flex;align-items:center;justify-content:space-between;gap:6px;margin:10px 0 14px;}
+.step{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;position:relative;font-size:.72rem;color:#8a7fa8;}
+.step:not(:last-child)::after{content:'';position:absolute;top:12px;left:calc(50% + 14px);right:calc(-50% + 14px);height:2px;background:var(--line);}
+.step.done:not(:last-child)::after{background:#1E6B34;}
+.step .dot{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.75rem;background:var(--line);color:#5a4d78;position:relative;z-index:1;}
+.step.done .dot{background:#1E6B34;color:#fff;}
+.step.now .dot{background:var(--purple-dark);color:#fff;box-shadow:0 0 0 4px rgba(110,79,199,.2);}
+.step.now,.step.done{color:var(--ink);font-weight:600;}
+.copy-row{display:inline-flex;align-items:center;gap:8px;}
+.copy-btn{border:1px solid var(--purple-dark);background:#fff;color:var(--purple-dark);border-radius:100px;font-size:.72rem;font-weight:600;padding:3px 10px;cursor:pointer;font-family:inherit;}
