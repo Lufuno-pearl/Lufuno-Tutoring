@@ -8,6 +8,7 @@ import MyVideos from './MyVideos'
 import FileBox from '../FileBox'
 import StoredVideo from '../StoredVideo'
 import ReferralBox from './ReferralBox'
+import ModuleFinder from './ModuleFinder'
 import { getAreas } from './actions'
 import { hsPrice, hsSessions, UNI_PRICE_PER_2H, GROUP_MAX, SessionType } from '../../lib/pricing'
 
@@ -349,7 +350,7 @@ function SessionConfirm({ rows, respondToSession, onAnswered }: { rows: any[]; r
   )
 }
 
-export default function PortalHome({ name, tier, uniSubjects, visiblePacks, bookings, subs, orders, messages, attendance, videoRequests, myVideoSubjects, homeworkRequests, videoTopicRequests, actions }: any) {
+export default function PortalHome({ name, tier, uniSubjects, visiblePacks, bookings, subs, orders, messages, attendance, videoRequests, myVideoSubjects, homeworkRequests, videoTopicRequests, moduleRequests, actions }: any) {
   const [section, setSection] = useState<Section>('menu')
   useLayoutEffect(() => {
     const saved = sessionStorage.getItem('portalSection') as Section | null
@@ -527,29 +528,7 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
             </section>
 
             <section style={{ marginTop: 24 }}>
-              <h3>Prefer a physical session?</h3>
-              <p className="meta">R{UNI_PRICE_PER_2H.group} per 2 hours in a group (up to {GROUP_MAX} students), or R{UNI_PRICE_PER_2H.one_on_one} per 2 hours one-on-one. Paid upfront — arranged with Lufuno once requested.</p>
-              <form onSubmit={handleBookingSubmit}>
-                <div className="field">
-                  <label>Subject</label>
-                  <select name="subject" required>
-                    {uniSubjects.map((s: string) => <option key={s}>{s}</option>)}
-                  </select>
-                </div>
-                <div className="field">
-                  <label>Group or one-on-one?</label>
-                  <select name="sessionType" value={uniType} onChange={e => setUniType(e.target.value as SessionType)}>
-                    <option value="group">Group (up to {GROUP_MAX} students) — R{UNI_PRICE_PER_2H.group} per 2 hours</option>
-                    <option value="one_on_one">One-on-one — R{UNI_PRICE_PER_2H.one_on_one} per 2 hours</option>
-                  </select>
-                </div>
-                <AreaPicker areas={areas} value={uniArea} onChange={setUniArea} notListedHelp="Video lessons work from anywhere, so we suggest those instead." />
-                <div className="field"><label>Preferred day</label><input type="date" name="day" required /></div>
-                <div className="field"><label>Preferred time</label><input type="time" name="time" required /></div>
-                <button className="btn btn-primary" disabled={bookingSubmitting || uniArea === '__none__'} style={{ opacity: bookingSubmitting || uniArea === '__none__' ? 0.6 : 1 }}>
-                  {bookingSubmitting ? 'Requesting...' : 'Request & get payment details'}
-                </button>
-              </form>
+              <ModuleFinder moduleRequests={moduleRequests || []} />
             </section>
           </>
         )}

@@ -2,6 +2,7 @@
 import { createClient } from '../../lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { sendPushToUser, sendPushToRole } from '../../lib/push'
+import { UNI_PRICE_PER_2H, toSessionType } from '../../lib/pricing'
 
 async function countReferral(supabase: any, studentId: string) {
   const { data: res, error } = await supabase.rpc('count_referral', { p_student: studentId })
@@ -193,4 +194,62 @@ export async function markVideoReady(id: string, path: string) {
   }
   revalidatePath('/tutor')
   revalidatePath('/portal')
+}
+
+export async function answerModuleRequest(id: string, available: boolean, tutorId: string): Promise<{ ok: boolean; message: string }> {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, message: 'Please sign in again.' }
+
+  const { data: req } = await supabase.from('module_requests').select('*').eq('id', id).single()
+  if (!req) return { ok: false, message: 'Request not found.' }
+  if (req.status !== 'requested') return { ok: false, message: 'This request was already answered.' }
+  const { data: mod } = await supabase.from('uni_modules').select('name, university').eq('id', req.module_id).single()
+  const modName = mod?.name || 'your module'
+
+  if (!available) {
+    const { error } = await supabase.from('module_requests').update({ status: 'unavailable' }).eq('id', id)
+    if (error) return { ok: false, message: error.message }
+    await supabase.from('notifications').insert({
+      student_id: req.student_id,
+      for_role: 'student',
+      message: `We don't have a ${modName} tutor yet. We will tell you as soon as we do.`,
+    })
+    await sendPushToUser(req.student_id, 'Tutoring update', `We don't have a ${modName} tutor yet. We will tell you as soon as we do.`, '/portal')
+    revalidatePath('/tutor')
+    revalidatePath('/portal')
+    return { ok: true, message: 'Student told there is no tutor yet.' }
+  }
+
+  const { data: stu } = await supabase.from('profiles').select('full_name').eq('id', req.student_id).single()
+  const first = (stu?.full_name || 'STUDENT').trim().split(' ')[0].replace(/[^a-zA-Z]/g, '').toUpperCase().slice(0, 10) || 'STUDENT'
+  const reference = `${first}${Math.floor(1000 + Math.random() * 9000)}`
+  const sessionType = toSessionType(req.session_type)
+
+  const { data: booking, error: bookingError } = await supabase.from('bookings').insert({
+    student_id: req.student_id,
+    subject: modName,
+    day: req.day,
+    time: req.time,
+    format: req.format,
+    session_type: sessionType,
+    area: req.area,
+    price: UNI_PRICE_PER_2H[sessionType],
+    reference,
+    tutor_id: tutorId || null,
+  }).select('id').single()
+  if (bookingError || !booking) return { ok: false, message: bookingError?.message || 'Could not create the booking.' }
+
+  const { error } = await supabase.from('module_requests').update({ status: 'available', tutor_id: tutorId || null, booking_id: booking.id }).eq('id', id)
+  if (error) return { ok: false, message: error.message }
+
+  await supabase.from('notifications').insert({
+    student_id: req.student_id,
+    for_role: 'student',
+    message: `Good news! A ${modName} tutor is available. Open Request Tutoring to pay and lock in your session.`,
+  })
+  await sendPushToUser(req.student_id, 'Tutor available', `A ${modName} tutor is available. Tap to pay and lock in your session.`, '/portal')
+  revalidatePath('/tutor')
+  revalidatePath('/portal')
+  return { ok: true, message: 'Student told. They can pay now.' }
 }
