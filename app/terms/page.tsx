@@ -1,4 +1,5 @@
 import TermsView, { TermsSection } from './TermsView'
+import { createClient } from '../../lib/supabase/server'
 
 export const metadata = { title: 'Terms and Conditions | Aid & Ace Tutoring' }
 
@@ -62,13 +63,24 @@ const sections: TermsSection[] = [
   },
 ]
 
-export default function TermsPage() {
+export default async function TermsPage() {
+  // only university students are shown the tutor agreement (they may want to tutor too)
+  let isUniversity = false
+  try {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      const { data: profile } = await supabase.from('profiles').select('tier').eq('id', user.id).single()
+      isUniversity = profile?.tier === 'university'
+    }
+  } catch (e) {}
   return (
     <TermsView
       heading="Terms and Conditions"
       intro="A short summary of the Aid & Ace student agreement. Read it any time."
       sections={sections}
-      other={{ href: '/terms/tutor', label: 'Tutor agreement summary' }}
+      backHref="/portal"
+      other={isUniversity ? { href: '/terms/tutor', label: 'Want to tutor with us? Read the tutor agreement' } : undefined}
     />
   )
 }

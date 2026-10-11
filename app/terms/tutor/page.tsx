@@ -57,7 +57,7 @@ export default function TutorTermsPage() {
       heading="Tutor Agreement"
       intro="A short summary of the Aid & Ace tutor agreement. The signed agreement is the full document."
       sections={sections}
-      other={{ href: '/terms', label: 'Student terms and conditions' }}
+      backHref="/partner"
     />
   )
 }
