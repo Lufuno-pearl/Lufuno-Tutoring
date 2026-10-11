@@ -6,7 +6,7 @@ import { createClient } from '../../lib/supabase/client'
 import { isAdminEmail } from '../../lib/admin'
 
 export default function LoginForm() {
-  const [mode, setMode] = useState<'signup' | 'signin'>('signup')
+  const [mode, setMode] = useState<'signup' | 'signin'>('signin')
   const [email, setEmail] = useState('')
   const [name, setName] = useState('')
   const [password, setPassword] = useState('')
@@ -66,7 +66,8 @@ export default function LoginForm() {
 
   return (
     <section>
-      <h2>{mode === 'signup' ? 'Create your account' : 'Sign in'}</h2>
+      <h2>{mode === 'signup' ? 'Create your account' : 'Welcome back'}</h2>
+      {mode === 'signin' && !success && <p className="meta">Sign in to continue.</p>}
       {success && <p className="meta" style={{ background: '#DCEEE0', padding: '10px 14px', borderRadius: 10, marginBottom: 16 }}>{success}</p>}
       {mode === 'signup' && (
         <div className="field"><label>Full name</label><input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Thandi Nkosi" /></div>
@@ -117,8 +118,14 @@ export default function LoginForm() {
       ) : (
         <button className="btn btn-primary" onClick={handleSignIn} disabled={loading}>{loading ? 'Signing in...' : 'Sign in'}</button>
       )}
-      <p className="meta" style={{ marginTop: 14, cursor: 'pointer' }} onClick={() => { setMode(mode === 'signup' ? 'signin' : 'signup'); setError(''); setSuccess('') }}>
-        {mode === 'signup' ? 'Already have an account? Sign in' : "New here? Create an account"}
+      <p className="meta" style={{ marginTop: 16, textAlign: 'center' }}>
+        {mode === 'signup' ? 'Already have an account? ' : "Don't have an account? "}
+        <span
+          style={{ color: 'var(--purple-dark)', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}
+          onClick={() => { setMode(mode === 'signup' ? 'signin' : 'signup'); setError(''); setSuccess('') }}
+        >
+          {mode === 'signup' ? 'Sign in' : 'Create one'}
+        </span>
       </p>
       {mode === 'signin' && (
         <p className="meta" style={{ marginTop: 10 }}>
