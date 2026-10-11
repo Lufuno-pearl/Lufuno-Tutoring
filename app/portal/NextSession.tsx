@@ -36,8 +36,14 @@ export default function NextSession({ name, bookings, subs, scheduled, onRequest
         .filter(b => b.status === 'confirmed' && b.day && b.time)
         .map(b => ({ b: { id: b.id, subject: b.subject, format: b.format, area: b.area, meeting_link: b.meeting_link, note: null as string | null }, at: new Date(`${b.day}T${b.time}`) }))
     : []
+  // a student only gets the sessions inside their own paid 30 days
+  const ends = (subs || []).filter(s => s.status === 'confirmed' && s.end_date).map(s => String(s.end_date))
+  const windowEnd = ends.length ? ends.sort()[ends.length - 1] : null
+  const todayISO = now ? new Date(now.getTime()).toISOString().slice(0, 10) : ''
+  const beyondCount = now && windowEnd ? (scheduled || []).filter(r => r.session_date > windowEnd && r.session_date >= todayISO).length : 0
+  const planEnded = !!(now && windowEnd && windowEnd < todayISO)
   const fromSchedule = now
-    ? (scheduled || []).map(r => ({ b: { id: r.id, subject: r.subject, format: r.format, area: null as string | null, meeting_link: null as string | null, note: r.note || null }, at: new Date(`${r.session_date}T${String(r.session_time).slice(0, 5)}`) }))
+    ? (scheduled || []).filter(r => !windowEnd || r.session_date <= windowEnd).map(r => ({ b: { id: r.id, subject: r.subject, format: r.format, area: null as string | null, meeting_link: null as string | null, note: r.note || null }, at: new Date(`${r.session_date}T${String(r.session_time).slice(0, 5)}`) }))
     : []
   const upcoming = [...fromBookings, ...fromSchedule]
     .filter(x => !isNaN(x.at.getTime()) && x.at.getTime() > horizon)
@@ -128,6 +134,13 @@ export default function NextSession({ name, bookings, subs, scheduled, onRequest
             </>
           )
         })()}
+        {now && windowEnd && (beyondCount > 0 || planEnded) && (
+          <div style={{ marginTop: 14, background: '#FFF6DD', borderLeft: '4px solid #F2C14E', padding: '8px 10px', fontSize: '0.86rem', borderRadius: 6 }}>
+            {planEnded
+              ? 'Your 30 days have ended. Renew to keep joining your sessions and keep your spot.'
+              : `Your plan ends on ${new Date(windowEnd + 'T12:00:00Z').toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', timeZone: 'UTC' })}. Renew to keep your spot for ${beyondCount} more session${beyondCount === 1 ? '' : 's'} your tutor has planned.`}
+          </div>
+        )}
       </div>
     </div>
   )

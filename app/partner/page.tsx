@@ -161,6 +161,7 @@ export default async function PartnerDashboard() {
         requests={<PartnerRequests userId={user.id} homework={homework} videos={videos} />}
         students={
           <PartnerStudents
+            allSubs={mySubs || []}
             marksByStudent={marksByStudent}
             scheduleByStudent={scheduleByStudent}
             myStudentIds={myStudentIds}

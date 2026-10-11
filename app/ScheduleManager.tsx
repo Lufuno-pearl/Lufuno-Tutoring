@@ -14,7 +14,22 @@ export function studentAlternate(studentId: string, bookings: any[], subs: any[]
   return (subs || []).some((x: any) => x.student_id === studentId && x.alternate && x.status !== 'cancelled' && x.status !== 'rejected')
 }
 
-export default function ScheduleManager({ studentId, rows, defaultFormat = 'online', alternateDefault = false }: { studentId: string; rows: Row[]; defaultFormat?: 'online' | 'physical'; alternateDefault?: boolean }) {
+// the other students in the same group: same tutor, group plan, still active
+export function classmatesOf(studentId: string, subs: any[]): { id: string; name: string }[] {
+  const live = (subs || []).filter((x: any) => x.status !== 'cancelled' && x.status !== 'rejected' && x.session_type !== 'one_on_one' && x.tutor_id)
+  const mine = live.find((x: any) => x.student_id === studentId)
+  if (!mine) return []
+  const seen = new Set<string>()
+  const out: { id: string; name: string }[] = []
+  live.forEach((x: any) => {
+    if (x.student_id === studentId || x.tutor_id !== mine.tutor_id || seen.has(x.student_id)) return
+    seen.add(x.student_id)
+    out.push({ id: x.student_id, name: x.profiles?.full_name || 'Student' })
+  })
+  return out
+}
+
+export default function ScheduleManager({ studentId, rows, defaultFormat = 'online', alternateDefault = false, classmates = [] }: { studentId: string; rows: Row[]; defaultFormat?: 'online' | 'physical'; alternateDefault?: boolean; classmates?: { id: string; name: string }[] }) {
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
   const [ok, setOk] = useState(false)
@@ -75,6 +90,17 @@ export default function ScheduleManager({ studentId, rows, defaultFormat = 'onli
           <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.88rem', marginBottom: 10 }}>
             <input type="checkbox" name="alternate" defaultChecked={alternateDefault} /> Alternate: every second week online
           </label>
+        )}
+        {classmates.length > 0 && (
+          <div className="field">
+            <label>Also add these sessions for the rest of the group</label>
+            {classmates.map(c => (
+              <label key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.9rem', margin: '4px 0' }}>
+                <input type="checkbox" name="also" value={c.id} defaultChecked /> {c.name}
+              </label>
+            ))}
+            <div className="meta" style={{ marginBottom: 0 }}>Students only see the sessions that fall inside their own paid 30 days.</div>
+          </div>
         )}
         <div className="field"><label>Note (optional)</label><input name="note" placeholder="e.g. Bring your Test 1 paper" /></div>
         {message && <p style={{ color: ok ? '#1E6B34' : '#A6443A', fontSize: '0.88rem' }}>{message}</p>}
