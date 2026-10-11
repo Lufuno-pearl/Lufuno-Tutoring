@@ -80,12 +80,7 @@ export default async function TutorDashboard() {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h2>Owner dashboard</h2>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          <Link href="/portal?view=student" className="btn" style={{ background: 'none', border: '1px solid var(--purple-dark)', color: 'var(--purple-dark)', padding: '8px 14px', fontSize: '0.8rem' }}>Student view</Link>
-          <NotificationBell forRole="staff" />
-          <Link href="/tutor/pay" className="btn" style={{ background: 'none', border: '1px solid var(--ink)' }}>Tutor pay</Link>
-          <form action={signOut}><button className="btn" style={{ background: 'none', border: '1px solid var(--ink)' }}>Sign out</button></form>
-        </div>
+        <NotificationBell forRole="staff" />
       </div>
       <TutorHome
         bookings={bookings}
@@ -105,7 +100,7 @@ export default async function TutorDashboard() {
         videoTopicRequests={videoTopicRequests}
         moduleRequests={moduleRequests}
         testPreps={testPreps || []}
-        actions={{ answerModuleRequest, confirmPayment, setMeetingLink, assignTutor, markAttendance, sendTutorMessage, toggleAvailable, claim, setCustomPackLink, markHomeworkSolved, setVideoTopicLink }}
+        actions={{ signOut, answerModuleRequest, confirmPayment, setMeetingLink, assignTutor, markAttendance, sendTutorMessage, toggleAvailable, claim, setCustomPackLink, markHomeworkSolved, setVideoTopicLink }}
       />
     </div>
   )
