@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useLayoutEffect } from 'react'
-import { Clock, UserCog, BookOpen, ClipboardList, MessageCircle, ChevronRight, Star, Video, Film, Gift, Calendar, GraduationCap, Target } from 'lucide-react'
+import Link from 'next/link'
+import { Home, Inbox, Users, MoreHorizontal, Clock, UserCog, BookOpen, ClipboardList, MessageCircle, ChevronRight, Star, Video, Film, Gift, Calendar, GraduationCap, Target } from 'lucide-react'
 import TutorMaterials from './TutorMaterials'
 import PackUpload from './PackUpload'
 import VideoManager from './VideoManager'
@@ -14,6 +15,7 @@ import AvailabilityOverview from './AvailabilityOverview'
 import { GROUP_MAX, UNI_PRICE_PER_2H } from '../../lib/pricing'
 import TestList, { daysUntil } from '../TestList'
 
+type Tab = 'home' | 'requests' | 'students' | 'chat' | 'more'
 type Section = 'menu' | 'pending' | 'assign' | 'packs' | 'sessions' | 'chat' | 'mytutoring' | 'videos' | 'videoreq' | 'referrals' | 'availability' | 'modules' | 'tests'
 
 function subjectLabel(choice?: string) {
@@ -69,15 +71,7 @@ function ChatThread({ studentId, thread, actions }: { studentId: string; thread:
   )
 }
 
-export default function TutorHome({ bookings, subs, orders, partners, threadsByStudent, attendanceRows, myAvailable, openBookings, openSubs, myClaimedBookings, myClaimedSubs, videoRequests, customPackRequests, homeworkRequests, videoTopicRequests, moduleRequests, testPreps, actions }: any) {
-  const [section, setSection] = useState<Section>('menu')
-  useLayoutEffect(() => {
-    const saved = sessionStorage.getItem('tutorSection') as Section | null
-    if (saved) setSection(saved)
-  }, [])
-  useEffect(() => {
-    sessionStorage.setItem('tutorSection', section)
-  }, [section])
+function TutorInner({ section, setSection, tab, bookings, subs, orders, partners, threadsByStudent, attendanceRows, myAvailable, openBookings, openSubs, myClaimedBookings, myClaimedSubs, videoRequests, customPackRequests, homeworkRequests, videoTopicRequests, moduleRequests, testPreps, actions }: any) {
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null)
   const [chatSearch, setChatSearch] = useState('')
   const [myStudentId, setMyStudentId] = useState<string | null>(null)
@@ -87,83 +81,103 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
   const { answerModuleRequest, confirmPayment, setMeetingLink, assignTutor, toggleAvailable, claim, markAttendance, sendTutorMessage, setCustomPackLink, markHomeworkSolved, setVideoTopicLink } = actions
 
   if (section === 'menu') {
+    const tile = (label: string, emoji: string, gradient: string, onClick: () => void, badge = 0) => (
+      <div className="tile" style={{ cursor: 'pointer' }} onClick={onClick}>
+        <div className="tile-art" style={{ background: gradient, position: 'relative' }}>
+          <span style={{ fontSize: '3rem', lineHeight: 1, filter: 'drop-shadow(0 3px 6px rgba(0,0,0,.25))' }}>{emoji}</span>
+          {badge > 0 && (
+            <span style={{ position: 'absolute', top: 10, right: 12, background: '#A6443A', color: '#fff', fontSize: '0.75rem', borderRadius: 100, minWidth: 22, height: 22, padding: '0 5px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{badge}</span>
+          )}
+        </div>
+        <div className="tile-body"><div className="name">{label}</div></div>
+      </div>
+    )
+    const pendingCount = (bookings || []).filter((b: any) => b.status === 'awaiting').length + (subs || []).filter((x: any) => x.status === 'awaiting').length
+    const unassigned = (openBookings || []).length + (openSubs || []).length
+
+    if (tab === 'requests') {
+      return (
+        <div>
+          <h3 style={{ marginTop: 0 }}>Requests</h3>
+          <div className="card-grid">
+            {tile('Pending Requests', '⏳', 'linear-gradient(135deg, #8B6FD9, #6E4FC7)', () => setSection('pending'), pendingCount)}
+            {tile('Assign Tutor', '🧑‍🏫', 'linear-gradient(135deg, #7C6FE0, #5B4FC0)', () => setSection('assign'), unassigned)}
+            {tile('Module Requests', '🎓', 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('modules'), pendingModules)}
+            {tile('Video Requests', '🎞️', 'linear-gradient(135deg, #E0956F, #C46B3E)', () => setSection('videoreq'), pendingVideos)}
+          </div>
+        </div>
+      )
+    }
+
+    if (tab === 'students') {
+      return (
+        <div>
+          <h3 style={{ marginTop: 0 }}>Students</h3>
+          <div className="card-grid">
+            {tile('Sessions Log', '📋', 'linear-gradient(135deg, #9B7FE8, #7A5FD0)', () => setSection('sessions'))}
+            {tile('Upcoming Tests', '🎯', 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('tests'), soonTests)}
+            {tile('Referrals', '🎁', 'linear-gradient(135deg, #F2C14E, #D9A32E)', () => setSection('referrals'))}
+            {tile('My Tutoring', '⭐', 'linear-gradient(135deg, #C89B3C, #A87D24)', () => { setSection('mytutoring'); setMyStudentId(null) })}
+          </div>
+        </div>
+      )
+    }
+
+    if (tab === 'more') {
+      return (
+        <div>
+          <h3 style={{ marginTop: 0 }}>More</h3>
+          <div className="card-grid">
+            {tile('Study Packs', '📚', 'linear-gradient(135deg, #C89B3C, #A87D24)', () => setSection('packs'))}
+            {tile('Videos', '🎬', 'linear-gradient(135deg, #1FB6A3, #17897B)', () => setSection('videos'))}
+            {tile('Tutor Availability', '📅', 'linear-gradient(135deg, #6E4FC7, #4B2FA0)', () => setSection('availability'))}
+            <Link href="/tutor/pay" style={{ textDecoration: 'none', color: 'inherit' }}>{tile('Tutor Pay', '💰', 'linear-gradient(135deg, #2E7D4F, #1F5C38)', () => {})}</Link>
+            <Link href="/portal?view=student" style={{ textDecoration: 'none', color: 'inherit' }}>{tile('Student View', '👩‍🎓', 'linear-gradient(135deg, #7A8FB0, #566B8F)', () => {})}</Link>
+          </div>
+          <form action={actions.signOut} style={{ marginTop: 16 }}><button className="btn" style={{ width: '100%', background: 'none', border: '1px solid var(--ink)' }}>Sign out</button></form>
+        </div>
+      )
+    }
+
+    // home: what needs the owner's attention
+    const today = new Date().toISOString().slice(0, 10)
+    const needsAttention = pendingCount + unassigned + pendingModules + pendingVideos + soonTests
     return (
       <div>
-        <div className="card-grid">
-          <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('pending')}>
-            <div className="tile-art" style={{ background: 'linear-gradient(135deg, #8B6FD9, #6E4FC7)' }}><Clock size={36} color="#fff" /></div>
-            <div className="tile-body"><div className="name">Pending Requests</div></div>
-          </div>
-          <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('assign')}>
-            <div className="tile-art" style={{ background: 'linear-gradient(135deg, #7C6FE0, #5B4FC0)' }}><UserCog size={36} color="#fff" /></div>
-            <div className="tile-body"><div className="name">Assign Tutor</div></div>
-          </div>
-          <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('packs')}>
-            <div className="tile-art" style={{ background: 'linear-gradient(135deg, #C89B3C, #A87D24)' }}><BookOpen size={36} color="#fff" /></div>
-            <div className="tile-body"><div className="name">Study Packs</div></div>
-          </div>
-          <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('sessions')}>
-            <div className="tile-art" style={{ background: 'linear-gradient(135deg, #9B7FE8, #7A5FD0)' }}><ClipboardList size={36} color="#fff" /></div>
-            <div className="tile-body"><div className="name">Sessions Log</div></div>
-          </div>
-          <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('videos')}>
-            <div className="tile-art" style={{ background: 'linear-gradient(135deg, #1FB6A3, #17897B)' }}><Video size={36} color="#fff" /></div>
-            <div className="tile-body"><div className="name">Videos</div></div>
-          </div>
-          <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('videoreq')}>
-            <div className="tile-art" style={{ background: 'linear-gradient(135deg, #E0956F, #C46B3E)', position: 'relative' }}>
-              <Film size={36} color="#fff" />
-              {pendingVideos > 0 && (
-                <span style={{ position: 'absolute', top: 10, right: 12, background: '#A6443A', color: '#fff', fontSize: '0.75rem', borderRadius: 100, minWidth: 22, height: 22, padding: '0 5px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{pendingVideos}</span>
-              )}
-            </div>
-            <div className="tile-body"><div className="name">Video Requests</div></div>
-          </div>
-          <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('modules')}>
-            <div className="tile-art" style={{ background: 'linear-gradient(135deg, #D96F8B, #B54767)', position: 'relative' }}>
-              <GraduationCap size={36} color="#fff" />
-              {pendingModules > 0 && (
-                <span style={{ position: 'absolute', top: 10, right: 12, background: '#A6443A', color: '#fff', fontSize: '0.75rem', borderRadius: 100, minWidth: 22, height: 22, padding: '0 5px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{pendingModules}</span>
-              )}
-            </div>
-            <div className="tile-body"><div className="name">Module Requests</div></div>
-          </div>
-          <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('tests')}>
-            <div className="tile-art" style={{ background: 'linear-gradient(135deg, #D96F8B, #B54767)', position: 'relative' }}>
-              <Target size={36} color="#fff" />
-              {soonTests > 0 && (
-                <span style={{ position: 'absolute', top: 10, right: 12, background: '#A6443A', color: '#fff', fontSize: '0.75rem', borderRadius: 100, minWidth: 22, height: 22, padding: '0 5px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{soonTests}</span>
-              )}
-            </div>
-            <div className="tile-body"><div className="name">Upcoming Tests</div></div>
-          </div>
-          <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('referrals')}>
-            <div className="tile-art" style={{ background: 'linear-gradient(135deg, #F2C14E, #D9A32E)' }}><Gift size={36} color="#fff" /></div>
-            <div className="tile-body"><div className="name">Referrals</div></div>
-          </div>
-          <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('availability')}>
-            <div className="tile-art" style={{ background: 'linear-gradient(135deg, #6E4FC7, #4B2FA0)' }}><Calendar size={36} color="#fff" /></div>
-            <div className="tile-body"><div className="name">Tutor Availability</div></div>
-          </div>
+        <div className="hero">
+          <div className="hero-hi">Owner dashboard 👑</div>
+          <div className="hero-sub">{needsAttention === 0 ? "You're all caught up." : `${needsAttention} thing${needsAttention === 1 ? '' : 's'} need your attention.`}</div>
         </div>
-        <div className="panel" style={{ cursor: 'pointer', marginBottom: 12 }} onClick={() => { setSection('chat'); setSelectedStudentId(null) }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <MessageCircle size={22} color="var(--purple-dark)" />
-            <div>
-              <h4 style={{ margin: 0 }}>Chats</h4>
-              <div className="meta" style={{ marginBottom: 0 }}>Message students & share files</div>
-            </div>
+        {pendingCount > 0 && (
+          <div className="panel" style={{ cursor: 'pointer', borderLeft: '5px solid #F2C14E' }} onClick={() => setSection('pending')}>
+            <h4 style={{ margin: 0 }}>{pendingCount} payment{pendingCount === 1 ? '' : 's'} to confirm</h4>
+            <div className="meta" style={{ marginBottom: 0 }}>Tap to review.</div>
           </div>
-        </div>
-        <div className="panel" style={{ cursor: 'pointer' }} onClick={() => { setSection('mytutoring'); setMyStudentId(null) }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <Star size={22} color="var(--gold)" />
-            <div>
-              <h4 style={{ margin: 0 }}>My Tutoring</h4>
-              <div className="meta" style={{ marginBottom: 0 }}>Your own availability, requests & students</div>
-            </div>
+        )}
+        {unassigned > 0 && (
+          <div className="panel" style={{ cursor: 'pointer', borderLeft: '5px solid #8B6FD9' }} onClick={() => setSection('assign')}>
+            <h4 style={{ margin: 0 }}>{unassigned} request{unassigned === 1 ? '' : 's'} need a tutor</h4>
+            <div className="meta" style={{ marginBottom: 0 }}>Tap to assign.</div>
           </div>
-        </div>
+        )}
+        {pendingModules > 0 && (
+          <div className="panel" style={{ cursor: 'pointer', borderLeft: '5px solid #D96F8B' }} onClick={() => setSection('modules')}>
+            <h4 style={{ margin: 0 }}>{pendingModules} module request{pendingModules === 1 ? '' : 's'}</h4>
+            <div className="meta" style={{ marginBottom: 0 }}>Tap to answer.</div>
+          </div>
+        )}
+        {pendingVideos > 0 && (
+          <div className="panel" style={{ cursor: 'pointer', borderLeft: '5px solid #E0956F' }} onClick={() => setSection('videoreq')}>
+            <h4 style={{ margin: 0 }}>{pendingVideos} video request{pendingVideos === 1 ? '' : 's'}</h4>
+            <div className="meta" style={{ marginBottom: 0 }}>Tap to see them.</div>
+          </div>
+        )}
+        {soonTests > 0 && (
+          <div className="panel" style={{ cursor: 'pointer', borderLeft: '5px solid #A6443A' }} onClick={() => setSection('tests')}>
+            <h4 style={{ margin: 0 }}>{soonTests} test or exam this week</h4>
+            <div className="meta" style={{ marginBottom: 0 }}>Tap to see the topics.</div>
+          </div>
+        )}
       </div>
     )
   }
@@ -488,7 +502,7 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
 
     return (
       <div>
-        <Back />
+        {null}
         <div className="field">
           <input value={chatSearch} onChange={e => setChatSearch(e.target.value)} placeholder="Search by student name..." />
         </div>
@@ -589,4 +603,49 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
   }
 
   return null
+}
+
+export default function TutorHome(props: any) {
+  const [section, setSection] = useState<Section>('menu')
+  const [tab, setTab] = useState<Tab>('home')
+  useLayoutEffect(() => {
+    try {
+      const saved = sessionStorage.getItem('tutorSection') as Section | null
+      const savedTab = sessionStorage.getItem('tutorTab') as Tab | null
+      if (saved) setSection(saved)
+      if (savedTab) setTab(savedTab)
+    } catch (e) {}
+  }, [])
+  useEffect(() => {
+    try { sessionStorage.setItem('tutorSection', section) } catch (e) {}
+  }, [section])
+  useEffect(() => {
+    try { sessionStorage.setItem('tutorTab', tab) } catch (e) {}
+  }, [tab])
+
+  function go(t: Tab) {
+    setTab(t)
+    setSection(t === 'chat' ? 'chat' : 'menu')
+    if (typeof window !== 'undefined') window.scrollTo({ top: 0 })
+  }
+  const items: { id: Tab; label: string; icon: any }[] = [
+    { id: 'home', label: 'Home', icon: <Home size={20} /> },
+    { id: 'requests', label: 'Requests', icon: <Inbox size={20} /> },
+    { id: 'students', label: 'Students', icon: <Users size={20} /> },
+    { id: 'chat', label: 'Chat', icon: <MessageCircle size={20} /> },
+    { id: 'more', label: 'More', icon: <MoreHorizontal size={20} /> },
+  ]
+  return (
+    <div>
+      <TutorInner {...props} section={section} setSection={setSection} tab={tab} />
+      <div className="tabbar">
+        {items.map(i => (
+          <button key={i.id} className={tab === i.id ? 'active' : ''} onClick={() => go(i.id)}>
+            {i.icon}
+            {i.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
 }
