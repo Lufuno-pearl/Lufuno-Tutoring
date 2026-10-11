@@ -2,6 +2,7 @@
 import { createClient } from '../../lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { sendPushToRole } from '../../lib/push'
+import { hsPrice, toSessionType, UNI_PRICE_PER_2H } from '../../lib/pricing'
 
 function makeReference(name: string) {
   const clean = (name || 'STUDENT').replace(/[^a-zA-Z]/g, '').toUpperCase().slice(0, 10) || 'STUDENT'
@@ -15,6 +16,25 @@ async function getReference(supabase: any, userId: string) {
   return makeReference(firstName)
 }
 
+const NO_AREA_MESSAGE = "We don't have a tutor in your area yet. Online sessions work just as well, so we suggest choosing Online."
+
+// Physical sessions need an area where a tutor works. If no tutor has added an area yet,
+// physical requests are not blocked, so nothing breaks while tutors are still setting up.
+async function checkArea(supabase: any, area: string): Promise<{ ok: boolean; area: string | null; message: string }> {
+  const { data, error } = await supabase.rpc('areas_with_tutors')
+  if (error || !data || data.length === 0) return { ok: true, area: area.trim() || null, message: '' }
+  if (!area.trim()) return { ok: false, area: null, message: 'Please choose your area.' }
+  const found = data.find((a: any) => String(a.name).toLowerCase() === area.trim().toLowerCase())
+  if (!found) return { ok: false, area: null, message: NO_AREA_MESSAGE }
+  return { ok: true, area: found.name as string, message: '' }
+}
+
+export async function getAreas(): Promise<string[]> {
+  const supabase = createClient()
+  const { data } = await supabase.rpc('areas_with_tutors')
+  return (data || []).map((a: any) => a.name as string)
+}
+
 export async function createBooking(formData: FormData) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -23,6 +43,7 @@ export async function createBooking(formData: FormData) {
   const subject = formData.get('subject') as string
   const day = formData.get('day') as string
   const time = formData.get('time') as string
+  const sessionType = toSessionType(formData.get('sessionType'))
 
   const { data: existing } = await supabase
     .from('bookings')
@@ -36,21 +57,27 @@ export async function createBooking(formData: FormData) {
     return { ok: true, duplicate: true, subject, day, reference: existing[0].reference }
   }
 
+  const areaCheck = await checkArea(supabase, String(formData.get('area') || ''))
+  if (!areaCheck.ok) return { ok: false, message: areaCheck.message }
+
   const reference = await getReference(supabase, user.id)
 
-  await supabase.from('bookings').insert({
+  const { error: bookingError } = await supabase.from('bookings').insert({
     student_id: user.id,
     subject,
     day,
     time,
     format: 'physical',
-    price: 150,
+    session_type: sessionType,
+    area: areaCheck.area,
+    price: UNI_PRICE_PER_2H[sessionType],
     reference,
   })
+  if (bookingError) return { ok: false, message: 'Something went wrong. Please try again.' }
   await supabase.from('notifications').insert({
     student_id: user.id,
     for_role: 'staff',
-    message: `New physical session request: ${subject}`,
+    message: `New physical session request: ${subject} (${sessionType === 'one_on_one' ? 'one-on-one' : 'group'}${areaCheck.area ? `, ${areaCheck.area}` : ''})`,
   })
   await sendPushToRole('staff', 'New session request', `${subject} — ${day} ${time}`, '/tutor')
   revalidatePath('/portal')
@@ -91,8 +118,6 @@ export async function requestVideoAccess(subject: string) {
   return { ok: true, duplicate: false, subject, reference }
 }
 
-const PHYSICAL_MONTH_NUMBERS = ['02', '06', '12']
-
 function formatMonthLabel(value: string) {
   const [year, mm] = value.split('-')
   const names = ['January','February','March','April','May','June','July','August','September','October','November','December']
@@ -107,15 +132,20 @@ export async function createHsSub(formData: FormData) {
 
   const format = formData.get('format') as string
   const grade = parseInt(formData.get('grade') as string, 10)
-  if (!grade || grade < 8 || grade > 12) return { ok: false }
+  if (!grade || grade < 8 || grade > 12) return { ok: false, message: 'Please choose your grade.' }
   // Grades 8 and 9 are Mathematics only
   const subjectChoice = grade <= 9 ? 'maths' : (formData.get('subjectChoice') as string)
-  const price = subjectChoice === 'both' ? 600 : 350
+  const sessionType = toSessionType(formData.get('sessionType'))
+  const price = hsPrice(subjectChoice, sessionType)
 
   const now = new Date()
   const currentMonthNum = String(now.getMonth() + 1).padStart(2, '0')
-  if (format === 'physical' && !PHYSICAL_MONTH_NUMBERS.includes(currentMonthNum)) {
-    return { ok: false }
+
+  let area: string | null = null
+  if (format === 'physical') {
+    const areaCheck = await checkArea(supabase, String(formData.get('area') || ''))
+    if (!areaCheck.ok) return { ok: false, message: areaCheck.message }
+    area = areaCheck.area
   }
 
   const todayISO = now.toISOString().slice(0, 10)
@@ -151,14 +181,16 @@ export async function createHsSub(formData: FormData) {
     format,
     grade,
     subject_choice: subjectChoice,
+    session_type: sessionType,
+    area,
     price,
     reference,
   })
-  if (insertError) return { ok: false }
+  if (insertError) return { ok: false, message: 'Something went wrong. Please try again.' }
   await supabase.from('notifications').insert({
     student_id: user.id,
     for_role: 'staff',
-    message: `New high school subscription request (Gr ${grade}, ${subjectChoice})`,
+    message: `New high school subscription request (Gr ${grade}, ${subjectChoice}, ${sessionType === 'one_on_one' ? 'one-on-one' : 'group'}, ${format}${area ? `, ${area}` : ''})`,
   })
   await sendPushToRole('staff', 'New subscription request', `${subjectChoice} subscription`, '/tutor')
   revalidatePath('/portal')
