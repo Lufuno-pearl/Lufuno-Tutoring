@@ -12,7 +12,7 @@ type Info = {
 
 const SITE = 'https://lufuno-tutoring.vercel.app'
 
-export default function ReferralBox() {
+export default function ReferralBox({ subscribed, onRequest }: { subscribed: boolean; onRequest: () => void }) {
   const [info, setInfo] = useState<Info | null>(null)
   const [loading, setLoading] = useState(true)
   const [failed, setFailed] = useState(false)
@@ -94,6 +94,14 @@ export default function ReferralBox() {
     <div>
       <h3>Refer & earn</h3>
       <p className="meta">Share your code with friends. When a friend uses it and their first payment is confirmed, they count towards your rewards.</p>
+
+      {!subscribed && (
+        <div className="panel" style={{ borderLeft: '5px solid #F2C14E' }}>
+          <h4 style={{ marginTop: 0 }}>Subscribe to get your R50 off</h4>
+          <p className="meta">You can share your code with friends, but the R50 off tutoring is only for students who are subscribed themselves. Request tutoring to unlock your reward.</p>
+          <button className="btn btn-primary" onClick={onRequest}>Request tutoring</button>
+        </div>
+      )}
 
       <div className="panel" style={{ textAlign: 'center', background: '#F2C14E', border: '2px solid var(--purple-dark)' }}>
         <div className="meta" style={{ marginBottom: 4, color: '#2B1766', fontWeight: 600 }}>Your code</div>
