@@ -1,3 +1,5 @@
+import { hsSessions, toSessionType, SessionType } from '../../../lib/pricing'
+
 export type AttRow = { id: string; student_id: string; marked_by: string; session_date: string; status: string }
 export type SubRow = {
   id: string
@@ -5,6 +7,7 @@ export type SubRow = {
   tutor_id: string | null
   price: number
   subject_choice: string
+  session_type?: string | null
   grade: number | null
   start_date: string | null
   end_date: string | null
@@ -15,6 +18,7 @@ export type Line = {
   studentId: string
   subId: string
   choice: string
+  sessionType: SessionType
   grade: number | null
   included: number
   rate: number
@@ -28,12 +32,12 @@ export type Line = {
 
 export const TUTOR_SHARE = 0.9
 
-export function includedSessions(choice: string) {
-  return choice === 'both' ? 18 : 10
+export function includedSessions(choice: string, sessionType?: string | null) {
+  return hsSessions(choice, toSessionType(sessionType))
 }
 
 export function rateFor(sub: SubRow) {
-  return Math.round(((sub.price * TUTOR_SHARE) / includedSessions(sub.subject_choice)) * 100) / 100
+  return Math.round(((sub.price * TUTOR_SHARE) / includedSessions(sub.subject_choice, sub.session_type)) * 100) / 100
 }
 
 export function computePay(att: AttRow[], subs: SubRow[]) {
@@ -59,8 +63,9 @@ export function computePay(att: AttRow[], subs: SubRow[]) {
         studentId: r.student_id,
         subId: sub.id,
         choice: sub.subject_choice,
+        sessionType: toSessionType(sub.session_type),
         grade: sub.grade,
-        included: includedSessions(sub.subject_choice),
+        included: includedSessions(sub.subject_choice, sub.session_type),
         rate: rateFor(sub),
         present: 0, noShow: 0, tutorMissed: 0, overLimit: 0, paid: 0, pay: 0,
       }
