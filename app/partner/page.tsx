@@ -50,6 +50,12 @@ export default async function PartnerDashboard() {
     .filter((t: any) => myStudentIds.includes(t.student_id) && daysUntil(t.test_date) >= 0)
     .map((t: any) => ({ ...t, profiles: { full_name: nameOf(t.student_id) } }))
 
+  const { data: marksRows } = myStudentIds.length
+    ? await supabase.from('marks').select('*').in('student_id', myStudentIds as string[]).order('taken_on', { ascending: true })
+    : { data: [] as any[] }
+  const marksByStudent: Record<string, any[]> = {}
+  ;(marksRows || []).forEach((m: any) => { (marksByStudent[m.student_id] = marksByStudent[m.student_id] || []).push(m) })
+
   let threads: Record<string, { name: string; msgs: any[] }> = {}
   if (myStudentIds.length > 0) {
     const { data: messages } = await supabase
@@ -149,6 +155,7 @@ export default async function PartnerDashboard() {
         requests={<PartnerRequests userId={user.id} homework={homework} videos={videos} />}
         students={
           <PartnerStudents
+            marksByStudent={marksByStudent}
             myStudentIds={myStudentIds}
             threads={threads}
             bookingsByStudent={bookingsByStudent}
