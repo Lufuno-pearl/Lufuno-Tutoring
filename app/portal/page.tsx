@@ -1,5 +1,7 @@
 import { createClient } from '../../lib/supabase/server'
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
+import { isAdminEmail } from '../../lib/admin'
 import { createBooking, createHsSub, buyPack, markAwaiting, sendMessage, signOut, setTier, requestVideoAccess, requestCustomPack, requestVideoTopic, submitHomework, respondToSession } from './actions'
 import PortalHome from './PortalHome'
 import NotificationBell from '../NotificationBell'
@@ -17,10 +19,14 @@ const PACKS = [
   { id: 'hsphys', name: 'High School Physical Sciences Pack', tier: 'highschool' },
 ]
 
-export default async function Portal() {
+export default async function Portal({ searchParams }: { searchParams?: { view?: string } }) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
+
+  // the owners open the owner dashboard by default; ?view=student lets them see the student side
+  const isAdmin = isAdminEmail(user.email)
+  if (isAdmin && searchParams?.view !== 'student') redirect('/tutor')
 
   const [{ data: profile }, { data: bookings }, { data: subs }, { data: orders }, { data: messages }, { data: attendance }, { data: videoRequests }, { data: videoTopicRequests }, { data: homeworkRequests }, { data: moduleRequests }, { data: testPreps }] = await Promise.all([
     supabase.from('profiles').select('tier, full_name').eq('id', user.id).single(),
@@ -70,6 +76,7 @@ export default async function Portal() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <h2 style={{ margin: 0 }}>My portal</h2>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          {isAdmin && <Link href="/tutor" className="btn btn-primary" style={{ padding: '8px 14px', fontSize: '0.8rem' }}>Owner dashboard</Link>}
           <NotificationBell forRole="student" />
           <form action={signOut}><button className="btn" style={{ background: 'none', border: '1px solid var(--ink)' }}>Sign out</button></form>
         </div>

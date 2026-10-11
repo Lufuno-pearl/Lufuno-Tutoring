@@ -79,8 +79,9 @@ export default async function TutorDashboard() {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2>Tutor dashboard</h2>
+        <h2>Owner dashboard</h2>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <Link href="/portal?view=student" className="btn" style={{ background: 'none', border: '1px solid var(--purple-dark)', color: 'var(--purple-dark)', padding: '8px 14px', fontSize: '0.8rem' }}>Student view</Link>
           <NotificationBell forRole="staff" />
           <Link href="/tutor/pay" className="btn" style={{ background: 'none', border: '1px solid var(--ink)' }}>Tutor pay</Link>
           <form action={signOut}><button className="btn" style={{ background: 'none', border: '1px solid var(--ink)' }}>Sign out</button></form>
