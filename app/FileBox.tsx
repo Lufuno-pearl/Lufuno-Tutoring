@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { createClient } from '../lib/supabase/client'
+import ConfirmFile from './ConfirmFile'
 
 export default function FileBox({ folderPath, uploadLabel, allowUpload = true }: { folderPath: string; uploadLabel?: string; allowUpload?: boolean }) {
   const [files, setFiles] = useState<{ name: string }[]>([])
@@ -15,16 +16,13 @@ export default function FileBox({ folderPath, uploadLabel, allowUpload = true }:
 
   useEffect(() => { loadFiles() }, [folderPath])
 
-  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
+  async function handleUpload(file: File) {
     setUploading(true)
     setError('')
     const { error } = await supabase.storage.from('homework').upload(`${folderPath}/${file.name}`, file, { upsert: true })
     setUploading(false)
     if (error) setError(error.message)
     else loadFiles()
-    e.target.value = ''
   }
 
   async function handleDownload(name: string) {
@@ -48,10 +46,7 @@ export default function FileBox({ folderPath, uploadLabel, allowUpload = true }:
         </div>
       ))}
       {allowUpload && (
-        <div className="field" style={{ marginTop: 8 }}>
-          {uploadLabel && <label>{uploadLabel}</label>}
-          <input type="file" onChange={handleUpload} disabled={uploading} />
-        </div>
+        <ConfirmFile label={uploadLabel} busy={uploading} onConfirm={handleUpload} />
       )}
       {uploading && <p className="meta">Uploading...</p>}
       {error && <p style={{ color: '#A6443A', fontSize: '0.85rem' }}>{error}</p>}
