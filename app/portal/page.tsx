@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { createBooking, createHsSub, buyPack, markAwaiting, sendMessage, signOut, setTier, requestVideoAccess, requestCustomPack, requestVideoTopic, submitHomework, respondToSession } from './actions'
 import PortalHome from './PortalHome'
 import NotificationBell from '../NotificationBell'
+import { hasTutorAccess } from '../../lib/testPrepAccess'
 
 const UNI_SUBJECTS = ['Basic Analysis', 'Multi-Variable Calculus', 'Mathematical Modelling & Methods', 'Scientific Computing', 'Abstract Mathematics', 'Statistics']
 const PACKS = [
@@ -90,6 +91,7 @@ export default async function Portal() {
         homeworkRequests={homeworkRequests}
         moduleRequests={moduleRequests}
         testPreps={testPreps || []}
+        canTestPrep={hasTutorAccess(subs, bookings)}
         actions={{ createBooking, createHsSub, buyPack, markAwaiting, sendMessage, requestVideoAccess, requestCustomPack, requestVideoTopic, submitHomework, respondToSession, userId: user.id }}
       />
     </div>

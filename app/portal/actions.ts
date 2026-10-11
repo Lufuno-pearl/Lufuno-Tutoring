@@ -3,6 +3,7 @@ import { createClient } from '../../lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { sendPushToRole, sendPushToUser } from '../../lib/push'
 import { hsPrice, toSessionType, UNI_PRICE_PER_2H } from '../../lib/pricing'
+import { hasTutorAccess } from '../../lib/testPrepAccess'
 
 function makeReference(name: string) {
   const clean = (name || 'STUDENT').replace(/[^a-zA-Z]/g, '').toUpperCase().slice(0, 10) || 'STUDENT'
@@ -473,6 +474,15 @@ export async function addTestPrep(formData: FormData): Promise<{ ok: boolean; me
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { ok: false, message: 'Please sign in again.' }
+
+  // only paid-up students with an assigned tutor can send tests and exams
+  const [{ data: accessSubs }, { data: accessBookings }] = await Promise.all([
+    supabase.from('hs_subscriptions').select('status, tutor_id, end_date').eq('student_id', user.id).not('tutor_id', 'is', null),
+    supabase.from('bookings').select('status, tutor_id, day').eq('student_id', user.id).not('tutor_id', 'is', null),
+  ])
+  if (!hasTutorAccess(accessSubs, accessBookings)) {
+    return { ok: false, message: 'This is available once you are subscribed and a tutor has been assigned to you.' }
+  }
 
   const subject = String(formData.get('subject') || '').trim().slice(0, 120)
   const kind = formData.get('kind') === 'exam' ? 'exam' : 'test'

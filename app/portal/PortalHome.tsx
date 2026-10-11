@@ -391,7 +391,7 @@ function SessionConfirm({ rows, respondToSession, onAnswered }: { rows: any[]; r
   )
 }
 
-export default function PortalHome({ name, tier, uniSubjects, visiblePacks, bookings, subs, orders, messages, attendance, videoRequests, myVideoSubjects, homeworkRequests, videoTopicRequests, moduleRequests, testPreps, actions }: any) {
+export default function PortalHome({ name, tier, uniSubjects, visiblePacks, bookings, subs, orders, messages, attendance, videoRequests, myVideoSubjects, homeworkRequests, videoTopicRequests, moduleRequests, testPreps, canTestPrep, actions }: any) {
   const [section, setSection] = useState<Section>('menu')
   const router = useRouter()
   useLayoutEffect(() => {
@@ -440,6 +440,7 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
       <div>
         <NextSession name={name || ''} bookings={bookings || []} subs={subs || []} onRequest={() => setSection('book')} />
         {(() => {
+          if (!canTestPrep) return null
           const soon = (testPreps || [])
             .filter((t: any) => t.status === 'upcoming' && daysUntil(t.test_date) >= 0 && daysUntil(t.test_date) <= 14)
             .sort((a: any, b: any) => (a.test_date < b.test_date ? -1 : 1))[0]
@@ -812,7 +813,15 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
       <div>
         <Back />
         <h3>Test & Exam Prep</h3>
-        <TestPrep rows={testPreps || []} subjects={subjectOptions} />
+        {canTestPrep ? (
+          <TestPrep rows={testPreps || []} subjects={subjectOptions} />
+        ) : (
+          <div className="panel">
+            <h4 style={{ marginTop: 0 }}>Available once you have a tutor</h4>
+            <p className="meta">Test & Exam Prep is for students who are subscribed and have a tutor assigned. Once your payment is confirmed and a tutor is assigned to you, you can tell your tutor when your test or exam is and what it covers.</p>
+            <button className="btn btn-primary" onClick={() => setSection('book')}>Request tutoring</button>
+          </div>
+        )}
       </div>
     )
   }
