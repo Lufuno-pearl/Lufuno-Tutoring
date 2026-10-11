@@ -43,10 +43,43 @@ function StatusPill({ status }: { status: string }) {
   return <span className={`status ${status}`}>{label}</span>
 }
 
+// Requested -> Paid -> Confirmed, so students always see where they are
+function PaySteps({ status }: { status: string }) {
+  const level = status === 'confirmed' ? 3 : status === 'awaiting' ? 2 : 1
+  const steps = ['Requested', 'Paid', 'Confirmed']
+  return (
+    <div className="steps">
+      {steps.map((label, i) => {
+        const n = i + 1
+        const state = n < level || level === 3 ? 'done' : n === level ? 'now' : 'todo'
+        return (
+          <div className={`step ${state}`} key={label}>
+            <span className="dot">{state === 'done' ? '✓' : n}</span>
+            <span className="lbl">{label}</span>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+const LUFUNO_WHATSAPP = '27673812727'
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false)
+  async function copy() {
+    try { await navigator.clipboard.writeText(text) } catch (e) { return }
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
+  }
+  return <button type="button" className="copy-btn" onClick={copy}>{copied ? 'Copied' : 'Copy'}</button>
+}
+
 function PayBlock({ kind, id, label, price, reference, markAwaiting }: { kind: 'bookings' | 'hs_subscriptions' | 'pack_orders' | 'video_access_requests'; id: string; label: string; price: number; reference?: string | null; markAwaiting: any }) {
   const [done, setDone] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const ref = reference || `${kind.slice(0, 4).toUpperCase()}-${id.slice(0, 8).toUpperCase()}`
+  const proofLink = `https://wa.me/${LUFUNO_WHATSAPP}?text=${encodeURIComponent(`Hi Lufuno, here is my proof of payment for ${label}. Amount: R${price}. Reference: ${ref}.`)}`
 
   async function handleClick() {
     if (submitting || done) return
@@ -59,23 +92,28 @@ function PayBlock({ kind, id, label, price, reference, markAwaiting }: { kind: '
   if (done) {
     return (
       <div className="pay-box" style={{ textAlign: 'center' }}>
+        <PaySteps status="awaiting" />
         <p style={{ fontWeight: 600, marginBottom: 4 }}>Thank you!</p>
         <p className="meta">We've received your payment confirmation for {label} — Lufuno will confirm it shortly.</p>
+        <a className="btn" href={proofLink} target="_blank" rel="noopener noreferrer" style={{ background: '#25D366', color: '#fff', marginTop: 4 }}>Send proof of payment on WhatsApp</a>
       </div>
     )
   }
 
   return (
     <div className="pay-box">
+      <PaySteps status="pending" />
       <div className="meta">Pay for: {label}</div>
       <div className="amount">R{price}</div>
       <div className="pay-line"><span>Bank</span><span>ABSA</span></div>
       <div className="pay-line"><span>Account holder</span><span>LP Moyo</span></div>
-      <div className="pay-line"><span>Account number</span><span>9383837426</span></div>
-      <div className="pay-line"><span>Reference</span><span>{ref}</span></div>
+      <div className="pay-line"><span>Account number</span><span className="copy-row">9383837426 <CopyButton text="9383837426" /></span></div>
+      <div className="pay-line"><span>Reference</span><span className="copy-row">{ref} <CopyButton text={ref} /></span></div>
+      <p className="meta" style={{ marginTop: 10, marginBottom: 0 }}>Use your reference exactly as shown so we can find your payment.</p>
       <button className="btn btn-gold" style={{ marginTop: 14, opacity: submitting ? 0.6 : 1 }} onClick={handleClick} disabled={submitting}>
         {submitting ? 'Submitting...' : "I've made the payment"}
       </button>
+      <a className="btn" href={proofLink} target="_blank" rel="noopener noreferrer" style={{ background: '#25D366', color: '#fff', marginTop: 10, marginLeft: 8 }}>Send proof on WhatsApp</a>
     </div>
   )
 }
@@ -758,6 +796,7 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
             <h4>{b.subject}</h4>
             <div className="meta">{b.day} at {b.time} · {b.format === 'physical' ? 'Physical' : 'Online'}{b.session_type === 'one_on_one' ? ' · One-on-one' : ' · Group'}{b.area ? ` · ${b.area}` : ''} · R{b.price}</div>
             <StatusPill status={b.status} />
+            <PaySteps status={b.status} />
             {b.status === 'confirmed' && b.format === 'online' && b.meeting_link && <p style={{ marginTop: 8 }}><a href={b.meeting_link} target="_blank">Join session &rarr;</a></p>}
           </div>
         ))}
@@ -766,6 +805,7 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
             <h4>Monthly subscription — {s.month}</h4>
             <div className="meta">{s.subject_choice === 'maths' ? 'Mathematics' : s.subject_choice === 'physics' ? 'Physical Sciences' : 'Maths + Physical Sciences'}{s.grade ? ` · Gr ${s.grade}` : ''} · {s.format === 'physical' ? 'Physical' : 'Online'}{s.session_type === 'one_on_one' ? ' · One-on-one' : ' · Group'}{s.area ? ` · ${s.area}` : ''} · R{s.price}{s.status === 'confirmed' && s.end_date ? ` · Active until ${s.end_date}` : ''}</div>
             <StatusPill status={s.status} />
+            <PaySteps status={s.status} />
             {s.status === 'confirmed' && s.format === 'online' && s.meeting_link && <p style={{ marginTop: 8 }}><a href={s.meeting_link} target="_blank">Join session &rarr;</a></p>}
           </div>
         ))}
