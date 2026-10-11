@@ -12,7 +12,7 @@ import TutorAreas from '../TutorAreas'
 import TestList, { daysUntil } from '../TestList'
 
 function kindLabel(x: any) {
-  return `${x.session_type === 'one_on_one' ? 'One-on-one' : 'Group'}${x.format === 'physical' ? ` · Physical${x.area ? ` (${x.area})` : ''}` : ' · Online'}`
+  return `${x.session_type === 'one_on_one' ? 'One-on-one' : 'Group'}${x.format === 'physical' ? ` · ${x.alternate ? 'In person + online' : 'Physical'}${x.area ? ` (${x.area})` : ''}` : ' · Online'}`
 }
 
 export default async function PartnerDashboard() {

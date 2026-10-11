@@ -44,6 +44,9 @@ export default async function Portal({ searchParams }: { searchParams?: { view?:
     supabase.from('scheduled_sessions').select('*').eq('student_id', user.id).order('session_date', { ascending: true }),
   ])
 
+  // school is read separately so the portal still loads if the school columns are not set up yet
+  const { data: schoolRow } = await supabase.from('profiles').select('school, province').eq('id', user.id).single()
+
   if (!profile?.tier) {
     return (
       <div>
@@ -102,6 +105,9 @@ export default async function Portal({ searchParams }: { searchParams?: { view?:
         testPreps={testPreps || []}
         marks={marks || []}
         scheduled={scheduled || []}
+        hasSchool={!!(schoolRow as any)?.school}
+        mySchool={(schoolRow as any)?.school || ''}
+        myProvince={(schoolRow as any)?.province || ''}
         canTestPrep={hasTutorAccess(subs, bookings)}
         actions={{ createBooking, createHsSub, buyPack, markAwaiting, sendMessage, requestVideoAccess, requestCustomPack, requestVideoTopic, submitHomework, respondToSession, userId: user.id }}
       />

@@ -221,7 +221,10 @@ export async function createHsSub(formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { ok: false }
 
-  const format = formData.get('format') as string
+  const rawFormat = formData.get('format') as string
+  // "both" means in person with some sessions online: stored as physical plus an alternate flag
+  const alternate = rawFormat === 'both'
+  const format = alternate ? 'physical' : rawFormat
   const grade = parseInt(formData.get('grade') as string, 10)
   if (!grade || grade < 8 || grade > 12) return { ok: false, message: 'Please choose your grade.' }
   // Grades 8 and 9 are Mathematics only
@@ -276,12 +279,13 @@ export async function createHsSub(formData: FormData) {
     area,
     price,
     reference,
+    ...(alternate ? { alternate: true } : {}),
   })
   if (insertError) return { ok: false, message: 'Something went wrong. Please try again.' }
   await supabase.from('notifications').insert({
     student_id: user.id,
     for_role: 'staff',
-    message: `New high school subscription request (Gr ${grade}, ${subjectChoice}, ${sessionType === 'one_on_one' ? 'one-on-one' : 'group'}, ${format}${area ? `, ${area}` : ''})`,
+    message: `New high school subscription request (Gr ${grade}, ${subjectChoice}, ${sessionType === 'one_on_one' ? 'one-on-one' : 'group'}, ${alternate ? 'in person with some online' : format}${area ? `, ${area}` : ''})`,
   })
   await sendPushToRole('staff', 'New subscription request', `${subjectChoice} subscription`, '/tutor')
   revalidatePath('/portal')
@@ -549,4 +553,22 @@ export async function deleteTestPrep(id: string) {
   revalidatePath('/portal')
   revalidatePath('/partner')
   revalidatePath('/tutor')
+}
+
+export async function saveSchool(formData: FormData): Promise<{ ok: boolean; message: string }> {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, message: 'Please sign in again.' }
+  const school = String(formData.get('school') || '').trim().slice(0, 120)
+  const province = String(formData.get('province') || '').trim().slice(0, 60)
+  if (school.length < 2) return { ok: false, message: 'Please enter your school name.' }
+  if (!province) return { ok: false, message: 'Please choose your province.' }
+  const { error } = await supabase.from('profiles').update({ school, province }).eq('id', user.id)
+  if (error) {
+    console.error('[saveSchool]', error.message)
+    return { ok: false, message: 'Could not save. Please try again.' }
+  }
+  revalidatePath('/portal')
+  revalidatePath('/tutor')
+  return { ok: true, message: 'Saved. Thank you!' }
 }

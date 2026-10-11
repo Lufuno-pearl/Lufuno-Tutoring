@@ -14,7 +14,7 @@ import TutorAreas from '../TutorAreas'
 import AvailabilityOverview from './AvailabilityOverview'
 import { GROUP_MAX, UNI_PRICE_PER_2H } from '../../lib/pricing'
 import MarksView from '../MarksView'
-import ScheduleManager, { studentFormat } from '../ScheduleManager'
+import ScheduleManager, { studentFormat, studentAlternate } from '../ScheduleManager'
 import TestList, { daysUntil } from '../TestList'
 
 type Tab = 'home' | 'requests' | 'students' | 'chat' | 'more'
@@ -25,7 +25,7 @@ function subjectLabel(choice?: string) {
 }
 
 function kindLabel(x: any) {
-  return `${x.session_type === 'one_on_one' ? 'One-on-one' : 'Group'}${x.format === 'physical' ? ` · Physical${x.area ? ` (${x.area})` : ''}` : ' · Online'}`
+  return `${x.session_type === 'one_on_one' ? 'One-on-one' : 'Group'}${x.format === 'physical' ? ` · ${x.alternate ? 'In person + online' : 'Physical'}${x.area ? ` (${x.area})` : ''}` : ' · Online'}`
 }
 
 function StatusPill({ status }: { status: string }) {
@@ -33,7 +33,7 @@ function StatusPill({ status }: { status: string }) {
   return <span className={`status ${status}`}>{label}</span>
 }
 
-function ChatThread({ studentId, thread, actions, marks, schedule, format }: { studentId: string; thread: any; actions: any; marks?: any[]; schedule?: any[]; format?: 'online' | 'physical' }) {
+function ChatThread({ studentId, thread, actions, marks, schedule, format, alternate }: { studentId: string; thread: any; actions: any; marks?: any[]; schedule?: any[]; format?: 'online' | 'physical'; alternate?: boolean }) {
   const { markAttendance, sendTutorMessage } = actions
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
@@ -66,7 +66,7 @@ function ChatThread({ studentId, thread, actions, marks, schedule, format }: { s
       </div>
       <div style={{ marginTop: 14, borderTop: '1px solid var(--line)', paddingTop: 12 }}>
         <h4 style={{ marginTop: 0 }}>Schedule</h4>
-        <ScheduleManager studentId={studentId} rows={schedule || []} defaultFormat={format || 'online'} />
+        <ScheduleManager studentId={studentId} rows={schedule || []} defaultFormat={format || 'online'} alternateDefault={!!alternate} />
       </div>
       <TutorMaterials studentId={studentId} studentName={thread.name} />
       <div style={{ marginTop: 14, borderTop: '1px solid var(--line)', paddingTop: 12 }}>
@@ -81,7 +81,84 @@ function ChatThread({ studentId, thread, actions, marks, schedule, format }: { s
   )
 }
 
-function TutorInner({ section, setSection, tab, bookings, subs, orders, partners, threadsByStudent, attendanceRows, myAvailable, openBookings, openSubs, myClaimedBookings, myClaimedSubs, videoRequests, customPackRequests, homeworkRequests, videoTopicRequests, moduleRequests, testPreps, marksByStudent, scheduleByStudent, actions }: any) {
+
+function MonthSummary({ subs, schoolByStudent }: { subs: any[]; schoolByStudent: Record<string, { school: string; province: string }> }) {
+  const names = ['January','February','March','April','May','June','July','August','September','October','November','December']
+  const sa = new Date(Date.now() + 2 * 60 * 60 * 1000)
+  const thisMonth = `${names[sa.getUTCMonth()]} ${sa.getUTCFullYear()}`
+  const live = (subs || []).filter((x: any) => x.month && x.status !== 'cancelled' && x.status !== 'rejected')
+  const months = Array.from(new Set<string>([thisMonth, ...live.map((x: any) => String(x.month))]))
+  const [month, setMonth] = useState(thisMonth)
+  const rows = live.filter((x: any) => x.month === month)
+  const isOne = (x: any) => x.session_type === 'one_on_one'
+  const group = rows.filter((x: any) => !isOne(x))
+  const one = rows.filter(isOne)
+  const paid = rows.filter((x: any) => x.status === 'confirmed').length
+
+  const subjects: [string, string[]][] = [['Mathematics', ['maths', 'both']], ['Physical Sciences', ['physics', 'both']]]
+  const forSubject = (list: any[], keys: string[]) => list.filter((x: any) => keys.includes(x.subject_choice) || (!x.subject_choice && keys.includes('both'))).length
+
+  const grades = Array.from(new Set<string>(rows.map((x: any) => String(x.grade || '')).filter(Boolean))).sort()
+  const bySchool: Record<string, number> = {}
+  group.forEach((x: any) => {
+    const sc = schoolByStudent?.[x.student_id]?.school
+    if (sc) bySchool[sc] = (bySchool[sc] || 0) + 1
+  })
+  const schools = Object.entries(bySchool).sort((a, b) => b[1] - a[1]).slice(0, 6)
+  const noSchool = group.filter((x: any) => !schoolByStudent?.[x.student_id]?.school).length
+
+  const stat = (n: number, label: string) => (
+    <div style={{ flex: 1, textAlign: 'center', background: '#F3EFE4', borderRadius: 14, padding: '10px 4px' }}>
+      <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--purple-dark)' }}>{n}</div>
+      <div className="meta" style={{ marginBottom: 0, fontSize: '0.74rem' }}>{label}</div>
+    </div>
+  )
+
+  return (
+    <div className="panel">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+        <h4 style={{ margin: 0 }}>High school subscribers</h4>
+        <select value={month} onChange={e => setMonth(e.target.value)} style={{ padding: '4px 8px', border: '1px solid var(--line)', borderRadius: 100 }}>
+          {months.map(m => <option key={m} value={m}>{m}</option>)}
+        </select>
+      </div>
+      <div style={{ display: 'flex', gap: 8, margin: '12px 0' }}>
+        {stat(rows.length, 'Total')}
+        {stat(group.length, 'Group')}
+        {stat(one.length, 'One-on-one')}
+        {stat(paid, 'Paid')}
+      </div>
+      {rows.length === 0 && <p className="meta">No subscriptions for {month} yet.</p>}
+      {rows.length > 0 && (
+        <>
+          <div className="meta" style={{ fontWeight: 600, marginBottom: 4 }}>Group students per subject</div>
+          {subjects.map(([label, keys]) => {
+            const n = forSubject(group, keys)
+            return <div key={label} className="meta" style={{ marginBottom: 2 }}>{label}: <strong>{n}</strong>{n > 0 ? ` · about ${Math.ceil(n / GROUP_MAX)} group${Math.ceil(n / GROUP_MAX) === 1 ? '' : 's'} of up to ${GROUP_MAX}` : ''}</div>
+          })}
+          <div className="meta" style={{ fontWeight: 600, margin: '10px 0 4px' }}>One-on-one per subject</div>
+          {subjects.map(([label, keys]) => <div key={label} className="meta" style={{ marginBottom: 2 }}>{label}: <strong>{forSubject(one, keys)}</strong></div>)}
+          {grades.length > 1 && (
+            <>
+              <div className="meta" style={{ fontWeight: 600, margin: '10px 0 4px' }}>By grade</div>
+              <div className="meta" style={{ marginBottom: 2 }}>{grades.map(g => `Gr ${g}: ${rows.filter((x: any) => String(x.grade) === g).length}`).join(' · ')}</div>
+            </>
+          )}
+          {(schools.length > 0 || noSchool > 0) && (
+            <>
+              <div className="meta" style={{ fontWeight: 600, margin: '10px 0 4px' }}>Group students by school</div>
+              {schools.map(([sc, n]) => <div key={sc} className="meta" style={{ marginBottom: 2 }}>🏫 {sc}: <strong>{n}</strong></div>)}
+              {noSchool > 0 && <div className="meta" style={{ marginBottom: 2 }}>School not added: {noSchool}</div>}
+            </>
+          )}
+          <p className="meta" style={{ marginTop: 10, marginBottom: 0 }}>A student taking both subjects is counted in each subject.</p>
+        </>
+      )}
+    </div>
+  )
+}
+
+function TutorInner({ section, setSection, tab, bookings, subs, orders, partners, threadsByStudent, attendanceRows, myAvailable, openBookings, openSubs, myClaimedBookings, myClaimedSubs, videoRequests, customPackRequests, homeworkRequests, videoTopicRequests, moduleRequests, testPreps, marksByStudent, scheduleByStudent, schoolByStudent, actions }: any) {
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null)
   const [chatSearch, setChatSearch] = useState('')
   const [myStudentId, setMyStudentId] = useState<string | null>(null)
@@ -158,6 +235,7 @@ function TutorInner({ section, setSection, tab, bookings, subs, orders, partners
           <div className="hero-hi">Owner dashboard 👑</div>
           <div className="hero-sub">{needsAttention === 0 ? "You're all caught up." : `${needsAttention} thing${needsAttention === 1 ? '' : 's'} need your attention.`}</div>
         </div>
+        <MonthSummary subs={subs || []} schoolByStudent={schoolByStudent || {}} />
         {pendingCount > 0 && (
           <div className="panel" style={{ cursor: 'pointer', borderLeft: '5px solid #F2C14E' }} onClick={() => setSection('pending')}>
             <h4 style={{ margin: 0 }}>{pendingCount} payment{pendingCount === 1 ? '' : 's'} to confirm</h4>
@@ -297,6 +375,12 @@ function TutorInner({ section, setSection, tab, bookings, subs, orders, partners
       <div className="panel" key={r.id}>
         <h4>{r.label}</h4>
         <div className="meta">{kindLabel(r)}</div>
+        {r.kind === 'hs_subscriptions' && (() => {
+          const sc = (schoolByStudent || {})[r.student_id]
+          if (!sc) return <div className="meta">🏫 School not added yet</div>
+          const same = Array.from(new Set((subs || []).filter((x: any) => x.student_id !== r.student_id && (schoolByStudent || {})[x.student_id]?.school?.toLowerCase() === sc.school.toLowerCase()).map((x: any) => x.student_id))).length
+          return <div className="meta">🏫 {sc.school}{sc.province ? `, ${sc.province}` : ''}{same > 0 ? ` · ${same} other student${same === 1 ? '' : 's'} from this school` : ''}</div>
+        })()}
         <div className="meta">{r.profiles?.full_name} · currently: {r.tutor_id ? (partners.find((p: any) => p.id === r.tutor_id)?.full_name || 'a tutor') : 'unassigned'}</div>
         <form action={async (formData: FormData) => { await assignTutor(r.kind, r.id, formData.get('tutorId') as string) }} style={{ display: 'flex', gap: 8, marginTop: 8 }}>
           <select name="tutorId" defaultValue={r.tutor_id || ''} style={{ flex: 1, padding: 8, border: '1px solid var(--line)', borderRadius: 100 }}>
@@ -488,7 +572,7 @@ function TutorInner({ section, setSection, tab, bookings, subs, orders, partners
           <Back onClick={() => setSelectedStudentId(null)} />
           <h3>{thread.name}</h3>
           <div className="meta" style={{ marginBottom: 10 }}>{thread.email}</div>
-          <ChatThread studentId={selectedStudentId} thread={thread} actions={actions} marks={(marksByStudent || {})[selectedStudentId]} schedule={(scheduleByStudent || {})[selectedStudentId]} format={studentFormat(selectedStudentId, bookings || [], subs || [])} />
+          <ChatThread studentId={selectedStudentId} thread={thread} actions={actions} marks={(marksByStudent || {})[selectedStudentId]} schedule={(scheduleByStudent || {})[selectedStudentId]} format={studentFormat(selectedStudentId, bookings || [], subs || [])} alternate={studentAlternate(selectedStudentId, bookings || [], subs || [])} />
         </div>
       )
     }
@@ -557,7 +641,7 @@ function TutorInner({ section, setSection, tab, bookings, subs, orders, partners
               )}
             </div>
           ))}
-          <ChatThread studentId={myStudentId} thread={thread} actions={{ markAttendance, sendTutorMessage }} marks={(marksByStudent || {})[myStudentId]} schedule={(scheduleByStudent || {})[myStudentId]} format={studentFormat(myStudentId, bookings || [], subs || [])} />
+          <ChatThread studentId={myStudentId} thread={thread} actions={{ markAttendance, sendTutorMessage }} marks={(marksByStudent || {})[myStudentId]} schedule={(scheduleByStudent || {})[myStudentId]} format={studentFormat(myStudentId, bookings || [], subs || [])} alternate={studentAlternate(myStudentId, bookings || [], subs || [])} />
         </div>
       )
     }

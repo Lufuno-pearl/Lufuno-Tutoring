@@ -54,6 +54,13 @@ export default async function TutorDashboard() {
   const marksByStudent: Record<string, any[]> = {}
   ;(marksRows || []).forEach((m: any) => { (marksByStudent[m.student_id] = marksByStudent[m.student_id] || []).push(m) })
 
+  // schools (read separately so the dashboard still loads before the school columns exist)
+  const hsStudentIds = Array.from(new Set((subs || []).map((x: any) => x.student_id).filter(Boolean)))
+  const { data: schoolRows } = hsStudentIds.length
+    ? await supabase.from('profiles').select('id, school, province').in('id', hsStudentIds as string[])
+    : { data: [] as any[] }
+  const schoolByStudent: Record<string, { school: string; province: string }> = {}
+  ;(schoolRows || []).forEach((r: any) => { if (r.school) schoolByStudent[r.id] = { school: r.school, province: r.province || '' } })
   const scheduleByStudent: Record<string, any[]> = {}
   ;(schedRows || []).forEach((r: any) => { (scheduleByStudent[r.student_id] = scheduleByStudent[r.student_id] || []).push(r) })
 
@@ -109,6 +116,7 @@ export default async function TutorDashboard() {
         moduleRequests={moduleRequests}
         testPreps={testPreps || []}
         marksByStudent={marksByStudent}
+        schoolByStudent={schoolByStudent}
         scheduleByStudent={scheduleByStudent}
         actions={{ signOut, answerModuleRequest, confirmPayment, setMeetingLink, assignTutor, markAttendance, sendTutorMessage, toggleAvailable, claim, setCustomPackLink, markHomeworkSolved, setVideoTopicLink }}
       />
