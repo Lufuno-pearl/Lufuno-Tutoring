@@ -9,6 +9,7 @@ import FileBox from '../FileBox'
 import AttendanceButtons from '../AttendanceButtons'
 import ReferralAdmin from './ReferralAdmin'
 import AvailabilityBoard from '../AvailabilityBoard'
+import TutorAreas from '../TutorAreas'
 import AvailabilityOverview from './AvailabilityOverview'
 
 type Section = 'menu' | 'pending' | 'assign' | 'packs' | 'sessions' | 'chat' | 'mytutoring' | 'videos' | 'videoreq' | 'referrals' | 'availability'
@@ -439,6 +440,9 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
         <Back />
         <h3>Your availability</h3>
         <AvailabilityBoard />
+
+        <h3>Your areas</h3>
+        <TutorAreas />
 
         <h3>Requests needing a tutor</h3>
         <h4 style={{ marginTop: 12 }}>University</h4>
