@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useLayoutEffect } from 'react'
-import { Clock, UserCog, BookOpen, ClipboardList, MessageCircle, ChevronRight, Star, Video, Film, Gift, Calendar } from 'lucide-react'
+import { Clock, UserCog, BookOpen, ClipboardList, MessageCircle, ChevronRight, Star, Video, Film, Gift, Calendar, GraduationCap } from 'lucide-react'
 import TutorMaterials from './TutorMaterials'
 import PackUpload from './PackUpload'
 import VideoManager from './VideoManager'
@@ -11,9 +11,9 @@ import ReferralAdmin from './ReferralAdmin'
 import AvailabilityBoard from '../AvailabilityBoard'
 import TutorAreas from '../TutorAreas'
 import AvailabilityOverview from './AvailabilityOverview'
-import { GROUP_MAX } from '../../lib/pricing'
+import { GROUP_MAX, UNI_PRICE_PER_2H } from '../../lib/pricing'
 
-type Section = 'menu' | 'pending' | 'assign' | 'packs' | 'sessions' | 'chat' | 'mytutoring' | 'videos' | 'videoreq' | 'referrals' | 'availability'
+type Section = 'menu' | 'pending' | 'assign' | 'packs' | 'sessions' | 'chat' | 'mytutoring' | 'videos' | 'videoreq' | 'referrals' | 'availability' | 'modules'
 
 function subjectLabel(choice?: string) {
   return choice === 'maths' ? 'Mathematics' : choice === 'physics' ? 'Physical Sciences' : 'Maths & Physical Sciences'
@@ -68,7 +68,7 @@ function ChatThread({ studentId, thread, actions }: { studentId: string; thread:
   )
 }
 
-export default function TutorHome({ bookings, subs, orders, partners, threadsByStudent, attendanceRows, myAvailable, openBookings, openSubs, myClaimedBookings, myClaimedSubs, videoRequests, customPackRequests, homeworkRequests, videoTopicRequests, actions }: any) {
+export default function TutorHome({ bookings, subs, orders, partners, threadsByStudent, attendanceRows, myAvailable, openBookings, openSubs, myClaimedBookings, myClaimedSubs, videoRequests, customPackRequests, homeworkRequests, videoTopicRequests, moduleRequests, actions }: any) {
   const [section, setSection] = useState<Section>('menu')
   useLayoutEffect(() => {
     const saved = sessionStorage.getItem('tutorSection') as Section | null
@@ -80,8 +80,9 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null)
   const [chatSearch, setChatSearch] = useState('')
   const [myStudentId, setMyStudentId] = useState<string | null>(null)
+  const pendingModules = (moduleRequests || []).filter((m: any) => m.status === 'requested').length
   const pendingVideos = (videoTopicRequests || []).filter((v: any) => v.status !== 'ready').length
-  const { confirmPayment, setMeetingLink, assignTutor, toggleAvailable, claim, markAttendance, sendTutorMessage, setCustomPackLink, markHomeworkSolved, setVideoTopicLink } = actions
+  const { answerModuleRequest, confirmPayment, setMeetingLink, assignTutor, toggleAvailable, claim, markAttendance, sendTutorMessage, setCustomPackLink, markHomeworkSolved, setVideoTopicLink } = actions
 
   if (section === 'menu') {
     return (
@@ -115,6 +116,15 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
               )}
             </div>
             <div className="tile-body"><div className="name">Video Requests</div></div>
+          </div>
+          <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('modules')}>
+            <div className="tile-art" style={{ background: 'linear-gradient(135deg, #D96F8B, #B54767)', position: 'relative' }}>
+              <GraduationCap size={36} color="#fff" />
+              {pendingModules > 0 && (
+                <span style={{ position: 'absolute', top: 10, right: 12, background: '#A6443A', color: '#fff', fontSize: '0.75rem', borderRadius: 100, minWidth: 22, height: 22, padding: '0 5px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{pendingModules}</span>
+              )}
+            </div>
+            <div className="tile-body"><div className="name">Module Requests</div></div>
           </div>
           <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('referrals')}>
             <div className="tile-art" style={{ background: 'linear-gradient(135deg, #F2C14E, #D9A32E)' }}><Gift size={36} color="#fff" /></div>
@@ -333,6 +343,57 @@ export default function TutorHome({ bookings, subs, orders, partners, threadsByS
         <Back />
         <h3>Video requests{pendingVideos > 0 ? ` (${pendingVideos} waiting)` : ''}</h3>
         <VideoRequests requests={videoTopicRequests || []} partners={partners || []} />
+      </div>
+    )
+  }
+
+  if (section === 'modules') {
+    const open = (moduleRequests || []).filter((m: any) => m.status === 'requested')
+    const done = (moduleRequests || []).filter((m: any) => m.status !== 'requested')
+    const tutorOptions = (r: any) => {
+      const wantsArea = r.format === 'physical' && r.area ? String(r.area).toLowerCase() : ''
+      const oneOnOne = r.session_type === 'one_on_one'
+      return (partners || []).map((p: any) => {
+        const areaOk = !wantsArea || (p.areas || []).some((a: string) => a.toLowerCase() === wantsArea)
+        const oneOk = !oneOnOne || !!p.takes_one_on_one
+        const notes: string[] = []
+        if (wantsArea) notes.push(areaOk ? `covers ${r.area}` : `not in ${r.area}`)
+        if (oneOnOne) notes.push(p.takes_one_on_one ? 'takes 1-on-1' : 'no 1-on-1')
+        if (!p.available) notes.push('not available')
+        const good = areaOk && oneOk
+        return { id: p.id as string, good, label: `${good ? '✓ ' : ''}${p.full_name}${notes.length ? ` — ${notes.join(', ')}` : ''}` }
+      }).sort((a: any, b: any) => Number(b.good) - Number(a.good))
+    }
+    return (
+      <div>
+        <Back />
+        <h3>Module requests{pendingModules > 0 ? ` (${pendingModules} waiting)` : ''}</h3>
+        {open.length === 0 && <p className="meta">Nothing waiting right now.</p>}
+        {open.map((r: any) => (
+          <div className="panel" key={r.id}>
+            <h4>{r.module?.name || 'Module'}</h4>
+            <div className="meta">{r.module?.university}{r.module?.year ? ` · Year ${r.module.year}` : ''}{r.module?.field ? ` · ${r.module.field}` : ''}</div>
+            <div className="meta">{r.profiles?.full_name} · {r.profiles?.email}</div>
+            <div className="meta">{kindLabel({ session_type: r.session_type, format: r.format, area: r.area })} · wants {r.day} at {r.time} · R{UNI_PRICE_PER_2H[r.session_type === 'one_on_one' ? 'one_on_one' : 'group']} per 2 hours</div>
+            <form action={async (formData: FormData) => { await answerModuleRequest(r.id, true, String(formData.get('tutorId') || '')) }} style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+              <select name="tutorId" defaultValue="" style={{ flex: 1, padding: 8, border: '1px solid var(--line)', borderRadius: 100 }}>
+                <option value="">Tutor to be chosen later</option>
+                {tutorOptions(r).map((o: any) => <option key={o.id} value={o.id}>{o.label}</option>)}
+              </select>
+              <button className="btn btn-primary">Yes, available</button>
+            </form>
+            <form action={async () => { await answerModuleRequest(r.id, false, '') }} style={{ marginTop: 8 }}>
+              <button className="btn" style={{ background: 'none', border: '1px solid var(--ink)' }}>Not available yet</button>
+            </form>
+          </div>
+        ))}
+        {done.length > 0 && <h3 style={{ marginTop: 20 }}>Answered</h3>}
+        {done.map((r: any) => (
+          <div className="panel" key={r.id}>
+            <h4>{r.module?.name || 'Module'}</h4>
+            <div className="meta">{r.profiles?.full_name} · {r.module?.university} · {r.status === 'available' ? `Available${r.tutor_id ? ` · ${(partners || []).find((p: any) => p.id === r.tutor_id)?.full_name || 'tutor'}` : ''}` : 'No tutor yet'}</div>
+          </div>
+        ))}
       </div>
     )
   }

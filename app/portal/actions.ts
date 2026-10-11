@@ -35,6 +35,96 @@ export async function getAreas(): Promise<string[]> {
   return (data || []).map((a: any) => a.name as string)
 }
 
+export async function getModuleCatalogue(): Promise<{ id: string; university: string; year: number; field: string; name: string; code: string | null }[]> {
+  const supabase = createClient()
+  const { data } = await supabase.from('uni_modules').select('id, university, year, field, name, code').order('name').limit(3000)
+  return (data || []) as { id: string; university: string; year: number; field: string; name: string; code: string | null }[]
+}
+
+export async function addModule(university: string, year: number, field: string, name: string, code: string): Promise<{ ok: boolean; message: string; module: any }> {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, message: 'Please sign in again.', module: null }
+
+  const uni = (university || '').trim().replace(/\s+/g, ' ')
+  const fld = (field || '').trim().replace(/\s+/g, ' ')
+  const nm = (name || '').trim().replace(/\s+/g, ' ')
+  const cd = (code || '').trim().slice(0, 20)
+  if (!uni || !fld || !year || year < 1 || year > 4) return { ok: false, message: 'Choose your university, year and subject area first.', module: null }
+  if (nm.length < 2) return { ok: false, message: 'Type the name of your module.', module: null }
+  if (nm.length > 80 || uni.length > 60 || fld.length > 60) return { ok: false, message: 'One of those names is too long.', module: null }
+
+  const { data: existing } = await supabase.from('uni_modules').select('id, university, year, field, name, code').eq('year', year)
+  const found = (existing || []).find((m: any) =>
+    String(m.university).toLowerCase() === uni.toLowerCase() &&
+    String(m.field).toLowerCase() === fld.toLowerCase() &&
+    String(m.name).toLowerCase() === nm.toLowerCase())
+  if (found) return { ok: true, message: 'That module is already on the list. We selected it for you.', module: found }
+
+  const { data, error } = await supabase
+    .from('uni_modules')
+    .insert({ university: uni, year, field: fld, name: nm, code: cd || null, created_by: user.id })
+    .select('id, university, year, field, name, code')
+    .single()
+  if (error || !data) return { ok: false, message: 'Could not add that module. Please try again.', module: null }
+  revalidatePath('/portal')
+  return { ok: true, message: 'Module added.', module: data }
+}
+
+export async function requestModuleTutoring(formData: FormData): Promise<{ ok: boolean; message: string }> {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, message: 'Please sign in again.' }
+
+  const moduleId = String(formData.get('moduleId') || '')
+  const format = formData.get('format') === 'physical' ? 'physical' : 'online'
+  const sessionType = toSessionType(formData.get('sessionType'))
+  const day = String(formData.get('day') || '')
+  const time = String(formData.get('time') || '')
+  if (!moduleId) return { ok: false, message: 'Please pick a module.' }
+  if (!day || !time) return { ok: false, message: 'Please choose a preferred day and time.' }
+
+  const { data: mod } = await supabase.from('uni_modules').select('id, name, university, year').eq('id', moduleId).single()
+  if (!mod) return { ok: false, message: 'We could not find that module. Please try again.' }
+
+  const { data: open } = await supabase
+    .from('module_requests')
+    .select('id')
+    .eq('student_id', user.id)
+    .eq('module_id', moduleId)
+    .eq('status', 'requested')
+    .limit(1)
+  if (open && open.length > 0) return { ok: true, message: 'You already asked about this module. We will get back to you.' }
+
+  let area: string | null = null
+  if (format === 'physical') {
+    const areaCheck = await checkArea(supabase, String(formData.get('area') || ''))
+    if (!areaCheck.ok) return { ok: false, message: areaCheck.message }
+    area = areaCheck.area
+  }
+
+  const { error } = await supabase.from('module_requests').insert({
+    student_id: user.id,
+    module_id: moduleId,
+    session_type: sessionType,
+    format,
+    area,
+    day,
+    time,
+  })
+  if (error) return { ok: false, message: 'Something went wrong. Please try again.' }
+
+  const label = `${mod.name} (${mod.university}, year ${mod.year}, ${sessionType === 'one_on_one' ? 'one-on-one' : 'group'}, ${format}${area ? `, ${area}` : ''})`
+  await supabase.from('notifications').insert({
+    student_id: user.id,
+    for_role: 'staff',
+    message: `New module tutoring request: ${label}`,
+  })
+  await sendPushToRole('staff', 'New module request', `${mod.name} — ${mod.university}`, '/tutor')
+  revalidatePath('/portal')
+  return { ok: true, message: `Thanks! We will check for a ${mod.name} tutor and let you know.` }
+}
+
 export async function createBooking(formData: FormData) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()

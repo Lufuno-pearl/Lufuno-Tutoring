@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { createClient } from '../../lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { confirmPayment, setMeetingLink, assignTutor, markAttendance, sendTutorMessage, toggleAvailable, claim, setCustomPackLink, markHomeworkSolved, setVideoTopicLink } from './actions'
+import { answerModuleRequest, confirmPayment, setMeetingLink, assignTutor, markAttendance, sendTutorMessage, toggleAvailable, claim, setCustomPackLink, markHomeworkSolved, setVideoTopicLink } from './actions'
 import { signOut } from '../portal/actions'
 import TutorHome from './TutorHome'
 import NotificationBell from '../NotificationBell'
@@ -35,6 +35,22 @@ export default async function TutorDashboard() {
     ...p,
     areas: (areaRows || []).filter((a: any) => a.tutor_id === p.id).map((a: any) => a.name),
     group_count: (subs || []).filter((s: any) => s.tutor_id === p.id && s.session_type !== 'one_on_one' && ['pending', 'awaiting', 'confirmed'].includes(s.status) && (!s.end_date || s.end_date >= todayISO)).length,
+  }))
+
+  // university module requests, with module and student details attached
+  const { data: modReqRaw } = await supabase.from('module_requests').select('*').order('created_at', { ascending: false }).limit(300)
+  const modIds = Array.from(new Set((modReqRaw || []).map((r: any) => r.module_id).filter(Boolean)))
+  const modStudentIds = Array.from(new Set((modReqRaw || []).map((r: any) => r.student_id).filter(Boolean)))
+  const { data: modRows } = modIds.length
+    ? await supabase.from('uni_modules').select('id, name, university, year, field').in('id', modIds as string[])
+    : { data: [] as any[] }
+  const { data: modStudents } = modStudentIds.length
+    ? await supabase.from('profiles').select('id, full_name, email').in('id', modStudentIds as string[])
+    : { data: [] as any[] }
+  const moduleRequests = (modReqRaw || []).map((r: any) => ({
+    ...r,
+    module: (modRows || []).find((m: any) => m.id === r.module_id) || null,
+    profiles: (modStudents || []).find((p: any) => p.id === r.student_id) || null,
   }))
 
   // attach student names to video topic requests (done separately so it never fails on a missing table link)
@@ -100,7 +116,8 @@ export default async function TutorDashboard() {
         customPackRequests={customPackRequests}
         homeworkRequests={homeworkRequests}
         videoTopicRequests={videoTopicRequests}
-        actions={{ confirmPayment, setMeetingLink, assignTutor, markAttendance, sendTutorMessage, toggleAvailable, claim, setCustomPackLink, markHomeworkSolved, setVideoTopicLink }}
+        moduleRequests={moduleRequests}
+        actions={{ answerModuleRequest, confirmPayment, setMeetingLink, assignTutor, markAttendance, sendTutorMessage, toggleAvailable, claim, setCustomPackLink, markHomeworkSolved, setVideoTopicLink }}
       />
     </div>
   )
