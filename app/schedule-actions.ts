@@ -13,6 +13,7 @@ export async function addSessions(formData: FormData): Promise<{ ok: boolean; me
   const date = String(formData.get('session_date') || '')
   const time = String(formData.get('session_time') || '')
   const format = formData.get('format') === 'physical' ? 'physical' : 'online'
+  const alternate = formData.get('alternate') === 'on' && format === 'physical'
   const note = String(formData.get('note') || '').trim().slice(0, 300)
   const weeks = Math.min(12, Math.max(1, Math.floor(Number(formData.get('weeks')) || 1)))
 
@@ -26,7 +27,7 @@ export async function addSessions(formData: FormData): Promise<{ ok: boolean; me
   const rows = Array.from({ length: weeks }, (_, i) => {
     const d = new Date(date + 'T12:00:00Z')
     d.setUTCDate(d.getUTCDate() + i * 7)
-    return { student_id: studentId, tutor_id: user.id, subject, session_date: d.toISOString().slice(0, 10), session_time: time, format, note: note || null }
+    return { student_id: studentId, tutor_id: user.id, subject, session_date: d.toISOString().slice(0, 10), session_time: time, format: alternate && i % 2 === 1 ? 'online' : format, note: note || null }
   })
 
   const { error } = await supabase.from('scheduled_sessions').insert(rows)
@@ -49,6 +50,23 @@ export async function addSessions(formData: FormData): Promise<{ ok: boolean; me
 export async function deleteSession(id: string): Promise<void> {
   const supabase = createClient()
   await supabase.from('scheduled_sessions').delete().eq('id', id)
+  revalidatePath('/portal')
+  revalidatePath('/partner')
+  revalidatePath('/tutor')
+}
+
+export async function setSessionFormat(id: string, format: 'online' | 'physical'): Promise<void> {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
+  const { data: row } = await supabase.from('scheduled_sessions').select('student_id, subject, session_date, session_time').eq('id', id).single()
+  if (!row) return
+  const { error } = await supabase.from('scheduled_sessions').update({ format }).eq('id', id)
+  if (error) return
+  const day = new Date(row.session_date + 'T12:00:00Z').toLocaleDateString('en-ZA', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' })
+  const text = `${row.subject} on ${day} at ${String(row.session_time).slice(0, 5)} is now ${format === 'online' ? 'online' : 'in person'}.`
+  await supabase.from('notifications').insert({ student_id: row.student_id, for_role: 'student', message: `Session changed. ${text}` })
+  await sendPushToUser(row.student_id, 'Session changed', text, '/portal')
   revalidatePath('/portal')
   revalidatePath('/partner')
   revalidatePath('/tutor')

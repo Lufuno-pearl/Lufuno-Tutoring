@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { CalendarClock, Video, MapPin } from 'lucide-react'
+import { sendMessage } from './actions'
 
 type Booking = { id: string; tutor_id?: string | null; subject: string; day: string | null; time: string | null; format: string | null; area?: string | null; status: string; meeting_link?: string | null }
 type Sub = { id: string; tutor_id?: string | null; subject_choice: string; format: string | null; status: string; meeting_link?: string | null; end_date?: string | null }
@@ -24,6 +25,7 @@ type Sched = { id: string; subject: string; session_date: string; session_time: 
 
 export default function NextSession({ name, bookings, subs, scheduled, onRequest }: { name: string; bookings: Booking[]; subs: Sub[]; scheduled?: Sched[]; onRequest: () => void }) {
   const [now, setNow] = useState<Date | null>(null)
+  const [asked, setAsked] = useState(false)
   useEffect(() => { setNow(new Date()) }, [])
 
   const firstName = (name || '').trim().split(' ')[0]
@@ -65,6 +67,18 @@ export default function NextSession({ name, bookings, subs, scheduled, onRequest
             </div>
             {next.b.format !== 'physical' && (next.b.meeting_link || classLink?.meeting_link) && (
               <a className="btn btn-gold" href={(next.b.meeting_link || classLink?.meeting_link) as string} target="_blank" rel="noopener noreferrer" style={{ marginTop: 12 }}>Join session</a>
+            )}
+            {next.b.format === 'physical' && (
+              asked ? (
+                <div className="meta" style={{ marginTop: 10, marginBottom: 0 }}>Request sent. Your tutor will reply in Chat.</div>
+              ) : (
+                <button onClick={async () => {
+                  setAsked(true)
+                  const fd = new FormData()
+                  fd.set('body', `Hi, I can't make it in person for ${next.b.subject} on ${next.at.toLocaleDateString('en-ZA', { weekday: 'long', day: 'numeric', month: 'long' })}. Can we do it online please?`)
+                  await sendMessage(fd)
+                }} style={{ background: 'none', border: 'none', color: 'var(--purple-dark)', fontWeight: 600, padding: 0, marginTop: 10, cursor: 'pointer', fontSize: '0.85rem' }}>Can't make it in person? Ask for online</button>
+              )
             )}
             {next.b.format !== 'physical' && !next.b.meeting_link && !classLink?.meeting_link && <div className="meta" style={{ marginTop: 10, marginBottom: 0 }}>Your tutor will add the meeting link here.</div>}
             {next.b.note && <div className="meta" style={{ marginTop: 8, marginBottom: 0 }}>📝 {next.b.note}</div>}
