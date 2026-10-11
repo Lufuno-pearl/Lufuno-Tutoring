@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useLayoutEffect, ReactNode } from 'react'
-import { Calendar, Inbox, Film, Users, Video, MapPin } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Calendar, Inbox, Film, Users, Video, MapPin, ScrollText } from 'lucide-react'
 
 type Section = 'menu' | 'availability' | 'open' | 'requests' | 'students' | 'videos' | 'areas'
 
@@ -25,6 +26,7 @@ function Badge({ n }: { n: number }) {
 
 export default function PartnerHome({ openCount, requestCount, studentCount, availability, open, requests, students, videos, areas }: Props) {
   const [section, setSection] = useState<Section>('menu')
+  const router = useRouter()
 
   useLayoutEffect(() => {
     try {
@@ -72,6 +74,10 @@ export default function PartnerHome({ openCount, requestCount, studentCount, ava
           <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('areas')}>
             <div className="tile-art" style={{ background: 'linear-gradient(135deg, #D96F8B, #B54767)' }}><MapPin size={36} color="#fff" /></div>
             <div className="tile-body"><div className="name">My Areas</div></div>
+          </div>
+          <div className="tile" style={{ cursor: 'pointer' }} onClick={() => router.push('/terms/tutor')}>
+            <div className="tile-art" style={{ background: 'linear-gradient(135deg, #7A8FB0, #566B8F)' }}><ScrollText size={36} color="#fff" /></div>
+            <div className="tile-body"><div className="name">Tutor Agreement</div></div>
           </div>
         </div>
       </div>
