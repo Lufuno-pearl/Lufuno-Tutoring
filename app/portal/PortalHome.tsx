@@ -658,7 +658,7 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
                   <option value="online">Online</option>
                   <option value="physical">Physical</option>
                 </select>
-                <p className="meta" style={{ marginTop: 6 }}>Online and physical cost the same. Physical sessions happen in your area with a tutor who lives nearby.</p>
+                <p className="meta" style={{ marginTop: 6 }}>Online and physical cost the same. Physical sessions happen in your area with a tutor who lives nearby. Prefer meeting in person but sometimes can't make it? Choose Physical. On any day you can't come, your tutor can switch that one session to online.</p>
               </div>
               {hsFormat === 'physical' && (
                 <AreaPicker areas={areas} value={hsArea} onChange={setHsArea} notListedHelp="Online sessions work just as well, so we suggest choosing Online." onChooseOnline={() => { setHsFormat('online'); setHsArea('') }} />
