@@ -4,14 +4,13 @@ import { ChevronRight } from 'lucide-react'
 import { createClient } from '../../lib/supabase/client'
 import { markVideoReady } from './actions'
 import StoredVideo from '../StoredVideo'
+import ConfirmFile from '../ConfirmFile'
 
 export function UploadVideo({ request, complete, onDone }: { request: any; complete?: (id: string, path: string) => Promise<void>; onDone?: () => void }) {
   const [state, setState] = useState<'idle' | 'uploading' | 'done' | 'error'>('idle')
   const [error, setError] = useState('')
 
-  async function onPick(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
+  async function onPick(file: File) {
     setState('uploading')
     setError('')
     try {
@@ -38,10 +37,8 @@ export function UploadVideo({ request, complete, onDone }: { request: any; compl
 
   return (
     <div style={{ marginTop: 10 }}>
-      <label className="btn btn-primary" style={{ display: 'inline-block', cursor: 'pointer', opacity: state === 'uploading' ? 0.6 : 1 }}>
-        {state === 'uploading' ? 'Uploading… keep this screen open' : 'Choose video from Photos'}
-        <input type="file" accept="video/*" onChange={onPick} disabled={state === 'uploading'} style={{ display: 'none' }} />
-      </label>
+      <ConfirmFile accept="video/*" buttonText="Choose video from Photos" confirmText="Yes, send this video" busy={state === 'uploading'} onConfirm={onPick} />
+      {state === 'uploading' && <p className="meta">Uploading… keep this screen open</p>}
       {state === 'error' && <p className="meta" style={{ marginTop: 8, color: '#A6443A' }}>Could not upload: {error}</p>}
     </div>
   )

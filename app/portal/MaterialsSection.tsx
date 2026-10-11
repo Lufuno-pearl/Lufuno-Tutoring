@@ -1,4 +1,5 @@
 'use client'
+import ConfirmFile from '../ConfirmFile'
 import { useEffect, useState } from 'react'
 import { createClient } from '../../lib/supabase/client'
 
@@ -15,16 +16,13 @@ export default function MaterialsSection({ userId }: { userId: string }) {
 
   useEffect(() => { loadFiles() }, [])
 
-  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
+  async function handleUpload(file: File) {
     setUploading(true)
     setError('')
     const { error } = await supabase.storage.from('materials').upload(`${userId}/${file.name}`, file, { upsert: true })
     setUploading(false)
     if (error) setError(error.message)
     else loadFiles()
-    e.target.value = ''
   }
 
   async function handleDownload(name: string) {
@@ -50,10 +48,7 @@ export default function MaterialsSection({ userId }: { userId: string }) {
           </div>
         ))}
       </div>
-      <div className="field">
-        <label>Upload a file for Lufuno</label>
-        <input type="file" onChange={handleUpload} disabled={uploading} />
-      </div>
+      <ConfirmFile label="Upload a file for Lufuno" busy={uploading} onConfirm={handleUpload} />
       {uploading && <p className="meta">Uploading...</p>}
       {error && <p style={{ color: '#A6443A', fontSize: '0.85rem' }}>{error}</p>}
     </section>

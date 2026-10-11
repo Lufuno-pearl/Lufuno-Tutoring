@@ -67,9 +67,16 @@ function SubjectVideos({ subject }: { subject: string }) {
       </div>
       <div className="field">
         <label>Video file</label>
-        <input type="file" accept="video/*" onChange={e => setFile(e.target.files?.[0] || null)} />
+        {file ? (
+          <div className="meta" style={{ marginBottom: 0 }}>
+            Selected: <strong style={{ wordBreak: 'break-all' }}>{file.name}</strong>{' '}
+            <span style={{ color: '#A6443A', cursor: 'pointer', fontWeight: 600 }} onClick={() => setFile(null)}>Cancel, choose another</span>
+          </div>
+        ) : (
+          <input type="file" accept="video/*" onChange={e => setFile(e.target.files?.[0] || null)} />
+        )}
       </div>
-      <button className="btn btn-primary" onClick={handleUpload} disabled={uploading || !file || !title.trim()}>{uploading ? 'Uploading...' : 'Upload video'}</button>
+      <button className="btn btn-primary" onClick={handleUpload} disabled={uploading || !file || !title.trim()}>{uploading ? 'Uploading...' : 'Yes, upload this video'}</button>
       {error && <p style={{ color: '#A6443A', fontSize: '0.85rem' }}>{error}</p>}
       <div className="meta" style={{ cursor: 'pointer', marginTop: 10 }} onClick={() => setOpen(false)}>Collapse</div>
     </div>
