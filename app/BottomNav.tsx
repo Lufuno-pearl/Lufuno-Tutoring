@@ -33,6 +33,8 @@ export default function BottomNav() {
     return () => { listener.subscription.unsubscribe() }
   }, [pathname])
 
+  if (pathname?.startsWith('/portal')) return null
+
   return (
     <div className="bottom-nav">
       <Link href="/" className={pathname === '/' ? 'active' : ''}>
