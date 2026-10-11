@@ -11,19 +11,21 @@ import ReferralBox from './ReferralBox'
 import ModuleFinder from './ModuleFinder'
 import NextSession from './NextSession'
 import TestPrep from './TestPrep'
+import QuestionOfDay from './QuestionOfDay'
+import { StreakCard, CountdownCard, PlanCard, GetStarted, WhatYouGet, PriceStrip, ReferBanner, HelpButton, Hero } from './HomeParts'
 import { daysUntil, whenLabel } from '../TestList'
 import { getAreas } from './actions'
 import { hsPrice, hsSessions, UNI_PRICE_PER_2H, GROUP_MAX, SessionType } from '../../lib/pricing'
 
 
-type Section = 'menu' | 'book' | 'packs' | 'chat' | 'history' | 'video' | 'guide' | 'homework' | 'referral' | 'testprep'
+type Section = 'menu' | 'book' | 'packs' | 'chat' | 'history' | 'video' | 'guide' | 'homework' | 'referral' | 'testprep' | 'qotd'
 type Tab = 'home' | 'tutoring' | 'chat' | 'learn' | 'more'
 
 // which bottom tab a screen belongs to
 function tabOf(section: Section): Tab | null {
   if (section === 'book' || section === 'history' || section === 'testprep') return 'tutoring'
   if (section === 'chat') return 'chat'
-  if (section === 'packs' || section === 'video' || section === 'homework') return 'learn'
+  if (section === 'packs' || section === 'video' || section === 'homework' || section === 'qotd') return 'learn'
   if (section === 'referral' || section === 'guide') return 'more'
   return null
 }
@@ -465,8 +467,9 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
         <div>
           <h3 style={{ marginTop: 0 }}>Learn</h3>
           <div className="card-grid">
+            {tile('Question of the Day', <Target size={36} color="#fff" />, 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('qotd'))}
             {tile('Study Packs', <BookOpen size={36} color="#fff" />, 'linear-gradient(135deg, #C89B3C, #A87D24)', () => setSection('packs'))}
-            {(tier === 'highschool' || (myVideoSubjects || []).length > 0) && tile('Video Lessons', <Video size={36} color="#fff" />, 'linear-gradient(135deg, #1FB6A3, #17897B)', () => setSection('video'))}
+            {tile('Video Lessons', <Video size={36} color="#fff" />, 'linear-gradient(135deg, #1FB6A3, #17897B)', () => setSection('video'))}
             {tier === 'highschool' && tile('Homework Help', <ClipboardList size={36} color="#fff" />, 'linear-gradient(135deg, #E0956F, #C46B3E)', () => setSection('homework'))}
           </div>
         </div>
@@ -486,36 +489,46 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
       )
     }
 
-    // home
+    // home: a different welcome for students who have not started yet, and a progress view for those who have
+    const hasRequested = (bookings || []).length + (subs || []).length + (moduleRequests || []).length > 0
+
+    const payWaiting = waitingPay > 0 && (
+      <div className="panel" style={{ cursor: 'pointer', borderLeft: '5px solid #F2C14E' }} onClick={() => setSection('book')}>
+        <div className="meta" style={{ marginBottom: 2 }}>Waiting for payment</div>
+        <h4 style={{ margin: 0 }}>{waitingPay === 1 ? '1 request needs payment' : `${waitingPay} requests need payment`}</h4>
+        <div className="meta" style={{ marginBottom: 0 }}>Tap to pay and lock in your session.</div>
+      </div>
+    )
+
+    if (!canTestPrep) {
+      return (
+        <div>
+          <Hero name={name || ''} />
+          {payWaiting}
+          <SessionConfirm rows={toConfirm} respondToSession={respondToSession} onAnswered={(id: string) => setAnswered(a => [...a, id])} />
+          <GetStarted hasRequested={hasRequested} hasTutor={false} onRequest={() => setSection('book')} />
+          <WhatYouGet tier={tier} />
+          <PriceStrip tier={tier} onRequest={() => setSection('book')} />
+          <div className="panel" style={{ cursor: 'pointer' }} onClick={() => setSection('qotd')}>
+            <div className="meta" style={{ marginBottom: 2 }}>Free for everyone</div>
+            <h4 style={{ margin: 0 }}>Try today's question</h4>
+            <div className="meta" style={{ marginBottom: 0 }}>A new Maths or Science question every day. Tap to try it.</div>
+          </div>
+          <ReferBanner onOpen={() => setSection('referral')} />
+          <HelpButton />
+        </div>
+      )
+    }
+
     return (
       <div>
         <NextSession name={name || ''} bookings={bookings || []} subs={subs || []} onRequest={() => setSection('book')} />
-        {waitingPay > 0 && (
-          <div className="panel" style={{ cursor: 'pointer', borderLeft: '5px solid #F2C14E' }} onClick={() => setSection('book')}>
-            <div className="meta" style={{ marginBottom: 2 }}>Waiting for payment</div>
-            <h4 style={{ margin: 0 }}>{waitingPay === 1 ? '1 request needs payment' : `${waitingPay} requests need payment`}</h4>
-            <div className="meta" style={{ marginBottom: 0 }}>Tap to pay and lock in your session.</div>
-          </div>
-        )}
-        {(() => {
-          if (!canTestPrep) return null
-          const soon = (testPreps || [])
-            .filter((t: any) => t.status === 'upcoming' && daysUntil(t.test_date) >= 0 && daysUntil(t.test_date) <= 14)
-            .sort((a: any, b: any) => (a.test_date < b.test_date ? -1 : 1))[0]
-          if (!soon) return null
-          return (
-            <div className="panel" style={{ cursor: 'pointer', borderLeft: '5px solid #A6443A' }} onClick={() => setSection('testprep')}>
-              <div className="meta" style={{ marginBottom: 2 }}>Coming up</div>
-              <h4 style={{ margin: 0 }}>{soon.subject} {soon.kind === 'exam' ? 'exam' : 'test'} {whenLabel(soon.test_date)}</h4>
-              <div className="meta" style={{ marginBottom: 0 }}>Tap to see or change your topics.</div>
-            </div>
-          )
-        })()}
+        {payWaiting}
         <SessionConfirm rows={toConfirm} respondToSession={respondToSession} onAnswered={(id: string) => setAnswered(a => [...a, id])} />
-        <div className="card-grid">
-          {tile('Request Tutoring', <CalendarPlus size={36} color="#fff" />, 'linear-gradient(135deg, #8B6FD9, #6E4FC7)', () => setSection('book'))}
-          {tile('My Bookings', <History size={36} color="#fff" />, 'linear-gradient(135deg, #9B7FE8, #7A5FD0)', () => setSection('history'))}
-        </div>
+        <StreakCard attendance={attendance || []} />
+        <CountdownCard tests={testPreps || []} onOpen={() => setSection('testprep')} />
+        <PlanCard subs={subs || []} attendance={attendance || []} />
+        <ReferBanner onOpen={() => setSection('referral')} />
       </div>
     )
   }
@@ -695,9 +708,17 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
       ) : (
         <div className="panel">
           <h4>You're not subscribed</h4>
-          <p className="meta">A high school subscription unlocks unlimited video topic requests. Subscribe from the menu to get started.</p>
+          <p className="meta">A high school subscription unlocks unlimited video topic requests. Request tutoring in the Tutoring tab to get started.</p>
+          <button className="btn btn-primary" onClick={() => setSection('book')}>Request tutoring</button>
         </div>
       ))}
+      {tier !== 'highschool' && (myVideoSubjects || []).length === 0 && (
+        <div className="panel">
+          <h4>Video lessons for your modules</h4>
+          <p className="meta">Short video lessons that explain the hardest parts of your modules, available once you have access. Ask us about video access for your module and we will let you know.</p>
+          <button className="btn btn-primary" onClick={() => setSection('book')}>Request tutoring</button>
+        </div>
+      )}
     </div>
   )
 }
@@ -782,7 +803,7 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
         ) : (
           <div className="panel">
             <h4>Homework & assignment help</h4>
-            <p className="meta">This unlocks once you have an active, confirmed subscription. Subscribe from the menu and confirm your payment to access it.</p>
+            <p className="meta">This unlocks once you have an active, confirmed subscription. Request tutoring, confirm your payment, and this unlocks.</p>
           </div>
         )}
       </div>
@@ -794,6 +815,16 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
       <div>
         <Back />
         <ReferralBox />
+      </div>
+    )
+  }
+
+  if (section === 'qotd') {
+    return (
+      <div>
+        <Back />
+        <h3>Question of the Day</h3>
+        <QuestionOfDay tier={tier} />
       </div>
     )
   }
@@ -865,7 +896,7 @@ export default function PortalHome(props: any) {
     try {
       const saved = sessionStorage.getItem('portalSection') as Section | null
       const savedTab = sessionStorage.getItem('portalTab') as Tab | null
-      const sections: Section[] = ['menu', 'book', 'packs', 'chat', 'history', 'video', 'guide', 'homework', 'referral', 'testprep']
+      const sections: Section[] = ['menu', 'book', 'packs', 'chat', 'history', 'video', 'guide', 'homework', 'referral', 'testprep', 'qotd']
       const tabs: Tab[] = ['home', 'tutoring', 'chat', 'learn', 'more']
       if (saved && sections.includes(saved)) setSection(saved)
       if (savedTab && tabs.includes(savedTab)) setTab(savedTab)

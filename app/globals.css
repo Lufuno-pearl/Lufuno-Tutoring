@@ -103,3 +103,28 @@ nav{background:linear-gradient(135deg,#2B1766,#6E4FC7);}
 .tabbar button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;color:#fff;opacity:.7;font-family:inherit;font-size:.68rem;font-weight:600;padding:6px 0;cursor:pointer;border-radius:14px;}
 .tabbar button.active{opacity:1;color:#F2C14E;}
 .tabbar button:active{transform:scale(.94);}
+
+/* Student home: streak, countdown, plan, get started, what you get */
+.streak-flame{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#F2994A,#E2542B);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(226,84,43,.4);flex:0 0 auto;}
+.week-dots{display:flex;justify-content:space-between;margin-top:14px;}
+.wd{display:flex;flex-direction:column;align-items:center;gap:4px;}
+.wd span{width:30px;height:30px;border-radius:50%;background:var(--line);display:flex;align-items:center;justify-content:center;color:#fff;}
+.wd.on span{background:#1E6B34;}
+.wd.today span{box-shadow:0 0 0 3px rgba(110,79,199,.35);}
+.wd small{font-size:.68rem;color:#5a4d78;font-weight:600;}
+.countdown{display:flex;align-items:center;gap:14px;}
+.count-num{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#D96F8B,#B54767);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-weight:700;font-size:1.6rem;flex:0 0 auto;box-shadow:0 4px 12px rgba(181,71,103,.4);}
+.bar{height:10px;border-radius:100px;background:var(--line);overflow:hidden;margin:10px 0 8px;}
+.bar-fill{height:100%;border-radius:100px;background:linear-gradient(90deg,#8B6FD9,#F2C14E);transition:width .4s ease;}
+.gs-step{display:flex;gap:12px;align-items:flex-start;padding:8px 0;color:#8a7fa8;}
+.gs-dot{width:26px;height:26px;border-radius:50%;background:var(--line);color:#5a4d78;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.8rem;flex:0 0 auto;}
+.gs-step.done .gs-dot{background:#1E6B34;color:#fff;}
+.gs-step.now .gs-dot{background:var(--purple-dark);color:#fff;box-shadow:0 0 0 4px rgba(110,79,199,.2);}
+.gs-step.done,.gs-step.now{color:var(--ink);}
+.gs-label{font-weight:600;font-size:.95rem;padding-top:2px;}
+.get-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
+.get-card{background:var(--card);border-radius:18px;padding:14px;box-shadow:0 4px 14px rgba(43,23,102,.07);}
+.get-emoji{font-size:1.6rem;}
+.get-title{font-weight:700;font-size:.9rem;margin-top:6px;}
+.get-text{font-size:.78rem;color:#5a4d78;margin-top:3px;}
+.panel.refer{background:linear-gradient(135deg,#FFF6DB,#FBE7A8);}
