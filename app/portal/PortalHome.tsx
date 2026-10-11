@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useLayoutEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { CalendarPlus, BookOpen, MessageCircle, Landmark, History, Video, HelpCircle, ClipboardList, Gift, ScrollText, Target } from 'lucide-react'
+import { CalendarPlus, BookOpen, MessageCircle, Landmark, History, Video, HelpCircle, ClipboardList, Gift, ScrollText, Target, Home, CalendarCheck, MoreHorizontal } from 'lucide-react'
 import MaterialsSection from './MaterialsSection'
 import PackDownload from './PackDownload'
 import MyVideos from './MyVideos'
@@ -16,7 +16,17 @@ import { getAreas } from './actions'
 import { hsPrice, hsSessions, UNI_PRICE_PER_2H, GROUP_MAX, SessionType } from '../../lib/pricing'
 
 
-type Section = 'menu' | 'book' | 'packs' | 'chat' | 'bank' | 'history' | 'video' | 'guide' | 'homework' | 'referral' | 'testprep'
+type Section = 'menu' | 'book' | 'packs' | 'chat' | 'history' | 'video' | 'guide' | 'homework' | 'referral' | 'testprep'
+type Tab = 'home' | 'tutoring' | 'chat' | 'learn' | 'more'
+
+// which bottom tab a screen belongs to
+function tabOf(section: Section): Tab | null {
+  if (section === 'book' || section === 'history' || section === 'testprep') return 'tutoring'
+  if (section === 'chat') return 'chat'
+  if (section === 'packs' || section === 'video' || section === 'homework') return 'learn'
+  if (section === 'referral' || section === 'guide') return 'more'
+  return null
+}
 
 function AreaPicker({ areas, value, onChange, notListedHelp, onChooseOnline }: { areas: string[]; value: string; onChange: (v: string) => void; notListedHelp: string; onChooseOnline?: () => void }) {
   if (areas.length === 0) return null
@@ -391,16 +401,8 @@ function SessionConfirm({ rows, respondToSession, onAnswered }: { rows: any[]; r
   )
 }
 
-export default function PortalHome({ name, tier, uniSubjects, visiblePacks, bookings, subs, orders, messages, attendance, videoRequests, myVideoSubjects, homeworkRequests, videoTopicRequests, moduleRequests, testPreps, canTestPrep, actions }: any) {
-  const [section, setSection] = useState<Section>('menu')
+function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visiblePacks, bookings, subs, orders, messages, attendance, videoRequests, myVideoSubjects, homeworkRequests, videoTopicRequests, moduleRequests, testPreps, canTestPrep, actions }: any) {
   const router = useRouter()
-  useLayoutEffect(() => {
-    const saved = sessionStorage.getItem('portalSection') as Section | null
-    if (saved) setSection(saved)
-  }, [])
-  useEffect(() => {
-    sessionStorage.setItem('portalSection', section)
-  }, [section])
   const [bookingSubmitting, setBookingSubmitting] = useState(false)
   const [thankYou, setThankYou] = useState('')
   const [hsGrade, setHsGrade] = useState('')
@@ -436,9 +438,65 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
   })
 
   if (section === 'menu') {
+    const waitingPay = [...(bookings || []), ...(subs || []), ...(orders || [])].filter((x: any) => x.status === 'pending').length
+
+    const tile = (label: string, icon: any, gradient: string, onClick: () => void) => (
+      <div className="tile" style={{ cursor: 'pointer' }} onClick={onClick}>
+        <div className="tile-art" style={{ background: gradient }}>{icon}</div>
+        <div className="tile-body"><div className="name">{label}</div></div>
+      </div>
+    )
+
+    if (tab === 'tutoring') {
+      return (
+        <div>
+          <h3 style={{ marginTop: 0 }}>Tutoring</h3>
+          <div className="card-grid">
+            {tile('Request Tutoring', <CalendarPlus size={36} color="#fff" />, 'linear-gradient(135deg, #8B6FD9, #6E4FC7)', () => setSection('book'))}
+            {tile('My Bookings & Attendance', <History size={36} color="#fff" />, 'linear-gradient(135deg, #9B7FE8, #7A5FD0)', () => setSection('history'))}
+            {tile('Test & Exam Prep', <Target size={36} color="#fff" />, 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('testprep'))}
+          </div>
+        </div>
+      )
+    }
+
+    if (tab === 'learn') {
+      return (
+        <div>
+          <h3 style={{ marginTop: 0 }}>Learn</h3>
+          <div className="card-grid">
+            {tile('Study Packs', <BookOpen size={36} color="#fff" />, 'linear-gradient(135deg, #C89B3C, #A87D24)', () => setSection('packs'))}
+            {(tier === 'highschool' || (myVideoSubjects || []).length > 0) && tile('Video Lessons', <Video size={36} color="#fff" />, 'linear-gradient(135deg, #1FB6A3, #17897B)', () => setSection('video'))}
+            {tier === 'highschool' && tile('Homework Help', <ClipboardList size={36} color="#fff" />, 'linear-gradient(135deg, #E0956F, #C46B3E)', () => setSection('homework'))}
+          </div>
+        </div>
+      )
+    }
+
+    if (tab === 'more') {
+      return (
+        <div>
+          <h3 style={{ marginTop: 0 }}>More</h3>
+          <div className="card-grid">
+            {tile('Refer & Earn', <Gift size={36} color="#fff" />, 'linear-gradient(135deg, #F2C14E, #D9A32E)', () => setSection('referral'))}
+            {tile('How It Works', <HelpCircle size={36} color="#fff" />, 'linear-gradient(135deg, #B98CE0, #8B5FC7)', () => setSection('guide'))}
+            {tile('Terms & Conditions', <ScrollText size={36} color="#fff" />, 'linear-gradient(135deg, #7A8FB0, #566B8F)', () => router.push('/terms'))}
+          </div>
+        </div>
+      )
+    }
+
+    // home
     return (
       <div>
         <NextSession name={name || ''} bookings={bookings || []} subs={subs || []} onRequest={() => setSection('book')} />
+        {waitingPay > 0 && (
+          <div className="panel" style={{ cursor: 'pointer', borderLeft: '5px solid #F2C14E' }} onClick={() => setSection('book')}>
+            <div className="meta" style={{ marginBottom: 2 }}>Waiting for payment</div>
+            <h4 style={{ margin: 0 }}>{waitingPay === 1 ? '1 request needs payment' : `${waitingPay} requests need payment`}</h4>
+            <div className="meta" style={{ marginBottom: 0 }}>Tap to pay and lock in your session.</div>
+          </div>
+        )}
         {(() => {
           if (!canTestPrep) return null
           const soon = (testPreps || [])
@@ -455,64 +513,13 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
         })()}
         <SessionConfirm rows={toConfirm} respondToSession={respondToSession} onAnswered={(id: string) => setAnswered(a => [...a, id])} />
         <div className="card-grid">
-          <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('book')}>
-            <div className="tile-art" style={{ background: 'linear-gradient(135deg, #8B6FD9, #6E4FC7)' }}><CalendarPlus size={36} color="#fff" /></div>
-            <div className="tile-body"><div className="name">Request Tutoring</div></div>
-          </div>
-          <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('packs')}>
-            <div className="tile-art" style={{ background: 'linear-gradient(135deg, #C89B3C, #A87D24)' }}><BookOpen size={36} color="#fff" /></div>
-            <div className="tile-body"><div className="name">Get Study Pack</div></div>
-          </div>
-          <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('chat')}>
-            <div className="tile-art" style={{ background: 'linear-gradient(135deg, #7C6FE0, #5B4FC0)' }}><MessageCircle size={36} color="#fff" /></div>
-            <div className="tile-body"><div className="name">Chats & Files</div></div>
-          </div>
-          <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('bank')}>
-            <div className="tile-art" style={{ background: 'linear-gradient(135deg, #9B7FE8, #7A5FD0)' }}><Landmark size={36} color="#fff" /></div>
-            <div className="tile-body"><div className="name">Bank Details</div></div>
-          </div>
-          {(tier === 'highschool' || (myVideoSubjects || []).length > 0) && (
-            <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('video')}>
-              <div className="tile-art" style={{ background: 'linear-gradient(135deg, #1FB6A3, #17897B)' }}><Video size={36} color="#fff" /></div>
-              <div className="tile-body"><div className="name">Video Lessons</div></div>
-            </div>
-          )}
-          {tier === 'highschool' && (
-            <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('homework')}>
-              <div className="tile-art" style={{ background: 'linear-gradient(135deg, #E0956F, #C46B3E)' }}><ClipboardList size={36} color="#fff" /></div>
-              <div className="tile-body"><div className="name">Homework Help</div></div>
-            </div>
-          )}
-          <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('testprep')}>
-            <div className="tile-art" style={{ background: 'linear-gradient(135deg, #D96F8B, #B54767)' }}><Target size={36} color="#fff" /></div>
-            <div className="tile-body"><div className="name">Test & Exam Prep</div></div>
-          </div>
-          <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('referral')}>
-            <div className="tile-art" style={{ background: 'linear-gradient(135deg, #F2C14E, #D9A32E)' }}><Gift size={36} color="#fff" /></div>
-            <div className="tile-body"><div className="name">Refer & Earn</div></div>
-          </div>
-          <div className="tile" style={{ cursor: 'pointer' }} onClick={() => setSection('guide')}>
-            <div className="tile-art" style={{ background: 'linear-gradient(135deg, #B98CE0, #8B5FC7)' }}><HelpCircle size={36} color="#fff" /></div>
-            <div className="tile-body"><div className="name">How It Works</div></div>
-          </div>
-          <div className="tile" style={{ cursor: 'pointer' }} onClick={() => router.push('/terms')}>
-            <div className="tile-art" style={{ background: 'linear-gradient(135deg, #7A8FB0, #566B8F)' }}><ScrollText size={36} color="#fff" /></div>
-            <div className="tile-body"><div className="name">Terms & Conditions</div></div>
-          </div>
-        </div>
-        <div className="panel" style={{ cursor: 'pointer' }} onClick={() => setSection('history')}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <History size={22} color="var(--purple-dark)" />
-            <div>
-              <h4 style={{ margin: 0 }}>My bookings & attendance</h4>
-              <div className="meta" style={{ marginBottom: 0 }}>See your history and status</div>
-            </div>
-          </div>
+          {tile('Request Tutoring', <CalendarPlus size={36} color="#fff" />, 'linear-gradient(135deg, #8B6FD9, #6E4FC7)', () => setSection('book'))}
+          {tile('My Bookings', <History size={36} color="#fff" />, 'linear-gradient(135deg, #9B7FE8, #7A5FD0)', () => setSection('history'))}
         </div>
       </div>
     )
   }
-  const Back = () => <div className="meta" style={{ cursor: 'pointer', marginBottom: 16, color: 'var(--purple-dark)', fontWeight: 600 }} onClick={() => setSection('menu')}>&larr; Back</div>
+  const Back = () => section === 'chat' ? null : <div className="meta" style={{ cursor: 'pointer', marginBottom: 16, color: 'var(--purple-dark)', fontWeight: 600 }} onClick={() => setSection('menu')}>&larr; Back</div>
 
   if (section === 'book') {
     async function handleBookingSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -766,20 +773,6 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
     )
   }
 
-  if (section === 'bank') {
-    return (
-      <div>
-        <Back />
-        <h3>Bank Details</h3>
-        <div className="pay-box">
-          <div className="pay-line"><span>Bank</span><span>ABSA</span></div>
-          <div className="pay-line"><span>Account holder</span><span>LP Moyo</span></div>
-          <div className="pay-line"><span>Account number</span><span>9383837426</span></div>
-        </div>
-        <p className="meta" style={{ marginTop: 10 }}>When you book or order something, a specific reference number is generated for that payment — use the reference shown there rather than a generic one.</p>
-      </div>
-    )
-  }
     if (section === 'homework') {
     return (
       <div>
@@ -862,4 +855,56 @@ export default function PortalHome({ name, tier, uniSubjects, visiblePacks, book
   }
 
   return null
+}
+
+export default function PortalHome(props: any) {
+  const [section, setSection] = useState<Section>('menu')
+  const [tab, setTab] = useState<Tab>('home')
+
+  useLayoutEffect(() => {
+    try {
+      const saved = sessionStorage.getItem('portalSection') as Section | null
+      const savedTab = sessionStorage.getItem('portalTab') as Tab | null
+      const sections: Section[] = ['menu', 'book', 'packs', 'chat', 'history', 'video', 'guide', 'homework', 'referral', 'testprep']
+      const tabs: Tab[] = ['home', 'tutoring', 'chat', 'learn', 'more']
+      if (saved && sections.includes(saved)) setSection(saved)
+      if (savedTab && tabs.includes(savedTab)) setTab(savedTab)
+    } catch (e) {}
+  }, [])
+  useEffect(() => {
+    try { sessionStorage.setItem('portalSection', section) } catch (e) {}
+    const owner = tabOf(section)
+    if (owner) setTab(owner)
+  }, [section])
+  useEffect(() => {
+    try { sessionStorage.setItem('portalTab', tab) } catch (e) {}
+  }, [tab])
+
+  const current: Tab = tabOf(section) || tab
+  function go(t: Tab) {
+    setTab(t)
+    setSection(t === 'chat' ? 'chat' : 'menu')
+    if (typeof window !== 'undefined') window.scrollTo({ top: 0 })
+  }
+  const items: { id: Tab; label: string; icon: any }[] = [
+    { id: 'home', label: 'Home', icon: <Home size={20} /> },
+    { id: 'tutoring', label: 'Tutoring', icon: <CalendarCheck size={20} /> },
+    { id: 'chat', label: 'Chat', icon: <MessageCircle size={20} /> },
+    { id: 'learn', label: 'Learn', icon: <BookOpen size={20} /> },
+    { id: 'more', label: 'More', icon: <MoreHorizontal size={20} /> },
+  ]
+
+  return (
+    <div>
+      <PortalInner {...props} section={section} setSection={setSection} tab={tab} />
+      <div className="tabbar">
+        {items.map(i => (
+          <button key={i.id} className={current === i.id ? 'active' : ''} onClick={() => go(i.id)}>
+            {i.icon}
+            {i.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
 }
