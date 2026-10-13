@@ -1,6 +1,8 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { BellRing, X } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { notificationTarget, applyTarget } from '../../lib/notificationTarget'
 import { createClient } from '../../lib/supabase/client'
 import { sendTestPush, sendRoleTest } from './actions'
 
@@ -24,8 +26,9 @@ function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
   })
 }
 
-export default function NotificationsView({ forRole, userId }: { forRole: 'student' | 'staff'; userId: string }) {
+export default function NotificationsView({ forRole, userId, home }: { forRole: 'student' | 'staff'; userId: string; home: '/portal' | '/tutor' | '/partner' }) {
   const supabase = createClient()
+  const router = useRouter()
   const [items, setItems] = useState<any[]>([])
   const [loaded, setLoaded] = useState(false)
   const [pushSupported, setPushSupported] = useState(true)
@@ -250,7 +253,7 @@ export default function NotificationsView({ forRole, userId }: { forRole: 'stude
 
       {loaded && items.length === 0 && <p className="meta">No notifications yet.</p>}
       {items.map(n => (
-        <div key={n.id} className="panel" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, cursor: 'pointer', background: n.read ? '#fff' : '#F7F4FC' }} onClick={() => markRead(n.id)}>
+        <div key={n.id} className="panel" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, cursor: 'pointer', background: n.read ? '#fff' : '#F7F4FC' }} onClick={() => { markRead(n.id); applyTarget(notificationTarget(n, home)); router.push(home) }}>
           <div>
             <div style={{ fontWeight: n.read ? 400 : 600 }}>{n.message}</div>
             <div className="meta" style={{ marginTop: 4, marginBottom: 0 }}>{new Date(n.created_at).toLocaleString()}</div>

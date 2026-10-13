@@ -166,6 +166,12 @@ function MonthSummary({ subs, schoolByStudent }: { subs: any[]; schoolByStudent:
 
 function TutorInner({ section, setSection, tab, bookings, subs, orders, partners, threadsByStudent, attendanceRows, myAvailable, openBookings, openSubs, myClaimedBookings, myClaimedSubs, videoRequests, customPackRequests, homeworkRequests, videoTopicRequests, moduleRequests, testPreps, marksByStudent, scheduleByStudent, schoolByStudent, actions }: any) {
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null)
+  useEffect(() => {
+    try {
+      const sid = sessionStorage.getItem('tutorOpenStudent')
+      if (sid) { sessionStorage.removeItem('tutorOpenStudent'); setSelectedStudentId(sid) }
+    } catch (e) {}
+  }, [])
   const [chatSearch, setChatSearch] = useState('')
   const [myStudentId, setMyStudentId] = useState<string | null>(null)
   const pendingModules = (moduleRequests || []).filter((m: any) => m.status === 'requested').length
