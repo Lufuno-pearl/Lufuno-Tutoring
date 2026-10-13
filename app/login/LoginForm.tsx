@@ -107,7 +107,8 @@ export default function LoginForm() {
           <input type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)} style={{ marginTop: 3, width: 18, height: 18, flex: '0 0 auto' }} />
           <span>
             I have read and agree to the{' '}
-            <a href="/terms" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--purple-dark)', fontWeight: 600 }}>Terms and Conditions</a>.
+            <a href="/terms" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--purple-dark)', fontWeight: 600 }}>Terms and Conditions</a> and{' '}
+            <a href="/privacy" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--purple-dark)', fontWeight: 600 }}>Privacy</a>.
             {' '}If I am under 18, my parent or guardian agrees too.
           </span>
         </label>
