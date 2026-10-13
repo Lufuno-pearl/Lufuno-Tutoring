@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useLayoutEffect } from 'react'
+import TabBarPortal, { scrollPageToTop } from '../TabBarPortal'
 import Link from 'next/link'
 import { Home, Inbox, Users, MoreHorizontal, Clock, UserCog, BookOpen, ClipboardList, MessageCircle, ChevronRight, Star, Video, Film, Gift, Calendar, GraduationCap, Target } from 'lucide-react'
 import TutorMaterials from './TutorMaterials'
@@ -732,7 +733,7 @@ export default function TutorHome(props: any) {
   function go(t: Tab) {
     setTab(t)
     setSection(t === 'chat' ? 'chat' : 'menu')
-    if (typeof window !== 'undefined') window.scrollTo({ top: 0 })
+    scrollPageToTop()
   }
   const items: { id: Tab; label: string; icon: any }[] = [
     { id: 'home', label: 'Home', icon: <Home size={20} /> },
@@ -744,14 +745,14 @@ export default function TutorHome(props: any) {
   return (
     <div>
       <TutorInner {...props} section={section} setSection={setSection} tab={tab} />
-      <div className="tabbar">
+      <TabBarPortal>
         {items.map(i => (
           <button key={i.id} className={tab === i.id ? 'active' : ''} onClick={() => go(i.id)}>
             {i.icon}
             {i.label}
           </button>
         ))}
-      </div>
+      </TabBarPortal>
     </div>
   )
 }

@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useLayoutEffect } from 'react'
+import TabBarPortal, { scrollPageToTop } from '../TabBarPortal'
 import { useRouter } from 'next/navigation'
 import { CalendarPlus, BookOpen, MessageCircle, Landmark, History, Video, HelpCircle, ClipboardList, Gift, ScrollText, Target, Home, CalendarCheck, MoreHorizontal } from 'lucide-react'
 import MaterialsSection from './MaterialsSection'
@@ -948,7 +949,7 @@ export default function PortalHome(props: any) {
   function go(t: Tab) {
     setTab(t)
     setSection(t === 'chat' ? 'chat' : 'menu')
-    if (typeof window !== 'undefined') window.scrollTo({ top: 0 })
+    scrollPageToTop()
   }
   const items: { id: Tab; label: string; icon: any }[] = [
     { id: 'home', label: 'Home', icon: <Home size={20} /> },
@@ -961,14 +962,14 @@ export default function PortalHome(props: any) {
   return (
     <div>
       <PortalInner {...props} section={section} setSection={setSection} tab={tab} />
-      <div className="tabbar">
+      <TabBarPortal>
         {items.map(i => (
           <button key={i.id} className={current === i.id ? 'active' : ''} onClick={() => go(i.id)}>
             {i.icon}
             {i.label}
           </button>
         ))}
-      </div>
+      </TabBarPortal>
     </div>
   )
 }

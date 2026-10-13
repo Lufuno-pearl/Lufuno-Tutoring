@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useLayoutEffect, ReactNode } from 'react'
+import TabBarPortal, { scrollPageToTop } from '../TabBarPortal'
 import { useRouter } from 'next/navigation'
 import { Calendar, Inbox, Film, Users, Video, MapPin, ScrollText, Target, Home, Settings, CalendarClock } from 'lucide-react'
 
@@ -67,7 +68,7 @@ export default function PartnerHome({ name, today, openCount, requestCount, stud
   function go(t: Tab) {
     setTab(t)
     setSection(t === 'students' ? 'students' : 'menu')
-    if (typeof window !== 'undefined') window.scrollTo({ top: 0 })
+    scrollPageToTop()
   }
 
   const tile = (label: string, icon: ReactNode, gradient: string, onClick: () => void, badge?: number) => (
@@ -180,14 +181,14 @@ export default function PartnerHome({ name, today, openCount, requestCount, stud
   return (
     <div>
       {body}
-      <div className="tabbar">
+      <TabBarPortal>
         {items.map(i => (
           <button key={i.id} className={current === i.id ? 'active' : ''} onClick={() => go(i.id)}>
             {i.icon}
             {i.label}
           </button>
         ))}
-      </div>
+      </TabBarPortal>
     </div>
   )
 }
