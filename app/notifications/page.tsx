@@ -10,14 +10,16 @@ export default async function NotificationsPage({ searchParams }: { searchParams
   if (!user) redirect('/login')
 
   let forRole: 'student' | 'staff' = 'student'
+  let home: '/portal' | '/tutor' | '/partner' = '/portal'
   if (searchParams?.role === 'staff') {
     if (ADMIN_EMAILS.includes(user.email!)) {
       forRole = 'staff'
+      home = '/tutor'
     } else {
       const { data: p } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-      if (p?.role === 'partner') forRole = 'staff'
+      if (p?.role === 'partner') { forRole = 'staff'; home = '/partner' }
     }
   }
 
-  return <NotificationsView forRole={forRole} userId={user.id} />
+  return <NotificationsView forRole={forRole} userId={user.id} home={home} />
 }
