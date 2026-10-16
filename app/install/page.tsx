@@ -1,4 +1,5 @@
 import TermsView, { TermsSection } from '../terms/TermsView'
+import InstallButton from '../InstallButton'
 
 export const metadata = { title: 'Install the app | Aid & Ace Tutoring' }
 
@@ -40,6 +41,7 @@ export default function InstallPage() {
       sections={sections}
       other={{ href: '/privacy', label: 'Read our Privacy summary' }}
       backHref="/portal"
+      extra={<InstallButton />}
     />
   )
 }
