@@ -17,10 +17,11 @@ import { GROUP_MAX, UNI_PRICE_PER_2H } from '../../lib/pricing'
 import MarksView from '../MarksView'
 import { deleteMessage } from '../message-actions'
 import ScheduleManager, { studentFormat, studentAlternate, classmatesOf } from '../ScheduleManager'
+import HomeworkSection from './HomeworkSection'
 import TestList, { daysUntil } from '../TestList'
 
 type Tab = 'home' | 'requests' | 'students' | 'chat' | 'more'
-type Section = 'menu' | 'pending' | 'assign' | 'packs' | 'sessions' | 'chat' | 'mytutoring' | 'videos' | 'videoreq' | 'referrals' | 'availability' | 'modules' | 'tests'
+type Section = 'menu' | 'pending' | 'assign' | 'packs' | 'sessions' | 'chat' | 'mytutoring' | 'homework' | 'videos' | 'videoreq' | 'referrals' | 'availability' | 'modules' | 'tests'
 
 function subjectLabel(choice?: string) {
   return choice === 'maths' ? 'Mathematics' : choice === 'physics' ? 'Physical Sciences' : 'Maths & Physical Sciences'
@@ -177,6 +178,7 @@ function TutorInner({ section, setSection, tab, bookings, subs, orders, partners
   const [myStudentId, setMyStudentId] = useState<string | null>(null)
   const pendingModules = (moduleRequests || []).filter((m: any) => m.status === 'requested').length
   const soonTests = (testPreps || []).filter((t: any) => daysUntil(t.test_date) >= 0 && daysUntil(t.test_date) <= 7).length
+  const openHomework = (homeworkRequests || []).filter((h: any) => h.status !== 'solved').length
   const pendingVideos = (videoTopicRequests || []).filter((v: any) => v.status !== 'ready').length
   const { answerModuleRequest, confirmPayment, setMeetingLink, assignTutor, toggleAvailable, claim, markAttendance, sendTutorMessage, setCustomPackLink, markHomeworkSolved, setVideoTopicLink } = actions
 
@@ -203,6 +205,7 @@ function TutorInner({ section, setSection, tab, bookings, subs, orders, partners
             {tile('Pending Requests', '⏳', 'linear-gradient(135deg, #8B6FD9, #6E4FC7)', () => setSection('pending'), pendingCount)}
             {tile('Assign Tutor', '🧑‍🏫', 'linear-gradient(135deg, #7C6FE0, #5B4FC0)', () => setSection('assign'), unassigned)}
             {tile('Module Requests', '🎓', 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('modules'), pendingModules)}
+            {tile('Homework Help', '📝', 'linear-gradient(135deg, #5FA3D9, #3F7FB8)', () => setSection('homework'), openHomework)}
             {tile('Video Requests', '🎞️', 'linear-gradient(135deg, #E0956F, #C46B3E)', () => setSection('videoreq'), pendingVideos)}
           </div>
         </div>
@@ -241,7 +244,7 @@ function TutorInner({ section, setSection, tab, bookings, subs, orders, partners
 
     // home: what needs the owner's attention
     const today = new Date().toISOString().slice(0, 10)
-    const needsAttention = pendingCount + unassigned + pendingModules + pendingVideos + soonTests
+    const needsAttention = pendingCount + unassigned + pendingModules + pendingVideos + openHomework + soonTests
     return (
       <div>
         <div className="hero">
@@ -265,6 +268,12 @@ function TutorInner({ section, setSection, tab, bookings, subs, orders, partners
           <div className="panel" style={{ cursor: 'pointer', borderLeft: '5px solid #D96F8B' }} onClick={() => setSection('modules')}>
             <h4 style={{ margin: 0 }}>{pendingModules} module request{pendingModules === 1 ? '' : 's'}</h4>
             <div className="meta" style={{ marginBottom: 0 }}>Tap to answer.</div>
+          </div>
+        )}
+        {openHomework > 0 && (
+          <div className="panel" style={{ cursor: 'pointer', borderLeft: '5px solid #5FA3D9' }} onClick={() => setSection('homework')}>
+            <h4 style={{ margin: 0 }}>{openHomework} homework help request{openHomework === 1 ? '' : 's'}</h4>
+            <div className="meta" style={{ marginBottom: 0 }}>Tap to open.</div>
           </div>
         )}
         {pendingVideos > 0 && (
@@ -341,26 +350,15 @@ function TutorInner({ section, setSection, tab, bookings, subs, orders, partners
             )}
           </div>
         ))}
-        <h3>Homework help requests</h3>
-        {(homeworkRequests || []).filter((h: any) => h.status !== 'solved').length === 0 && <p className="meta">No open homework requests.</p>}
-        {(homeworkRequests || []).filter((h: any) => h.status !== 'solved').map((h: any) => (
-          <div className="panel" key={h.id}>
-            <h4>{h.subject}</h4>
-            <div className="meta">{h.profiles?.full_name} · {h.profiles?.email}</div>
-            <div className="meta">{h.tutor_id ? `Picked up by ${(partners || []).find((p: any) => p.id === h.tutor_id)?.full_name || 'a tutor'}` : 'Not picked up yet'}</div>
-            {h.description && <p className="meta">{h.description}</p>}
-            <span className={`status ${h.status === 'solved' ? 'confirmed' : 'pending'}`}>{h.status === 'solved' ? 'Solved' : 'Pending'}</span>
-            <div className="meta" style={{ marginTop: 8, fontWeight: 600 }}>Their document</div>
-            <FileBox folderPath={`${h.student_id}/${h.id}/question`} allowUpload={false} />
-            <div className="meta" style={{ marginTop: 10, fontWeight: 600 }}>Upload your solution</div>
-            <FileBox folderPath={`${h.student_id}/${h.id}/solution`} uploadLabel="Upload solved file" />
-            {h.status !== 'solved' && (
-              <form action={async () => { await markHomeworkSolved(h.id) }} style={{ marginTop: 8 }}>
-                <button className="btn btn-gold">Mark solved</button>
-              </form>
-            )}
-          </div>
-        ))}
+      </div>
+    )
+  }
+
+  if (section === 'homework') {
+    return (
+      <div>
+        <Back />
+        <HomeworkSection requests={homeworkRequests || []} partners={partners || []} markSolved={markHomeworkSolved} />
       </div>
     )
   }

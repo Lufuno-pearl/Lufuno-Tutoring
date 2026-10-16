@@ -1,5 +1,6 @@
 import './globals.css'
 import BottomNav from './BottomNav'
+import InstallCapture from './InstallCapture'
 
 export const metadata = {
   title: 'Aid & Ace Tutoring',
@@ -24,6 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <div className="wrap" style={{ padding: '30px 20px 60px' }}>
           {children}
         </div>
+        <InstallCapture />
         <BottomNav />
       </body>
     </html>

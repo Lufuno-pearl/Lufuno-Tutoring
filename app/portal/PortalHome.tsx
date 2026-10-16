@@ -7,6 +7,7 @@ import MaterialsSection from './MaterialsSection'
 import PackDownload from './PackDownload'
 import MyVideos from './MyVideos'
 import FileBox from '../FileBox'
+import { createClient } from '../../lib/supabase/client'
 import StoredVideo from '../StoredVideo'
 import ReferralBox from './ReferralBox'
 import MarksView from '../MarksView'
@@ -195,15 +196,28 @@ function HomeworkBox({ userId, subjectOptions, submitHomework, myRequests }: { u
   const [sentId, setSentId] = useState<string | undefined>(undefined)
   const [sending, setSending] = useState(false)
   const [error, setError] = useState(false)
+  const [file, setFile] = useState<File | null>(null)
+  const [fileKey, setFileKey] = useState(0)
+  const [uploadFailed, setUploadFailed] = useState(false)
 
   async function handleSubmit() {
     if (!subject || sending) return
+    if (!file && !confirm('You have not attached your homework document. Send the request without it?')) return
     setSending(true)
     setError(false)
+    setUploadFailed(false)
     try {
       const result = await submitHomework(subject, description)
-      setSentId(result?.id)
+      if (!result?.ok || !result?.id) throw new Error('failed')
+      setSentId(result.id)
+      if (file) {
+        const supabase = createClient()
+        const { error: upErr } = await supabase.storage.from('homework').upload(`${userId}/${result.id}/question/${file.name}`, file, { upsert: true })
+        if (upErr) setUploadFailed(true)
+      }
       setDescription('')
+      setFile(null)
+      setFileKey(k => k + 1)
       setSent(true)
     } catch (e) {
       setError(true)
@@ -215,13 +229,11 @@ function HomeworkBox({ userId, subjectOptions, submitHomework, myRequests }: { u
   return (
     <div>
       <h3>Homework & assignment help</h3>
-      <p className="meta">Tell us what you need help with, then upload the document right here — Lufuno (or your tutor) will upload the solution back to this same request once it's ready.</p>
+      <p className="meta">Tell us what you need help with and attach your document below, then send. Lufuno (or your tutor) will upload the solution back to this same request once it's ready.</p>
       {sent && (
-        <div className="panel" style={{ background: '#DCEEE0', textAlign: 'center' }}>
-          <p style={{ margin: 0, fontWeight: 600 }}>Thanks! Upload your document below.</p>
-          {sentId
-            ? <FileBox folderPath={`${userId}/${sentId}/question`} uploadLabel="Upload your homework document" />
-            : <p className="meta" style={{ marginTop: 8 }}>Scroll down to your new request and tap "Upload / replace your document".</p>}
+        <div className="panel" style={{ background: uploadFailed ? '#F3E6C7' : '#DCEEE0', textAlign: 'center' }}>
+          <p style={{ margin: 0, fontWeight: 600 }}>{uploadFailed ? 'Your request was sent, but the document did not upload. Please upload it below.' : 'Thanks! Your request was sent.'}</p>
+          {uploadFailed && sentId && <FileBox folderPath={`${userId}/${sentId}/question`} uploadLabel="Upload your homework document" />}
         </div>
       )}
       {error && (
@@ -238,6 +250,11 @@ function HomeworkBox({ userId, subjectOptions, submitHomework, myRequests }: { u
       <div className="field">
         <label>What do you need help with?</label>
         <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="e.g. Assignment 3, question 4 — stuck on the working" />
+      </div>
+      <div className="field">
+        <label>Your homework document</label>
+        <input key={fileKey} type="file" onChange={e => setFile(e.target.files?.[0] || null)} />
+        {file && <div className="meta" style={{ marginTop: 6 }}>Attached: <strong>{file.name}</strong> ({Math.max(1, Math.round(file.size / 1024))} KB)</div>}
       </div>
       <button className="btn btn-primary" onClick={handleSubmit} disabled={sending}>{sending ? 'Sending...' : 'Submit request'}</button>
 

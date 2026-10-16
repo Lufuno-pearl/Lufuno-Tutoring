@@ -17,6 +17,7 @@ export function notificationTarget(n: { message: string; student_id?: string | n
 
   if (home === '/tutor') {
     if (has('new message')) return { home, section: 'chat', tab: 'chat', studentId: n.student_id || undefined }
+    if (has('homework')) return { home, section: 'homework', tab: 'requests' }
     if (has('study pack')) return { home, section: 'packs', tab: 'more' }
     if (has('video topic')) return { home, section: 'videoreq', tab: 'more' }
     if (has('video access')) return { home, section: 'videos', tab: 'more' }
