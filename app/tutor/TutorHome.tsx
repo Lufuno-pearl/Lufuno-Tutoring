@@ -176,6 +176,7 @@ function TutorInner({ section, setSection, tab, bookings, subs, orders, partners
   }, [])
   const [chatSearch, setChatSearch] = useState('')
   const [myStudentId, setMyStudentId] = useState<string | null>(null)
+  const [myView, setMyView] = useState<'menu' | 'availability' | 'areas' | 'students' | 'open'>('menu')
   const pendingModules = (moduleRequests || []).filter((m: any) => m.status === 'requested').length
   const soonTests = (testPreps || []).filter((t: any) => daysUntil(t.test_date) >= 0 && daysUntil(t.test_date) <= 7).length
   const openHomework = (homeworkRequests || []).filter((h: any) => h.status !== 'solved').length
@@ -220,7 +221,7 @@ function TutorInner({ section, setSection, tab, bookings, subs, orders, partners
             {tile('Sessions Log', '📋', 'linear-gradient(135deg, #9B7FE8, #7A5FD0)', () => setSection('sessions'))}
             {tile('Upcoming Tests', '🎯', 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('tests'), soonTests)}
             {tile('Referrals', '🎁', 'linear-gradient(135deg, #F2C14E, #D9A32E)', () => setSection('referrals'))}
-            {tile('My Tutoring', '⭐', 'linear-gradient(135deg, #C89B3C, #A87D24)', () => { setSection('mytutoring'); setMyStudentId(null) })}
+            {tile('My Tutoring', '⭐', 'linear-gradient(135deg, #C89B3C, #A87D24)', () => { setSection('mytutoring'); setMyStudentId(null); setMyView('menu') })}
           </div>
         </div>
       )
@@ -658,51 +659,99 @@ function TutorInner({ section, setSection, tab, bookings, subs, orders, partners
     }
 
     const myStudentIds = Array.from(new Set([...(myClaimedBookings || []).map((b: any) => b.student_id), ...(myClaimedSubs || []).map((s: any) => s.student_id)]))
+    const openCount = (openBookings || []).length + (openSubs || []).length
+
+    const row = (label: string, sub: string, onClick: () => void, badge = 0) => (
+      <div className="panel" style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} onClick={onClick}>
+        <div>
+          <h4 style={{ margin: 0 }}>{label}</h4>
+          <div className="meta" style={{ marginBottom: 0 }}>{sub}</div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {badge > 0 && <span style={{ background: '#A6443A', color: '#fff', fontSize: '0.75rem', borderRadius: 100, minWidth: 22, height: 22, padding: '0 5px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{badge}</span>}
+          <ChevronRight size={18} color="var(--purple-dark)" />
+        </div>
+      </div>
+    )
+
+    if (myView === 'availability') {
+      return (
+        <div>
+          <Back onClick={() => setMyView('menu')} />
+          <h3>Your availability</h3>
+          <AvailabilityBoard />
+        </div>
+      )
+    }
+
+    if (myView === 'areas') {
+      return (
+        <div>
+          <Back onClick={() => setMyView('menu')} />
+          <h3>Your areas</h3>
+          <TutorAreas />
+        </div>
+      )
+    }
+
+    if (myView === 'open') {
+      return (
+        <div>
+          <Back onClick={() => setMyView('menu')} />
+          <h3>Students who want tutors</h3>
+          <h4 style={{ marginTop: 12 }}>University</h4>
+          {(openBookings || []).length === 0 && <p className="meta">Nothing open right now.</p>}
+          {(openBookings || []).map((b: any) => (
+            <div className="panel" key={b.id}>
+              <h4>{b.subject}</h4>
+              <div className="meta">{b.profiles?.full_name} · {b.day} at {b.time} · {kindLabel(b)}</div>
+              <form action={async () => { await claim('bookings', b.id) }}>
+                <button className="btn btn-primary">Claim this student</button>
+              </form>
+            </div>
+          ))}
+          <h4 style={{ marginTop: 20 }}>High School</h4>
+          {(openSubs || []).length === 0 && <p className="meta">Nothing open right now.</p>}
+          {(openSubs || []).map((s: any) => (
+            <div className="panel" key={s.id}>
+              <h4>{s.month}</h4>
+              <div className="meta">{s.profiles?.full_name}{s.grade ? ` · Gr ${s.grade}` : ''} · {subjectLabel(s.subject_choice)} · {kindLabel(s)}</div>
+              <form action={async () => { await claim('hs_subscriptions', s.id) }}>
+                <button className="btn btn-primary">Claim this student</button>
+              </form>
+            </div>
+          ))}
+        </div>
+      )
+    }
+
+    if (myView === 'students') {
+      return (
+        <div>
+          <Back onClick={() => setMyView('menu')} />
+          <h3>Your students</h3>
+          {myStudentIds.length === 0 && <p className="meta">You haven't claimed any students yet.</p>}
+          {myStudentIds.map((sid: string) => {
+            const thread = threadsByStudent[sid] || { name: 'Student' }
+            return (
+              <div key={sid} className="panel" style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} onClick={() => setMyStudentId(sid)}>
+                <h4 style={{ margin: 0 }}>{thread.name}</h4>
+                <ChevronRight size={18} color="var(--purple-dark)" />
+              </div>
+            )
+          })}
+        </div>
+      )
+    }
 
     return (
       <div>
         <Back />
-        <h3>Your availability</h3>
-        <AvailabilityBoard />
-
-        <h3>Your areas</h3>
-        <TutorAreas />
-
-        <h3>Requests needing a tutor</h3>
-        <h4 style={{ marginTop: 12 }}>University</h4>
-        {(openBookings || []).length === 0 && <p className="meta">Nothing open right now.</p>}
-        {(openBookings || []).map((b: any) => (
-          <div className="panel" key={b.id}>
-            <h4>{b.subject}</h4>
-            <div className="meta">{b.profiles?.full_name} · {b.day} at {b.time} · {kindLabel(b)}</div>
-            <form action={async () => { await claim('bookings', b.id) }}>
-              <button className="btn btn-primary">Claim this student</button>
-            </form>
-          </div>
-        ))}
-        <h4 style={{ marginTop: 20 }}>High School</h4>
-        {(openSubs || []).length === 0 && <p className="meta">Nothing open right now.</p>}
-        {(openSubs || []).map((s: any) => (
-          <div className="panel" key={s.id}>
-            <h4>{s.month}</h4>
-            <div className="meta">{s.profiles?.full_name}{s.grade ? ` · Gr ${s.grade}` : ''} · {subjectLabel(s.subject_choice)} · {kindLabel(s)}</div>
-            <form action={async () => { await claim('hs_subscriptions', s.id) }}>
-              <button className="btn btn-primary">Claim this student</button>
-            </form>
-          </div>
-        ))}
-
-        <h3 style={{ marginTop: 20 }}>Your students</h3>
-        {myStudentIds.length === 0 && <p className="meta">You haven't claimed any students yet.</p>}
-        {myStudentIds.map((sid: string) => {
-          const thread = threadsByStudent[sid] || { name: 'Student' }
-          return (
-            <div key={sid} className="panel" style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} onClick={() => setMyStudentId(sid)}>
-              <h4 style={{ margin: 0 }}>{thread.name}</h4>
-              <ChevronRight size={18} color="var(--purple-dark)" />
-            </div>
-          )
-        })}
+        <h3>My tutoring</h3>
+        {row('Your students', myStudentIds.length === 0 ? 'None claimed yet' : `${myStudentIds.length} student${myStudentIds.length === 1 ? '' : 's'}`, () => setMyView('students'))}
+        {row('Students who want tutors', openCount === 0 ? 'Nothing open right now' : `${openCount} waiting for a tutor`, () => setMyView('open'), openCount)}
+        {row('Your availability', 'Set the times you can tutor', () => setMyView('availability'))}
+        {row('Your areas', 'Where you can meet students in person', () => setMyView('areas'))}
       </div>
     )
   }
