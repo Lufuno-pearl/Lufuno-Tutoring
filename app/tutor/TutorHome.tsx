@@ -380,6 +380,7 @@ function TutorInner({ section, setSection, tab, bookings, subs, orders, partners
         const notes: string[] = []
         if (wantsArea) notes.push(areaOk ? `covers ${r.area}` : `not in ${r.area}`)
         if (oneOnOne) notes.push(p.takes_one_on_one ? 'takes 1-on-1' : 'no 1-on-1')
+        if ((p.teaches || []).length) notes.push(`teaches ${(p.teaches as string[]).join(', ')}`)
         if (countGroups) notes.push(`${p.group_count || 0}/${GROUP_MAX} group students`)
         if (!p.available) notes.push('not available')
         const good = areaOk && oneOk
@@ -730,7 +731,7 @@ function TutorInner({ section, setSection, tab, bookings, subs, orders, partners
       return (
         <div>
           <Back onClick={() => setMyView('menu')} />
-          <h3>Your areas</h3>
+          <h3>Your subjects and areas</h3>
           <TutorAreas />
         </div>
       )
@@ -794,7 +795,7 @@ function TutorInner({ section, setSection, tab, bookings, subs, orders, partners
         {row('Students who want tutors', openCount === 0 ? 'Nothing open right now' : `${openCount} waiting for a tutor`, () => setMyView('open'), openCount)}
         {row('Student marks', 'Add and edit marks for each student', () => setMyView('marks'))}
         {row('Your availability', 'Set the times you can tutor', () => setMyView('availability'))}
-        {row('Your areas', 'Where you can meet students in person', () => setMyView('areas'))}
+        {row('Your subjects and areas', 'What you teach and where you can meet students', () => setMyView('areas'))}
       </div>
     )
   }

@@ -58,3 +58,31 @@ export async function setOneOnOne(value: boolean): Promise<{ ok: boolean; messag
   revalidatePath('/tutor')
   return { ok: true, message: value ? 'Saved. You take one-on-one students.' : 'Saved. You do not take one-on-one students.' }
 }
+
+export async function getMySubjects(): Promise<string[]> {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+  const { data } = await supabase.from('profiles').select('teaches').eq('id', user.id).single()
+  return ((data as any)?.teaches || []) as string[]
+}
+
+export async function setMySubjects(list: string[]): Promise<{ ok: boolean; message: string }> {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, message: 'Please sign in again.' }
+  const seen = new Set<string>()
+  const clean: string[] = []
+  for (const raw of list || []) {
+    const v = String(raw || '').trim().replace(/\s+/g, ' ').slice(0, 40)
+    if (v.length < 2 || seen.has(v.toLowerCase())) continue
+    seen.add(v.toLowerCase())
+    clean.push(v)
+  }
+  if (clean.length > 20) return { ok: false, message: 'That is too many subjects.' }
+  const { error } = await supabase.from('profiles').update({ teaches: clean }).eq('id', user.id)
+  if (error) return { ok: false, message: error.message }
+  revalidatePath('/partner')
+  revalidatePath('/tutor')
+  return { ok: true, message: 'Subjects saved.' }
+}

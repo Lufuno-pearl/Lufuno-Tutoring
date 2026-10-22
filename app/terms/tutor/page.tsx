@@ -7,6 +7,7 @@ const sections: TermsSection[] = [
     title: 'Becoming a tutor',
     points: [
       'Tutors apply by email to aidandace27@gmail.com with the signed agreement, a copy of ID, proof of study or qualification, and results for the subjects you want to teach.',
+      'List the subjects you are good at in the app (Subjects and Areas) and on the agreement. You only get students for subjects you list.',
       'You are a tutor only once Aid & Ace confirms in writing that you are approved.',
       'You work as an independent tutor, not an employee.',
     ],
