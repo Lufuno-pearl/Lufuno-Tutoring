@@ -256,3 +256,12 @@ html[data-mode="dark"] .wl-note{background:#352C57;color:#DCCFF7;border-color:#5
 html[data-mode="dark"]{--unread:#3A2D5C;}
 html[data-mode="dark"] .panel svg[color="#8a7fa8"]{color:#BDB1DB}
 html[data-mode="dark"] .lucide-bell,html[data-mode="dark"] .lucide-moon,html[data-mode="dark"] .lucide-bell-ring{stroke:#D9CBFF}
+
+/* Dark mode: the three stat tiles and the referral card keep readable text */
+html[data-mode="dark"] .stat{background:#2F2352 !important;}
+html[data-mode="dark"] .stat .n{color:#F1EAFB !important;}
+html[data-mode="dark"] .stat small{color:#BDB1DB !important;}
+html[data-mode="dark"] .stat .s{color:#8FE0AE !important;}
+html[data-mode="dark"] .panel.refer{background:linear-gradient(135deg,#4A3A12,#5A4416) !important;}
+html[data-mode="dark"] .panel.refer,html[data-mode="dark"] .panel.refer h4,html[data-mode="dark"] .panel.refer .meta{color:#F8E7B5 !important;}
+html[data-mode="dark"] .stat .s[style*="#A6443A"]{color:#FF9A8F !important;}
