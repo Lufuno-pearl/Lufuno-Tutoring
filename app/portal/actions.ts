@@ -97,12 +97,8 @@ export async function requestModuleTutoring(formData: FormData): Promise<{ ok: b
     .limit(1)
   if (open && open.length > 0) return { ok: true, message: 'You already asked about this module. We will get back to you.' }
 
-  let area: string | null = null
-  if (format === 'physical') {
-    const areaCheck = await checkArea(supabase, String(formData.get('area') || ''))
-    if (!areaCheck.ok) return { ok: false, message: areaCheck.message }
-    area = areaCheck.area
-  }
+  // University in-person sessions are held on campus in a venue, so no area is needed
+  const area: string | null = null
 
   const { error } = await supabase.from('module_requests').insert({
     student_id: user.id,

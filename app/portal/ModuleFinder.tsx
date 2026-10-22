@@ -101,7 +101,6 @@ export default function ModuleFinder({ moduleRequests }: { moduleRequests: any[]
     fd.set('moduleId', picked.id)
     fd.set('sessionType', sessionType)
     fd.set('format', format)
-    if (format === 'physical' && area && area !== NONE) fd.set('area', area)
     fd.set('day', day)
     fd.set('time', time)
     const r = await requestModuleTutoring(fd)
@@ -119,12 +118,12 @@ export default function ModuleFinder({ moduleRequests }: { moduleRequests: any[]
     setBusy(false)
   }
 
-  const blocked = busy || !picked || !day || !time || (format === 'physical' && area === NONE)
+  const blocked = busy || !picked || !day || !time
 
   return (
     <div>
       <h3>Tutoring for your modules</h3>
-      <p className="meta">Tell us what you study, pick your module and ask if tutoring is available. If we have a tutor, we confirm it and then you pay. R{UNI_PRICE.group} for 3 sessions of 1h30 in a group (up to {GROUP_MAX} students), or R{UNI_PRICE.one_on_one} for 3 sessions of 1h30 one-on-one. Online or physical.</p>
+      <p className="meta">Tell us what you study, pick your module and ask if tutoring is available. If we have a tutor, we confirm it and then you pay. R{UNI_PRICE.group} for 3 sessions of 1h30 in a group (up to {GROUP_MAX} students), or R{UNI_PRICE.one_on_one} for 3 sessions of 1h30 one-on-one. Online or on campus.</p>
 
       {(moduleRequests || []).length > 0 && (
         <div style={{ marginBottom: 12 }}>
@@ -214,29 +213,13 @@ export default function ModuleFinder({ moduleRequests }: { moduleRequests: any[]
             </select>
           </div>
           <div className="field">
-            <label>Online or physical?</label>
+            <label>Online or on campus?</label>
             <select value={format} onChange={e => { setFormat(e.target.value); setArea('') }}>
               <option value="online">Online</option>
-              <option value="physical">Physical</option>
+              <option value="physical">On campus (we meet at a venue)</option>
             </select>
           </div>
-          {format === 'physical' && areas.length > 0 && (
-            <div className="field">
-              <label>Which area are you in?</label>
-              <select value={area} onChange={e => setArea(e.target.value)}>
-                <option value="">Select your area</option>
-                {areas.map(a => <option key={a} value={a}>{a}</option>)}
-                <option value={NONE}>My area is not listed</option>
-              </select>
-              {area === NONE && (
-                <div className="panel" style={{ background: '#F3E6C7', marginTop: 8 }}>
-                  <p style={{ margin: 0, fontWeight: 600 }}>We don't have a tutor in your area yet.</p>
-                  <p className="meta" style={{ margin: '4px 0 0' }}>Online sessions work just as well, so we suggest choosing Online.</p>
-                  <button type="button" className="btn btn-primary" style={{ marginTop: 8 }} onClick={() => { setFormat('online'); setArea('') }}>Switch to Online</button>
-                </div>
-              )}
-            </div>
-          )}
+          {format === 'physical' && <p className="meta">On-campus sessions are held in a study room or venue at your university. We tell you which one when we confirm your tutor.</p>}
           <div className="field"><label>Preferred day</label><input type="date" value={day} onChange={e => setDay(e.target.value)} /></div>
           <div className="field"><label>Preferred time</label><input type="time" value={time} onChange={e => setTime(e.target.value)} /></div>
           <p className="meta">You pay only after we confirm a tutor.</p>
