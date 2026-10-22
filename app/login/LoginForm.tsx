@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Eye, EyeOff } from 'lucide-react'
 import { createClient } from '../../lib/supabase/client'
 import { isAdminEmail } from '../../lib/admin'
+import { Girl, Cloud, Plant, Flower } from './Welcome'
 
 export default function LoginForm() {
   const [mode, setMode] = useState<'signup' | 'signin'>('signin')
@@ -64,75 +65,56 @@ export default function LoginForm() {
     await afterAuth(data.user, supabase)
   }
 
+  const signup = mode === 'signup'
   return (
-    <section>
-      <h2>{mode === 'signup' ? 'Create your account' : 'Welcome back'}</h2>
-      {mode === 'signin' && !success && <p className="meta">Sign in to continue.</p>}
-      {success && <p className="meta" style={{ background: '#DCEEE0', padding: '10px 14px', borderRadius: 10, marginBottom: 16 }}>{success}</p>}
-      {mode === 'signup' && (
-        <div className="field"><label>Full name</label><input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Thandi Nkosi" /></div>
-      )}
-      <div className="field"><label>Email</label><input value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" /></div>
-      <div className="field">
-        <label>Password</label>
-        <div style={{ position: 'relative' }}>
-          <input
-            type={showPassword ? 'text' : 'password'}
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            placeholder="At least 6 characters"
-            style={{ paddingRight: 40 }}
-          />
-          <span
-            onClick={() => setShowPassword(!showPassword)}
-            style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', cursor: 'pointer', color: '#8a7fa8' }}
-          >
-            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-          </span>
+    <div className="wl">
+      <div className="wl-cloud wl-c1"><Cloud /></div>
+      <div className="wl-cloud wl-c2"><Cloud /></div>
+      <div className="wl-plant"><Plant /></div>
+      <div className="wl-flower"><Flower /></div>
+      <h2 className="wl-title">{signup ? 'Welcome to Aid & Ace!' : 'Welcome back!'}</h2>
+      <p className="wl-sub">{signup ? "Let's get you set up. It takes a minute." : 'We missed you. Ready to fix the gaps?'}</p>
+      <div className="wl-girl"><Girl wink /></div>
+      <section className="wl-card">
+        {success && <p className="wl-note wl-ok">{success}</p>}
+        {signup && <p className="wl-note">Hi there! 👋 Create your account and we will help you fix the gaps and ace the exam.</p>}
+        {signup && (
+          <div className="wl-field"><i>🙂</i><input value={name} onChange={e => setName(e.target.value)} placeholder="Full name" aria-label="Full name" /></div>
+        )}
+        <div className="wl-field"><i>✉</i><input value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" aria-label="Email" autoCapitalize="none" /></div>
+        <div className="wl-field">
+          <i>🔒</i>
+          <input type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} placeholder={signup ? 'Password (6+ characters)' : 'Password'} aria-label="Password" />
+          <span className="wl-eye" onClick={() => setShowPassword(!showPassword)}>{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</span>
         </div>
-      </div>
-      {mode === 'signup' && (
-        <div className="field">
-          <label>Confirm password</label>
-          <input
-            type={showPassword ? 'text' : 'password'}
-            value={confirmPassword}
-            onChange={e => setConfirmPassword(e.target.value)}
-            placeholder="Type your password again"
-          />
-        </div>
-      )}
-      {mode === 'signup' && (
-        <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start', margin: '4px 0 12px', fontSize: '0.9rem' }}>
-          <input type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)} style={{ marginTop: 3, width: 18, height: 18, flex: '0 0 auto' }} />
-          <span>
-            I have read and agree to the{' '}
-            <a href="/terms" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--purple-dark)', fontWeight: 600 }}>Terms and Conditions</a> and{' '}
-            <a href="/privacy" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--purple-dark)', fontWeight: 600 }}>Privacy</a>.
-            {' '}If I am under 18, my parent or guardian agrees too.
+        {signup && (
+          <div className="wl-field"><i>🔒</i><input type={showPassword ? 'text' : 'password'} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Type your password again" aria-label="Confirm password" /></div>
+        )}
+        {signup && (
+          <label className="wl-agree">
+            <input type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)} />
+            <span>
+              I have read and agree to the{' '}
+              <a href="/terms" target="_blank" rel="noopener noreferrer">Terms and Conditions</a> and{' '}
+              <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy</a>.
+              {' '}If I am under 18, my parent or guardian agrees too.
+            </span>
+          </label>
+        )}
+        {error && <p className="wl-err">{error}</p>}
+        {!signup && <p className="wl-forgot">Forgot your password? WhatsApp Lufuno on <strong>067 381 2727</strong> to have it reset.</p>}
+        {signup ? (
+          <button className="wl-btn" onClick={handleSignUp} disabled={loading}>{loading ? 'Creating account...' : 'Create account'}</button>
+        ) : (
+          <button className="wl-btn" onClick={handleSignIn} disabled={loading}>{loading ? 'Signing in...' : 'Sign in'}</button>
+        )}
+        <p className="wl-switch">
+          {signup ? 'Already have an account? ' : 'New here? '}
+          <span onClick={() => { setMode(signup ? 'signin' : 'signup'); setError(''); setSuccess('') }}>
+            {signup ? 'Sign in' : 'Create your account'}
           </span>
-        </label>
-      )}
-      {error && <p style={{ color: '#A6443A', fontSize: '0.85rem' }}>{error}</p>}
-      {mode === 'signup' ? (
-        <button className="btn btn-primary" onClick={handleSignUp} disabled={loading}>{loading ? 'Creating account...' : 'Create account'}</button>
-      ) : (
-        <button className="btn btn-primary" onClick={handleSignIn} disabled={loading}>{loading ? 'Signing in...' : 'Sign in'}</button>
-      )}
-      <p className="meta" style={{ marginTop: 16, textAlign: 'center' }}>
-        {mode === 'signup' ? 'Already have an account? ' : "Don't have an account? "}
-        <span
-          style={{ color: 'var(--purple-dark)', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}
-          onClick={() => { setMode(mode === 'signup' ? 'signin' : 'signup'); setError(''); setSuccess('') }}
-        >
-          {mode === 'signup' ? 'Sign in' : 'Create one'}
-        </span>
-      </p>
-      {mode === 'signin' && (
-        <p className="meta" style={{ marginTop: 10 }}>
-          Forgot your password? WhatsApp Lufuno on <strong>067 381 2727</strong> to have it reset.
         </p>
-      )}
-    </section>
+      </section>
+    </div>
   )
 }
