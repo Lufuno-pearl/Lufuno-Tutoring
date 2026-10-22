@@ -2,7 +2,7 @@ import { createClient } from '../../lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { claim, setMeetingLink, markAttendance, sendPartnerMessage } from './actions'
 import { signOut } from '../portal/actions'
-import NotificationBell from '../NotificationBell'
+import HeaderTools from '../HeaderTools'
 import PartnerStudents from './PartnerStudents'
 import VideoManager from '../tutor/VideoManager'
 import PartnerRequests from './PartnerRequests'
@@ -142,7 +142,7 @@ export default async function PartnerDashboard() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h2>Tutor dashboard</h2>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          <NotificationBell forRole="staff" />
+          <HeaderTools forRole="staff" />
           <form action={signOut}><button className="btn" style={{ background: 'none', border: '1px solid var(--ink)' }}>Sign out</button></form>
         </div>
       </div>

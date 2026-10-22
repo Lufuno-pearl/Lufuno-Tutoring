@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation'
 import { answerModuleRequest, confirmPayment, setMeetingLink, assignTutor, markAttendance, sendTutorMessage, toggleAvailable, claim, setCustomPackLink, markHomeworkSolved, setVideoTopicLink } from './actions'
 import { signOut } from '../portal/actions'
 import TutorHome from './TutorHome'
-import NotificationBell from '../NotificationBell'
+import HeaderTools from '../HeaderTools'
 
 const ADMIN_EMAILS = ['pearllufunomoyo@gmail.com', 'jonesneliswa@gmail.com']
 
@@ -95,7 +95,7 @@ export default async function TutorDashboard() {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h2>Owner dashboard</h2>
-        <NotificationBell forRole="staff" />
+        <HeaderTools forRole="staff" />
       </div>
       <TutorHome
         bookings={bookings}
