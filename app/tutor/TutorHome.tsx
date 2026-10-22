@@ -238,6 +238,7 @@ function TutorInner({ section, setSection, tab, bookings, subs, orders, partners
             {tile('Videos', '🎬', 'linear-gradient(135deg, #1FB6A3, #17897B)', () => setSection('videos'))}
             {tile('Tutor Availability', '📅', 'linear-gradient(135deg, #6E4FC7, #4B2FA0)', () => setSection('availability'))}
             <Link href="/tutor/pay" style={{ textDecoration: 'none', color: 'inherit' }}>{tile('Tutor Pay', '💰', 'linear-gradient(135deg, #2E7D4F, #1F5C38)', () => {})}</Link>
+            <Link href="/appearance" style={{ textDecoration: 'none', color: 'inherit' }}>{tile('Appearance', '🎨', 'linear-gradient(135deg, #D96FB5, #A8478F)', () => {})}</Link>
             <Link href="/portal?view=student" style={{ textDecoration: 'none', color: 'inherit' }}>{tile('Student View', '👩‍🎓', 'linear-gradient(135deg, #7A8FB0, #566B8F)', () => {})}</Link>
           </div>
           <form action={actions.signOut} style={{ marginTop: 16 }}><button className="btn" style={{ width: '100%', background: 'none', border: '1px solid var(--ink)' }}>Sign out</button></form>

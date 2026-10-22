@@ -46,6 +46,9 @@ export default async function Portal({ searchParams }: { searchParams?: { view?:
 
   // school is read separately so the portal still loads if the school columns are not set up yet
   const { data: schoolRow } = await supabase.from('profiles').select('school, province').eq('id', user.id).single()
+  // photo is read separately too, so nothing breaks before the photo setup has been run
+  const { data: avatarRow } = await supabase.from('profiles').select('avatar_path').eq('id', user.id).single()
+  const avatarPath = (avatarRow as any)?.avatar_path || null
 
   if (!profile?.tier) {
     return (
@@ -105,6 +108,7 @@ export default async function Portal({ searchParams }: { searchParams?: { view?:
         testPreps={testPreps || []}
         marks={marks || []}
         scheduled={scheduled || []}
+        avatarPath={avatarPath}
         hasSchool={!!(schoolRow as any)?.school}
         mySchool={(schoolRow as any)?.school || ''}
         myProvince={(schoolRow as any)?.province || ''}
