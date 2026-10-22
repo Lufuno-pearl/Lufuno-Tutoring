@@ -1,4 +1,5 @@
 'use client'
+import { useState, useEffect } from 'react'
 import { Check, Flame, MessageCircle, Gift } from 'lucide-react'
 import { HS_PRICE, UNI_PRICE_PER_2H, hsSessions, toSessionType } from '../../lib/pricing'
 import { daysUntil } from '../TestList'
@@ -198,12 +199,55 @@ export function HelpButton() {
   )
 }
 
+const QUOTES = [
+  'Small steps every day add up to big marks.',
+  "A gap you've found is a gap you can fix.",
+  "You don't have to be perfect. You just have to keep going.",
+  'Mistakes are proof that you are trying.',
+  "Ask the question. Someone else in the room is wondering the same thing.",
+  'Today\'s practice is tomorrow\'s confidence.',
+  'Hard topics become easy topics once you stay with them.',
+  'Progress, not perfection.',
+  'Every expert was once stuck on the same problem you are.',
+  'Your effort today is the mark you see tomorrow.',
+  'Start where you are. Use what you have. Do what you can.',
+  'Believe you can learn it, then show up and do it.',
+  'One more question done is one more gap closed.',
+  'Rest well, study smart, and trust the work you put in.',
+  "Failing a test is not failing at life. Learn from it and rise.",
+  'You are closer to understanding than you think.',
+  'Discipline beats motivation. Do a little, even on the slow days.',
+  'Be proud of how far you have come, and keep climbing.',
+  'The best time to start was yesterday. The next best time is now.',
+  'Questions are the beginning of understanding.',
+  'Study a little every day and the exam will feel like revision.',
+  "Your future self will thank you for the work you do today.",
+  'Be patient with yourself. Learning takes time.',
+  'Focus on understanding, and the marks will follow.',
+  'Great things are done by a series of small things done well.',
+  'You were not made to quit. Try again.',
+  'Stay curious. Stay consistent. Stay kind to yourself.',
+  'Confidence is built one solved problem at a time.',
+  'The harder the topic, the sweeter the win.',
+  'You can do hard things. You have done them before.',
+  'Ace the exam by fixing one gap at a time.',
+]
+
+function todaysQuote() {
+  const sa = new Date(Date.now() + 2 * 60 * 60 * 1000)
+  const day = Math.floor(sa.getTime() / 86400000)
+  return QUOTES[day % QUOTES.length]
+}
+
 export function Hero({ name }: { name: string }) {
   const first = (name || '').trim().split(' ')[0]
+  const [quote, setQuote] = useState('')
+  useEffect(() => { setQuote(todaysQuote()) }, [])
   return (
     <div className="hero">
       <div className="hero-hi">{first ? `Welcome, ${first}` : 'Welcome'} 👋</div>
       <div className="hero-slogan">Fix the gaps. Ace the exam.</div>
+      {quote && <div style={{ marginTop: 10, fontSize: '0.9rem', fontStyle: 'italic', opacity: 0.92 }}>&ldquo;{quote}&rdquo;</div>}
     </div>
   )
 }
