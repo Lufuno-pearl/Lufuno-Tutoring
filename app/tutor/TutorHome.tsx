@@ -15,7 +15,7 @@ import TutorAreas from '../TutorAreas'
 import AvailabilityOverview from './AvailabilityOverview'
 import { GROUP_MAX, UNI_PRICE_PER_2H } from '../../lib/pricing'
 import MarksView from '../MarksView'
-import { deleteMessage } from '../message-actions'
+import MessageMeta from '../MessageMeta'
 import ScheduleManager, { studentFormat, studentAlternate, classmatesOf } from '../ScheduleManager'
 import HomeworkSection from './HomeworkSection'
 import TestList, { daysUntil } from '../TestList'
@@ -58,7 +58,7 @@ function ChatThread({ studentId, thread, actions, marks, schedule, format, alter
         {thread.msgs.length === 0 && <p className="meta">No messages yet.</p>}
         {thread.msgs.map((m: any) => (
           <div key={m.id} style={{ marginBottom: 8, textAlign: m.sender === 'tutor' ? 'right' : 'left' }}>
-            <div className="meta" style={{ marginBottom: 2 }}>{m.sender === 'tutor' ? 'You' : thread.name}{m.sender === 'tutor' && <span style={{ cursor: 'pointer', color: '#A6443A', fontSize: '0.74rem', marginLeft: 8 }} onClick={async () => { if (!confirm('Delete this message for everyone?')) return; const r = await deleteMessage(m.id); if (!r.ok) alert('Could not delete that message.') }}>Delete</span>}</div>
+            <MessageMeta id={m.id} createdAt={m.created_at} label={m.sender === 'tutor' ? 'You' : thread.name} mine={m.sender === 'tutor'} />
             <div style={{ display: 'inline-block', background: m.sender === 'tutor' ? '#DCEEE0' : '#F3EFE4', padding: '8px 12px', borderRadius: 6 }}>{m.body}</div>
           </div>
         ))}
@@ -176,7 +176,9 @@ function TutorInner({ section, setSection, tab, bookings, subs, orders, partners
   }, [])
   const [chatSearch, setChatSearch] = useState('')
   const [myStudentId, setMyStudentId] = useState<string | null>(null)
-  const [myView, setMyView] = useState<'menu' | 'availability' | 'areas' | 'students' | 'open'>('menu')
+  const [myView, setMyView] = useState<'menu' | 'availability' | 'areas' | 'students' | 'open' | 'marks'>('menu')
+  const [marksStudentId, setMarksStudentId] = useState<string | null>(null)
+  const [marksSearch, setMarksSearch] = useState('')
   const pendingModules = (moduleRequests || []).filter((m: any) => m.status === 'requested').length
   const soonTests = (testPreps || []).filter((t: any) => daysUntil(t.test_date) >= 0 && daysUntil(t.test_date) <= 7).length
   const openHomework = (homeworkRequests || []).filter((h: any) => h.status !== 'solved').length
@@ -221,7 +223,7 @@ function TutorInner({ section, setSection, tab, bookings, subs, orders, partners
             {tile('Sessions Log', '📋', 'linear-gradient(135deg, #9B7FE8, #7A5FD0)', () => setSection('sessions'))}
             {tile('Upcoming Tests', '🎯', 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('tests'), soonTests)}
             {tile('Referrals', '🎁', 'linear-gradient(135deg, #F2C14E, #D9A32E)', () => setSection('referrals'))}
-            {tile('My Tutoring', '⭐', 'linear-gradient(135deg, #C89B3C, #A87D24)', () => { setSection('mytutoring'); setMyStudentId(null); setMyView('menu') })}
+            {tile('My Tutoring', '⭐', 'linear-gradient(135deg, #C89B3C, #A87D24)', () => { setSection('mytutoring'); setMyStudentId(null); setMyView('menu'); setMarksStudentId(null) })}
           </div>
         </div>
       )
@@ -674,6 +676,45 @@ function TutorInner({ section, setSection, tab, bookings, subs, orders, partners
       </div>
     )
 
+    if (myView === 'marks') {
+      if (marksStudentId) {
+        const t = threadsByStudent[marksStudentId] || { name: 'Student' }
+        return (
+          <div>
+            <Back onClick={() => setMarksStudentId(null)} />
+            <h3>{t.name}: marks</h3>
+            <MarksView marks={(marksByStudent || {})[marksStudentId] || []} subjects={[]} mode="tutor" studentId={marksStudentId} />
+          </div>
+        )
+      }
+      const all = Object.entries(threadsByStudent)
+        .filter(([, t]: any) => !marksSearch.trim() || t.name.toLowerCase().includes(marksSearch.trim().toLowerCase()))
+        .sort((a: any, b: any) => a[1].name.localeCompare(b[1].name))
+      return (
+        <div>
+          <Back onClick={() => setMyView('menu')} />
+          <h3>Student marks</h3>
+          <div className="field"><input value={marksSearch} onChange={e => setMarksSearch(e.target.value)} placeholder="Search by student name..." /></div>
+          {all.length === 0 && <p className="meta">{marksSearch.trim() ? 'No matches.' : 'No students yet.'}</p>}
+          {all.map(([sid, t]: any) => {
+            const ms = (marksByStudent || {})[sid] || []
+            const bySub: Record<string, number[]> = {}
+            ms.forEach((m: any) => { (bySub[m.subject] = bySub[m.subject] || []).push(Math.round((Number(m.mark) / Number(m.out_of)) * 100)) })
+            const low = Object.values(bySub).some(a => a.reduce((x, y) => x + y, 0) / a.length < 50)
+            return (
+              <div key={sid} className="panel" style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderLeft: low ? '5px solid #A6443A' : undefined }} onClick={() => setMarksStudentId(sid)}>
+                <div>
+                  <h4 style={{ margin: 0 }}>{t.name}</h4>
+                  <div className="meta" style={{ marginBottom: 0 }}>{ms.length === 0 ? 'No marks yet' : `${ms.length} mark${ms.length === 1 ? '' : 's'}`}{low ? ' · average below 50%' : ''}</div>
+                </div>
+                <ChevronRight size={18} color="var(--purple-dark)" />
+              </div>
+            )
+          })}
+        </div>
+      )
+    }
+
     if (myView === 'availability') {
       return (
         <div>
@@ -750,6 +791,7 @@ function TutorInner({ section, setSection, tab, bookings, subs, orders, partners
         <h3>My tutoring</h3>
         {row('Your students', myStudentIds.length === 0 ? 'None claimed yet' : `${myStudentIds.length} student${myStudentIds.length === 1 ? '' : 's'}`, () => setMyView('students'))}
         {row('Students who want tutors', openCount === 0 ? 'Nothing open right now' : `${openCount} waiting for a tutor`, () => setMyView('open'), openCount)}
+        {row('Student marks', 'Add and edit marks for each student', () => setMyView('marks'))}
         {row('Your availability', 'Set the times you can tutor', () => setMyView('availability'))}
         {row('Your areas', 'Where you can meet students in person', () => setMyView('areas'))}
       </div>

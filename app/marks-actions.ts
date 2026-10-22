@@ -58,3 +58,25 @@ export async function deleteMark(id: string): Promise<void> {
   revalidatePath('/partner')
   revalidatePath('/tutor')
 }
+
+export async function updateMark(id: string, formData: FormData): Promise<{ ok: boolean; message: string }> {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, message: 'Please sign in again.' }
+  const title = String(formData.get('title') || '').trim().slice(0, 120)
+  const mark = Number(formData.get('mark'))
+  const outOf = Number(formData.get('out_of'))
+  const takenOn = String(formData.get('taken_on') || '')
+  if (title.length < 2) return { ok: false, message: 'Please say what it was, for example "Test 1".' }
+  if (!isFinite(mark) || !isFinite(outOf) || outOf <= 0 || mark < 0) return { ok: false, message: 'Please enter the mark and what it was out of.' }
+  if (mark > outOf) return { ok: false, message: 'The mark cannot be more than the total.' }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(takenOn)) return { ok: false, message: 'Please pick the date.' }
+  const today = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString().slice(0, 10)
+  if (takenOn > today) return { ok: false, message: 'That date is in the future.' }
+  const { data, error } = await supabase.from('marks').update({ title, mark, out_of: outOf, taken_on: takenOn }).eq('id', id).select('id')
+  if (error || !data || data.length === 0) return { ok: false, message: 'Could not save. You can only edit marks you added.' }
+  revalidatePath('/portal')
+  revalidatePath('/partner')
+  revalidatePath('/tutor')
+  return { ok: true, message: 'Saved.' }
+}

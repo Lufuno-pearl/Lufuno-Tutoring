@@ -11,7 +11,7 @@ import { createClient } from '../../lib/supabase/client'
 import StoredVideo from '../StoredVideo'
 import ReferralBox from './ReferralBox'
 import MarksView from '../MarksView'
-import { deleteMessage } from '../message-actions'
+import MessageMeta from '../MessageMeta'
 import SchoolCard from './SchoolCard'
 import ModuleFinder from './ModuleFinder'
 import NextSession from './NextSession'
@@ -797,7 +797,7 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
           {(messages || []).length === 0 && <p className="meta">No messages yet — say hello.</p>}
           {(messages || []).map((m: any) => (
             <div key={m.id} style={{ marginBottom: 10, textAlign: m.sender === 'student' ? 'right' : 'left' }}>
-              <div className="meta" style={{ marginBottom: 2 }}>{m.sender === 'student' ? 'You' : 'Lufuno'}{m.sender === 'student' && <span style={{ cursor: 'pointer', color: '#A6443A', fontSize: '0.74rem', marginLeft: 8 }} onClick={async () => { if (!confirm('Delete this message for everyone?')) return; const r = await deleteMessage(m.id); if (!r.ok) alert('Could not delete that message.') }}>Delete</span>}</div>
+              <MessageMeta id={m.id} createdAt={m.created_at} label={m.sender === 'student' ? 'You' : 'Lufuno'} mine={m.sender === 'student'} />
               <div style={{ display: 'inline-block', background: m.sender === 'student' ? '#DCEEE0' : '#F3EFE4', padding: '8px 12px', borderRadius: 6 }}>{m.body}</div>
             </div>
           ))}

@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { addMark, deleteMark } from './marks-actions'
+import { addMark, deleteMark, updateMark } from './marks-actions'
 
 type Mark = { id: string; subject: string; title: string; mark: number; out_of: number; taken_on: string; source: string }
 
@@ -12,11 +12,25 @@ export default function MarksView({ marks, subjects, mode, studentId }: { marks:
   const [message, setMessage] = useState('')
   const [ok, setOk] = useState(false)
   const [formKey, setFormKey] = useState(0)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editMsg, setEditMsg] = useState('')
   const today = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString().slice(0, 10)
 
   const sorted = [...marks].sort((a, b) => (a.taken_on < b.taken_on ? -1 : a.taken_on > b.taken_on ? 1 : 0))
   const bySubject: Record<string, Mark[]> = {}
   sorted.forEach(m => { (bySubject[m.subject] = bySubject[m.subject] || []).push(m) })
+
+  const lowSubjects = Object.keys(bySubject).filter(sub => {
+    const ps = bySubject[sub].map(pct)
+    return ps.reduce((a, b) => a + b, 0) / ps.length < 50
+  })
+
+  async function saveEdit(id: string, fd: FormData) {
+    setEditMsg('')
+    const res = await updateMark(id, fd)
+    if (res.ok) setEditingId(null)
+    else setEditMsg(res.message)
+  }
 
   async function submit(fd: FormData) {
     if (busy) return
@@ -35,6 +49,15 @@ export default function MarksView({ marks, subjects, mode, studentId }: { marks:
 
   return (
     <div>
+      {lowSubjects.length > 0 && (
+        <div style={{ background: '#FBE9E6', borderLeft: '5px solid #A6443A', padding: '10px 12px', borderRadius: 6, marginBottom: 12, fontSize: '0.9rem' }}>
+          {tutorMode ? (
+            <><strong>Needs extra attention:</strong> the average is below 50% in {lowSubjects.join(', ')}. Look at which topics are costing marks and plan the next sessions around them.</>
+          ) : (
+            <><strong>Your average in {lowSubjects.join(', ')} is below 50%.</strong> Don't be discouraged: this is exactly what tutoring is for. Tell your tutor which topics feel hardest, practise a little every day, and your next marks will climb. 💪</>
+          )}
+        </div>
+      )}
       {Object.keys(bySubject).map(subject => {
         const rows = bySubject[subject]
         const ps = rows.map(pct)
@@ -57,20 +80,43 @@ export default function MarksView({ marks, subjects, mode, studentId }: { marks:
                 <div key={m.id} title={`${m.title}: ${pct(m)}%`} style={{ flex: 1, height: `${Math.max(6, pct(m))}%`, background: colour(pct(m)), borderRadius: '6px 6px 0 0', opacity: m.source === 'school' ? 0.55 : 1 }} />
               ))}
             </div>
-            {[...rows].reverse().map(m => (
-              <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, padding: '6px 0', borderTop: '1px solid var(--line)' }}>
-                <div>
-                  <div style={{ fontWeight: 600 }}>{m.title}</div>
-                  <div className="meta" style={{ marginBottom: 0 }}>{m.taken_on} · {m.source === 'tutor' ? 'Set by tutor' : 'From school'}</div>
+            {[...rows].reverse().map(m => {
+              const canEdit = (tutorMode && m.source === 'tutor') || (!tutorMode && m.source === 'school')
+              if (editingId === m.id) {
+                return (
+                  <form key={m.id} action={(fd: FormData) => saveEdit(m.id, fd)} style={{ padding: '8px 0', borderTop: '1px solid var(--line)' }}>
+                    <div className="field"><label>What was it?</label><input name="title" defaultValue={m.title} required /></div>
+                    <div style={{ display: 'flex', gap: 10 }}>
+                      <div className="field" style={{ flex: 1 }}><label>Mark</label><input name="mark" type="number" step="any" min="0" inputMode="decimal" defaultValue={Number(m.mark)} required /></div>
+                      <div className="field" style={{ flex: 1 }}><label>Out of</label><input name="out_of" type="number" step="any" min="1" inputMode="decimal" defaultValue={Number(m.out_of)} required /></div>
+                    </div>
+                    <div className="field"><label>Date</label><input name="taken_on" type="date" max={today} defaultValue={m.taken_on} required /></div>
+                    {editMsg && <p style={{ color: '#A6443A', fontSize: '0.88rem' }}>{editMsg}</p>}
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button className="btn btn-primary" style={{ padding: '8px 16px' }}>Save changes</button>
+                      <button type="button" className="btn" style={{ background: 'none', border: '1px solid var(--ink)', padding: '8px 16px' }} onClick={() => { setEditingId(null); setEditMsg('') }}>Cancel</button>
+                    </div>
+                  </form>
+                )
+              }
+              return (
+                <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, padding: '6px 0', borderTop: '1px solid var(--line)' }}>
+                  <div>
+                    <div style={{ fontWeight: 600 }}>{m.title}</div>
+                    <div className="meta" style={{ marginBottom: 0 }}>{m.taken_on} · {m.source === 'tutor' ? 'Set by tutor' : 'From school'}</div>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontWeight: 700, color: colour(pct(m)) }}>{Number(m.mark)}/{Number(m.out_of)} · {pct(m)}%</div>
+                    {canEdit && (
+                      <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+                        <button onClick={() => { setEditingId(m.id); setEditMsg('') }} style={{ background: 'none', border: 'none', color: 'var(--purple-dark)', fontSize: '0.78rem', cursor: 'pointer', padding: 0 }}>Edit</button>
+                        <button onClick={async () => { if (confirm('Delete this mark?')) await deleteMark(m.id) }} style={{ background: 'none', border: 'none', color: '#A6443A', fontSize: '0.78rem', cursor: 'pointer', padding: 0 }}>Delete</button>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontWeight: 700, color: colour(pct(m)) }}>{Number(m.mark)}/{Number(m.out_of)} · {pct(m)}%</div>
-                  {((tutorMode && m.source === 'tutor') || (!tutorMode && m.source === 'school')) && (
-                    <button onClick={async () => { if (confirm('Delete this mark?')) await deleteMark(m.id) }} style={{ background: 'none', border: 'none', color: '#A6443A', fontSize: '0.78rem', cursor: 'pointer', padding: 0 }}>Delete</button>
-                  )}
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )
       })}
