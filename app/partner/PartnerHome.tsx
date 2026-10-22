@@ -92,7 +92,7 @@ export default function PartnerHome({ name, today, openCount, requestCount, stud
   else if (section === 'requests') body = <div><Back /><h3>Homework & video requests</h3>{requests}</div>
   else if (section === 'tests') body = <div><Back /><h3>Upcoming tests & exams</h3><p className="meta">Topics your students told us to prepare for.</p>{tests}</div>
   else if (section === 'availability') body = <div><Back /><h3>My availability</h3>{availability}</div>
-  else if (section === 'areas') body = <div><Back /><h3>My areas</h3>{areas}</div>
+  else if (section === 'areas') body = <div><Back /><h3>My subjects and areas</h3>{areas}</div>
   else if (section === 'videos') body = <div><Back /><h3>Manage videos</h3>{videos}</div>
   else if (tab === 'requests') {
     body = (
@@ -112,7 +112,7 @@ export default function PartnerHome({ name, today, openCount, requestCount, stud
         <div className="card-grid">
           {tile('My Availability', <Calendar size={36} color="#fff" />, 'linear-gradient(135deg, #6E4FC7, #4B2FA0)', () => setSection('availability'))}
           {tile('Manage Videos', <Video size={36} color="#fff" />, 'linear-gradient(135deg, #1FB6A3, #17897B)', () => setSection('videos'))}
-          {tile('My Areas', <MapPin size={36} color="#fff" />, 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('areas'))}
+          {tile('Subjects & Areas', <MapPin size={36} color="#fff" />, 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('areas'))}
           {tile('Appearance', <Settings size={36} color="#fff" />, 'linear-gradient(135deg, #D96FB5, #A8478F)', () => router.push('/appearance'))}
           {tile('Tutor Agreement', <ScrollText size={36} color="#fff" />, 'linear-gradient(135deg, #7A8FB0, #566B8F)', () => router.push('/terms/tutor'))}
         </div>

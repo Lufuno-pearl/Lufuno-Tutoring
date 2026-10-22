@@ -35,8 +35,11 @@ export default async function TutorDashboard() {
 
   // each tutor's areas and how many group students they already have
   const todayISO = new Date().toISOString().slice(0, 10)
+  // subjects each tutor teaches (separate query so the page still loads before the SQL is run)
+  const { data: teachRows } = await supabase.from('profiles').select('id, teaches').eq('role', 'partner')
   const partnersFull = (partners || []).map((p: any) => ({
     ...p,
+    teaches: ((teachRows || []).find((t: any) => t.id === p.id)?.teaches || []) as string[],
     areas: (areaRows || []).filter((a: any) => a.tutor_id === p.id).map((a: any) => a.name),
     group_count: (subs || []).filter((s: any) => s.tutor_id === p.id && s.session_type !== 'one_on_one' && ['pending', 'awaiting', 'confirmed'].includes(s.status) && (!s.end_date || s.end_date >= todayISO)).length,
   }))
