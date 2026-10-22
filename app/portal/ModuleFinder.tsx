@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { getAreas, getModuleCatalogue, addModule, requestModuleTutoring } from './actions'
-import { UNI_PRICE_PER_2H, GROUP_MAX, SessionType } from '../../lib/pricing'
+import { UNI_PRICE, GROUP_MAX, SessionType } from '../../lib/pricing'
 
 type Mod = { id: string; university: string; year: number; field: string; name: string; code: string | null }
 
@@ -124,7 +124,7 @@ export default function ModuleFinder({ moduleRequests }: { moduleRequests: any[]
   return (
     <div>
       <h3>Tutoring for your modules</h3>
-      <p className="meta">Tell us what you study, pick your module and ask if tutoring is available. If we have a tutor, we confirm it and then you pay. R{UNI_PRICE_PER_2H.group} per 2 hours in a group (up to {GROUP_MAX} students), or R{UNI_PRICE_PER_2H.one_on_one} per 2 hours one-on-one. Online or physical.</p>
+      <p className="meta">Tell us what you study, pick your module and ask if tutoring is available. If we have a tutor, we confirm it and then you pay. R{UNI_PRICE.group} for 3 sessions of 1h30 in a group (up to {GROUP_MAX} students), or R{UNI_PRICE.one_on_one} for 3 sessions of 1h30 one-on-one. Online or physical.</p>
 
       {(moduleRequests || []).length > 0 && (
         <div style={{ marginBottom: 12 }}>
@@ -209,8 +209,8 @@ export default function ModuleFinder({ moduleRequests }: { moduleRequests: any[]
           <div className="field">
             <label>Group or one-on-one?</label>
             <select value={sessionType} onChange={e => setSessionType(e.target.value as SessionType)}>
-              <option value="group">Group (up to {GROUP_MAX} students) — R{UNI_PRICE_PER_2H.group} per 2 hours</option>
-              <option value="one_on_one">One-on-one — R{UNI_PRICE_PER_2H.one_on_one} per 2 hours</option>
+              <option value="group">Group (up to {GROUP_MAX} students) — R{UNI_PRICE.group} for 3 sessions of 1h30</option>
+              <option value="one_on_one">One-on-one — R{UNI_PRICE.one_on_one} for 3 sessions of 1h30</option>
             </select>
           </div>
           <div className="field">

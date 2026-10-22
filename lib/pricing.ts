@@ -19,8 +19,10 @@ export const HS_SESSIONS: Record<SessionType, Record<Plan, number>> = {
   one_on_one: { one: 7, both: 14 },
 }
 
-// University physical sessions, rand per 2 hours
-export const UNI_PRICE_PER_2H: Record<SessionType, number> = {
+// University: one price covers a block of 3 sessions of 1 hour 30 minutes each
+export const UNI_SESSIONS = 3
+export const UNI_MINUTES = 90
+export const UNI_PRICE: Record<SessionType, number> = {
   group: 150,
   one_on_one: 250,
 }

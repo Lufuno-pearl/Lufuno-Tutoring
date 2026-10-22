@@ -2,7 +2,7 @@
 import { createClient } from '../../lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { sendPushToUser, sendPushToRole } from '../../lib/push'
-import { UNI_PRICE_PER_2H, toSessionType } from '../../lib/pricing'
+import { UNI_PRICE, toSessionType } from '../../lib/pricing'
 
 async function countReferral(supabase: any, studentId: string) {
   const { data: res, error } = await supabase.rpc('count_referral', { p_student: studentId })
@@ -234,7 +234,7 @@ export async function answerModuleRequest(id: string, available: boolean, tutorI
     format: req.format,
     session_type: sessionType,
     area: req.area,
-    price: UNI_PRICE_PER_2H[sessionType],
+    price: UNI_PRICE[sessionType],
     reference,
     tutor_id: tutorId || null,
   }).select('id').single()
