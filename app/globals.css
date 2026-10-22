@@ -265,3 +265,14 @@ html[data-mode="dark"] .stat .s{color:#8FE0AE !important;}
 html[data-mode="dark"] .panel.refer{background:linear-gradient(135deg,#4A3A12,#5A4416) !important;}
 html[data-mode="dark"] .panel.refer,html[data-mode="dark"] .panel.refer h4,html[data-mode="dark"] .panel.refer .meta{color:#F8E7B5 !important;}
 html[data-mode="dark"] .stat .s[style*="#A6443A"]{color:#FF9A8F !important;}
+
+/* Dark mode: inline colours are stored as rgb(), so match those too (chat bubbles, notices) */
+html[data-mode="dark"] [style*="rgb(220, 238, 224)"]{background:#1D4A2B !important;}
+html[data-mode="dark"] [style*="rgb(243, 230, 199)"],html[data-mode="dark"] [style*="rgb(255, 246, 221)"]{background:#4A3A12 !important;}
+html[data-mode="dark"] [style*="rgb(243, 214, 208)"],html[data-mode="dark"] [style*="rgb(251, 233, 230)"]{background:#4F2420 !important;}
+html[data-mode="dark"] [style*="rgb(243, 239, 228)"],html[data-mode="dark"] [style*="rgb(230, 224, 240)"],html[data-mode="dark"] [style*="rgb(247, 244, 252)"]{background:#33264F !important;}
+html[data-mode="dark"] [style*="background: rgb(255, 255, 255)"]{background:var(--card) !important;}
+html[data-mode="dark"] [style*="rgb(255, 227, 214)"],html[data-mode="dark"] [style*="rgb(231, 221, 250)"],html[data-mode="dark"] [style*="rgb(216, 241, 228)"]{background:#2F2352 !important;}
+/* date and time boxes must not run off the screen on phones */
+.field{min-width:0;}
+.field input[type="date"],.field input[type="time"]{min-width:0;max-width:100%;-webkit-appearance:none;appearance:none;height:44px;}
