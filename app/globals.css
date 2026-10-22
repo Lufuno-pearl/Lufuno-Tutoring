@@ -1,4 +1,5 @@
 :root{
+  --unread:#F7F4FC;
   --ink:#241B3A;
   --paper:#F1ECFB;
   --purple:#8B6FD9;
@@ -251,3 +252,7 @@ html[data-mode="dark"] .stat small,html[data-mode="dark"] .cloud-card p,html[dat
 html[data-mode="dark"] .wl-card{background:#2A2342}html[data-mode="dark"] .wl-field{background:#382F58}html[data-mode="dark"] .wl-field input{color:#EDE7FF}
 html[data-mode="dark"] .wl-title{color:#C9B6F2}html[data-mode="dark"] .wl-sub,html[data-mode="dark"] .wl-switch,html[data-mode="dark"] .wl-agree,html[data-mode="dark"] .wl-forgot{color:#BDB1DB}
 html[data-mode="dark"] .wl-note{background:#352C57;color:#DCCFF7;border-color:#5a4a8f}html[data-mode="dark"] .wl-cloud{opacity:.25}
+
+html[data-mode="dark"]{--unread:#3A2D5C;}
+html[data-mode="dark"] .panel svg[color="#8a7fa8"]{color:#BDB1DB}
+html[data-mode="dark"] .lucide-bell,html[data-mode="dark"] .lucide-moon,html[data-mode="dark"] .lucide-bell-ring{stroke:#D9CBFF}

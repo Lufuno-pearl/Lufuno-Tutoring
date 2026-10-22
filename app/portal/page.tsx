@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { isAdminEmail } from '../../lib/admin'
 import { createBooking, createHsSub, buyPack, markAwaiting, sendMessage, signOut, setTier, requestVideoAccess, requestCustomPack, requestVideoTopic, submitHomework, respondToSession } from './actions'
 import PortalHome from './PortalHome'
-import NotificationBell from '../NotificationBell'
+import HeaderTools from '../HeaderTools'
 import { hasTutorAccess } from '../../lib/testPrepAccess'
 
 const UNI_SUBJECTS = ['Basic Analysis', 'Multi-Variable Calculus', 'Mathematical Modelling & Methods', 'Scientific Computing', 'Abstract Mathematics', 'Statistics']
@@ -85,7 +85,7 @@ export default async function Portal({ searchParams }: { searchParams?: { view?:
         <h2 style={{ margin: 0 }}>My portal</h2>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           {isAdmin && <Link href="/tutor" className="btn btn-primary" style={{ padding: '8px 14px', fontSize: '0.8rem' }}>Owner dashboard</Link>}
-          <NotificationBell forRole="student" />
+          <HeaderTools forRole="student" />
           <form action={signOut}><button className="btn" style={{ background: 'none', border: '1px solid var(--ink)' }}>Sign out</button></form>
         </div>
       </div>
