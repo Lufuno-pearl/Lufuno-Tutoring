@@ -113,6 +113,7 @@ export default function PartnerHome({ name, today, openCount, requestCount, stud
           {tile('My Availability', <Calendar size={36} color="#fff" />, 'linear-gradient(135deg, #6E4FC7, #4B2FA0)', () => setSection('availability'))}
           {tile('Manage Videos', <Video size={36} color="#fff" />, 'linear-gradient(135deg, #1FB6A3, #17897B)', () => setSection('videos'))}
           {tile('My Areas', <MapPin size={36} color="#fff" />, 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('areas'))}
+          {tile('Appearance', <Settings size={36} color="#fff" />, 'linear-gradient(135deg, #D96FB5, #A8478F)', () => router.push('/appearance'))}
           {tile('Tutor Agreement', <ScrollText size={36} color="#fff" />, 'linear-gradient(135deg, #7A8FB0, #566B8F)', () => router.push('/terms/tutor'))}
         </div>
       </div>

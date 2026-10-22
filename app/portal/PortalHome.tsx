@@ -17,7 +17,7 @@ import ModuleFinder from './ModuleFinder'
 import NextSession from './NextSession'
 import TestPrep from './TestPrep'
 import QuestionOfDay from './QuestionOfDay'
-import { StreakCard, CountdownCard, PlanCard, GetStarted, WhatYouGet, PriceStrip, ReferBanner, HelpButton, Hero } from './HomeParts'
+import { StreakCard, CountdownCard, PlanCard, GetStarted, WhatYouGet, PriceStrip, ReferBanner, HelpButton, Hero, QuoteCloud, StatTrio } from './HomeParts'
 import { daysUntil, whenLabel } from '../TestList'
 import { getAreas } from './actions'
 import { hsPrice, hsSessions, UNI_PRICE_PER_2H, GROUP_MAX, SessionType } from '../../lib/pricing'
@@ -415,7 +415,7 @@ function SessionConfirm({ rows, respondToSession, onAnswered }: { rows: any[]; r
   )
 }
 
-function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visiblePacks, bookings, subs, orders, messages, attendance, videoRequests, myVideoSubjects, homeworkRequests, videoTopicRequests, moduleRequests, testPreps, canTestPrep, marks, scheduled, hasSchool, mySchool, myProvince, actions }: any) {
+function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visiblePacks, bookings, subs, orders, messages, attendance, videoRequests, myVideoSubjects, homeworkRequests, videoTopicRequests, moduleRequests, testPreps, canTestPrep, marks, scheduled, hasSchool, mySchool, myProvince, avatarPath, actions }: any) {
   const router = useRouter()
   const [bookingSubmitting, setBookingSubmitting] = useState(false)
   const [thankYou, setThankYou] = useState('')
@@ -500,6 +500,7 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
             {tile('Terms & Conditions', '📜', 'linear-gradient(135deg, #7A8FB0, #566B8F)', () => router.push('/terms'))}
             {tile('Privacy', '🔒', 'linear-gradient(135deg, #6BB59A, #4A9279)', () => router.push('/privacy'))}
             {tile('Add to Phone', '📲', 'linear-gradient(135deg, #E39B6B, #C97B49)', () => router.push('/install'))}
+            {tile('Appearance', '🎨', 'linear-gradient(135deg, #D96FB5, #A8478F)', () => router.push('/appearance'))}
           </div>
         </div>
       )
@@ -519,7 +520,8 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
     if (!canTestPrep) {
       return (
         <div>
-          <Hero name={name || ''} />
+          <Hero name={name || ''} avatarPath={avatarPath} />
+          <QuoteCloud />
           {tier === 'highschool' && !hasSchool && <SchoolCard />}
           {payWaiting}
           <SessionConfirm rows={toConfirm} respondToSession={respondToSession} onAnswered={(id: string) => setAnswered(a => [...a, id])} />
@@ -534,12 +536,15 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
 
     return (
       <div>
+        <Hero name={name || ''} avatarPath={avatarPath} />
         <NextSession name={name || ''} bookings={bookings || []} subs={subs || []} scheduled={scheduled || []} onRequest={() => setSection('book')} />
+        <StatTrio attendance={attendance || []} marks={marks || []} tests={testPreps || []} />
+        <QuoteCloud />
         {tier === 'highschool' && !hasSchool && <SchoolCard />}
         {payWaiting}
         <SessionConfirm rows={toConfirm} respondToSession={respondToSession} onAnswered={(id: string) => setAnswered(a => [...a, id])} />
-        <StreakCard attendance={attendance || []} />
         <CountdownCard tests={testPreps || []} onOpen={() => setSection('testprep')} />
+        <StreakCard attendance={attendance || []} />
         <PlanCard subs={subs || []} attendance={attendance || []} />
         <ReferBanner subscribed={!!canTestPrep} onOpen={() => setSection('referral')} />
       </div>
