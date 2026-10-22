@@ -2,7 +2,7 @@
 import { createClient } from '../../lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { sendPushToRole, sendPushToUser } from '../../lib/push'
-import { hsPrice, toSessionType, UNI_PRICE_PER_2H } from '../../lib/pricing'
+import { hsPrice, toSessionType, UNI_PRICE } from '../../lib/pricing'
 import { hasTutorAccess } from '../../lib/testPrepAccess'
 
 function makeReference(name: string) {
@@ -161,7 +161,7 @@ export async function createBooking(formData: FormData) {
     format: 'physical',
     session_type: sessionType,
     area: areaCheck.area,
-    price: UNI_PRICE_PER_2H[sessionType],
+    price: UNI_PRICE[sessionType],
     reference,
   })
   if (bookingError) return { ok: false, message: 'Something went wrong. Please try again.' }

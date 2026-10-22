@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { Check, Flame, MessageCircle, Gift } from 'lucide-react'
-import { HS_PRICE, UNI_PRICE_PER_2H, hsSessions, toSessionType } from '../../lib/pricing'
+import { HS_PRICE, UNI_PRICE, hsSessions, toSessionType } from '../../lib/pricing'
 import { daysUntil } from '../TestList'
 import Avatar from '../Avatar'
 
@@ -229,8 +229,8 @@ export function PriceStrip({ tier, onRequest }: { tier: string; onRequest: () =>
         </>
       ) : (
         <>
-          <div className="pay-line"><span>Group session (up to 10)</span><span>R{UNI_PRICE_PER_2H.group} per 2 hours</span></div>
-          <div className="pay-line"><span>One-on-one session</span><span>R{UNI_PRICE_PER_2H.one_on_one} per 2 hours</span></div>
+          <div className="pay-line"><span>Group (up to 10)</span><span>R{UNI_PRICE.group} for 3 sessions of 1h30</span></div>
+          <div className="pay-line"><span>One-on-one</span><span>R{UNI_PRICE.one_on_one} for 3 sessions of 1h30</span></div>
         </>
       )}
       <button className="btn btn-primary" style={{ marginTop: 12 }} onClick={onRequest}>Request tutoring</button>

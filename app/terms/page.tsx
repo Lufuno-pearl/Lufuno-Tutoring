@@ -16,7 +16,7 @@ const sections: TermsSection[] = [
     points: [
       'High school group: R350 a month for one subject, R600 for both (up to 10 students in a group).',
       'High school one-on-one: R450 a month for one subject, R800 for both.',
-      'University: group R150 per 2 hours (up to 10 students), one-on-one R250 per 2 hours. You pay after we confirm that a tutor is available.',
+      'University: group R150 for 3 sessions of 1 hour 30 minutes (up to 10 students), one-on-one R250 for 3 sessions of 1 hour 30 minutes. You pay after we confirm that a tutor is available.',
       'Pay by EFT with the bank details and your own payment reference shown in the app. Pay only Aid & Ace: never pay a tutor directly.',
       'We tell you at least 14 days before a price change applies to you.',
     ],
