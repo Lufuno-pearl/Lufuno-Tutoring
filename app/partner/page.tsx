@@ -17,7 +17,7 @@ function kindLabel(x: any) {
   return `${x.session_type === 'one_on_one' ? 'One-on-one' : 'Group'}${x.format === 'physical' ? ` · ${x.alternate ? 'In person + online' : 'Physical'}${x.area ? ` (${x.area})` : ''}` : ' · Online'}`
 }
 
-export default async function PartnerDashboard() {
+async function PartnerDashboardInner() {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -187,4 +187,22 @@ export default async function PartnerDashboard() {
       />
     </div>
   )
+}
+
+// If loading the dashboard ever fails, show what went wrong instead of a blank crash, so it can be fixed fast.
+export default async function PartnerDashboard() {
+  try {
+    return await PartnerDashboardInner()
+  } catch (e: any) {
+    const d = String(e?.digest || '')
+    if (d.startsWith('NEXT_REDIRECT') || d.startsWith('NEXT_NOT_FOUND') || d === 'DYNAMIC_SERVER_USAGE' || String(e?.message || '').includes('Dynamic server usage')) throw e
+    console.error('Partner dashboard failed', e)
+    return (
+      <div className="panel" style={{ maxWidth: 560, margin: '24px auto' }}>
+        <h3 style={{ marginTop: 0 }}>Something went wrong loading your dashboard</h3>
+        <p className="meta">Please take a screenshot of this and send it to Aid &amp; Ace on WhatsApp (067 381 2727).</p>
+        <pre style={{ whiteSpace: 'pre-wrap', fontSize: '0.8rem', background: '#F6F1FF', padding: 10, borderRadius: 10 }}>{String(e?.message || e)}{'\n'}{String(e?.stack || '').split('\n').slice(1, 4).join('\n')}</pre>
+      </div>
+    )
+  }
 }
