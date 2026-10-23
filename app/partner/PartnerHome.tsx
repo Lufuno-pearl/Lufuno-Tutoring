@@ -3,6 +3,7 @@ import { useState, useEffect, useLayoutEffect, ReactNode } from 'react'
 import TodayAttendance from '../TodayAttendance'
 import TabBarPortal, { scrollPageToTop } from '../TabBarPortal'
 import { useRouter } from 'next/navigation'
+import { Hero, QuoteCloud, StreakCard, TUTOR_QUOTES } from '../portal/HomeParts'
 import { Calendar, Inbox, Film, Users, Video, MapPin, ScrollText, Target, Home, Settings, CalendarClock } from 'lucide-react'
 
 type Section = 'menu' | 'availability' | 'open' | 'requests' | 'students' | 'videos' | 'areas' | 'tests'
@@ -12,6 +13,9 @@ type TodaySession = { id: string; studentId?: string; subject: string; time: str
 
 type Props = {
   name: string
+  avatarPath?: string | null
+  streakRows?: any[]
+  monthSessions?: number
   today: TodaySession[]
   markedToday?: Record<string, string>
   markAttendance?: (studentId: string, status: 'present' | 'absent') => Promise<any>
@@ -45,7 +49,7 @@ function tabOf(section: Section): Tab | null {
 const SECTIONS: Section[] = ['menu', 'availability', 'open', 'requests', 'students', 'videos', 'areas', 'tests']
 const TABS: Tab[] = ['home', 'students', 'requests', 'manage']
 
-export default function PartnerHome({ markedToday, markAttendance, name, today, openCount, requestCount, studentCount, testCount, tests, availability, open, requests, students, videos, areas }: Props) {
+export default function PartnerHome({ avatarPath, streakRows, monthSessions, markedToday, markAttendance, name, today, openCount, requestCount, studentCount, testCount, tests, availability, open, requests, students, videos, areas }: Props) {
   const [section, setSection] = useState<Section>('menu')
   const [tab, setTab] = useState<Tab>('home')
   const router = useRouter()
@@ -126,9 +130,13 @@ export default function PartnerHome({ markedToday, markAttendance, name, today, 
     const attention = openCount + requestCount + testCount
     body = (
       <div>
-        <div className="hero">
-          <div className="hero-hi">Hi{firstName ? `, ${firstName}` : ''} 👋</div>
-          <div className="hero-slogan">Fix the gaps. Ace the exam.</div>
+        <Hero name={name} avatarPath={avatarPath} />
+        <QuoteCloud quotes={TUTOR_QUOTES} />
+        <StreakCard attendance={streakRows || []} mode="tutor" />
+        <div className="stats">
+          <div className="stat" style={{ background: '#E8DEFB' }}><small>My students</small><div className="ic">🎓</div><div className="n">{studentCount}</div></div>
+          <div className="stat" style={{ background: '#FDE3D6' }}><small>Sessions this month</small><div className="ic">📚</div><div className="n">{monthSessions || 0}</div></div>
+          <div className="stat" style={{ background: '#D8F0E4' }}><small>Today</small><div className="ic">📅</div><div className="n">{today.length}</div></div>
         </div>
 
         <div className="next-card">
