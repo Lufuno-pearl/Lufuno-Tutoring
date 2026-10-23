@@ -28,7 +28,7 @@ export default function LoginForm() {
     const { data: profile } = await supabase.from('profiles').select('role, tier').eq('id', user.id).single()
     if (profile?.role === 'partner') { router.push('/partner'); return }
     if (!profile?.tier && (tier === 'university' || tier === 'highschool')) {
-      await supabase.from('profiles').update({ tier }).eq('id', user.id)
+      await supabase.from('profiles').update({ tier }).eq('id', user.id).is('tier', null)
     }
     router.push('/portal')
   }
@@ -78,6 +78,7 @@ export default function LoginForm() {
       <div className="wl-girl"><Girl wink /></div>
       <section className="wl-card">
         {success && <p className="wl-note wl-ok">{success}</p>}
+        {signup && (tier === 'university' || tier === 'highschool') && <p className="wl-note">🔒 You are signing up as a {tier === 'university' ? 'university student' : 'high school student'}. You pick once and it can't be changed later, so check it's right.</p>}
         {signup && <p className="wl-note">Hi there! 👋 Create your account and we will help you fix the gaps and ace the exam.</p>}
         {signup && (
           <div className="wl-field"><i>🙂</i><input value={name} onChange={e => setName(e.target.value)} placeholder="Full name" aria-label="Full name" /></div>
