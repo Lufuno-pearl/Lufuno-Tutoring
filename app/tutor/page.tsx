@@ -14,7 +14,7 @@ export default async function TutorDashboard() {
   if (!user) redirect('/login')
   if (!ADMIN_EMAILS.includes(user.email!)) redirect('/portal')
 
-  const [{ data: bookings }, { data: subs }, { data: orders }, { data: messagesDesc }, { data: attendanceRows }, { data: partners }, { data: myProfile }, { data: videoRequests }, { data: customPackRequests }, { data: homeworkRequests }, { data: videoTopicRequestsRaw }, { data: areaRows }, { data: moduleRequests }, { data: testPreps }, { data: marksRows }, { data: schedRows }] = await Promise.all([
+  const [{ data: bookingsAll }, { data: subsAll }, { data: ordersAll }, { data: messagesDescAll }, { data: attendanceRowsAll }, { data: partners }, { data: myProfile }, { data: videoRequestsAll }, { data: customPackRequestsAll }, { data: homeworkRequestsAll }, { data: videoTopicRequestsRawAll }, { data: areaRows }, { data: moduleRequestsAll }, { data: testPrepsAll }, { data: marksRowsAll }, { data: schedRowsAll }] = await Promise.all([
     supabase.from('bookings').select('*, profiles:profiles!bookings_student_id_fkey(full_name, email, tier)').order('created_at', { ascending: false }),
     supabase.from('hs_subscriptions').select('*, profiles:profiles!hs_subscriptions_student_id_fkey(full_name, email, tier)').order('created_at', { ascending: false }),
     supabase.from('pack_orders').select('*, profiles(full_name, email, tier)').order('created_at', { ascending: false }),
@@ -32,6 +32,20 @@ export default async function TutorDashboard() {
     supabase.from('marks').select('*').order('taken_on', { ascending: true }).limit(2000),
     supabase.from('scheduled_sessions').select('*').order('session_date', { ascending: true }).limit(2000),
   ])
+
+  // Each owner sees their own tutoring only. Students that the OTHER owner tutors herself are left out of this dashboard.
+  const otherEmail = ADMIN_EMAILS.find(e => e !== user.email)
+  const { data: otherOwner } = otherEmail ? await supabase.from('profiles').select('id').ilike('email', otherEmail).maybeSingle() : { data: null as any }
+  const hiddenStudents = new Set<string>()
+  if (otherOwner?.id) {
+    ;[...(bookingsAll || []), ...(subsAll || [])].forEach((x: any) => { if (x.tutor_id === otherOwner.id && x.student_id) hiddenStudents.add(x.student_id) })
+    ;(moduleRequestsAll || []).forEach((m: any) => { if (m.tutor_id === otherOwner.id && m.status === 'available' && m.student_id) hiddenStudents.add(m.student_id) })
+  }
+  const visible = (rows: any[] | null) => (rows || []).filter((x: any) => !x.student_id || !hiddenStudents.has(x.student_id))
+  const bookings = visible(bookingsAll), subs = visible(subsAll), orders = visible(ordersAll), messagesDesc = visible(messagesDescAll)
+  const attendanceRows = visible(attendanceRowsAll), homeworkRequests = visible(homeworkRequestsAll), videoRequests = visible(videoRequestsAll)
+  const customPackRequests = visible(customPackRequestsAll), videoTopicRequestsRaw = visible(videoTopicRequestsRawAll), moduleRequests = visible(moduleRequestsAll)
+  const testPreps = visible(testPrepsAll), marksRows = visible(marksRowsAll), schedRows = visible(schedRowsAll)
 
   // new tutor applications waiting (separate query so the page loads before the SQL is run)
   const { count: pendingApps } = await supabase.from('tutor_applications').select('id', { count: 'exact', head: true }).eq('status', 'submitted')

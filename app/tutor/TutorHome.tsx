@@ -14,6 +14,7 @@ import ReferralAdmin from './ReferralAdmin'
 import AvailabilityBoard from '../AvailabilityBoard'
 import TutorAreas from '../TutorAreas'
 import AvailabilityOverview from './AvailabilityOverview'
+import { eligibility } from '../../lib/matching'
 import { GROUP_MAX, UNI_PRICE } from '../../lib/pricing'
 import MarksView from '../MarksView'
 import { ChatBubble, ReplyBar } from '../ChatParts'
@@ -441,7 +442,9 @@ function TutorInner({ section, setSection, tab, bookings, subs, orders, partners
   if (section === 'assign') {
     const uniItems = (bookings || []).map((b: any) => ({ ...b, kind: 'bookings', label: `${b.subject} — ${b.day} ${b.time}` }))
     const hsItems = (subs || []).map((s: any) => ({ ...s, kind: 'hs_subscriptions', label: `${s.month} — High School${s.grade ? ` Gr ${s.grade}` : ''} · ${subjectLabel(s.subject_choice)}` }))
-    const optionsFor = (r: any) => {
+    const onlyTeachers = (list: any[]) => { const ok = list.filter((o: any) => o.elig !== 'no'); return ok.length > 0 ? ok : list }
+    const optionsFor = (r: any) => onlyTeachers(optionsForAll(r))
+    const optionsForAll = (r: any) => {
       const wantsArea = r.format === 'physical' && r.area ? String(r.area).toLowerCase() : ''
       const oneOnOne = r.session_type === 'one_on_one'
       const countGroups = r.kind === 'hs_subscriptions' && !oneOnOne
@@ -456,8 +459,11 @@ function TutorInner({ section, setSection, tab, bookings, subs, orders, partners
         if (!p.available) notes.push('not available')
         const good = areaOk && oneOk
         const n = studentCountOf(p.id)
-        return { id: p.id as string, good, n, label: `${good ? '✓ ' : ''}${p.full_name} (${studentsLabel(n)})${notes.length ? ` — ${notes.join(', ')}` : ''}` }
-      }).sort((a: any, b: any) => Number(b.good) - Number(a.good) || a.n - b.n)
+        const elig = eligibility(p, r)
+        if (elig === 'unknown') notes.push('subjects not set')
+        if (elig === 'no') notes.push('does not teach this')
+        return { id: p.id as string, good: good && elig === 'yes', n, elig, label: `${good && elig === 'yes' ? '✓ ' : ''}${p.full_name} (${studentsLabel(n)})${notes.length ? ` — ${notes.join(', ')}` : ''}` }
+      }).sort((a: any, b: any) => Number(b.good) - Number(a.good) || Number(b.elig === 'yes') - Number(a.elig === 'yes') || a.n - b.n)
     }
     const renderItem = (r: any) => (
       <div className="panel" key={r.id}>
@@ -564,7 +570,8 @@ function TutorInner({ section, setSection, tab, bookings, subs, orders, partners
   if (section === 'modules') {
     const open = (moduleRequests || []).filter((m: any) => m.status === 'requested')
     const done = (moduleRequests || []).filter((m: any) => m.status !== 'requested')
-    const tutorOptions = (r: any) => {
+    const tutorOptions = (r: any) => { const list = tutorOptionsAll(r); const ok = list.filter((o: any) => o.elig !== 'no'); return ok.length > 0 ? ok : list }
+    const tutorOptionsAll = (r: any) => {
       const wantsArea = r.format === 'physical' && r.area ? String(r.area).toLowerCase() : ''
       const oneOnOne = r.session_type === 'one_on_one'
       return (partners || []).map((p: any) => {
@@ -579,8 +586,11 @@ function TutorInner({ section, setSection, tab, bookings, subs, orders, partners
         if (!p.available) notes.push('not available')
         const good = areaOk && oneOk && !!mm
         const n = studentCountOf(p.id)
-        return { id: p.id as string, good, n, label: `${good ? '✓ ' : ''}${p.full_name} (${studentsLabel(n)})${notes.length ? ` — ${notes.join(', ')}` : ''}` }
-      }).sort((a: any, b: any) => Number(b.good) - Number(a.good) || a.n - b.n)
+        const elig = eligibility(p, { module: r.module })
+        if (elig === 'unknown') notes.push('subjects not set')
+        if (elig === 'no') notes.push('does not teach this')
+        return { id: p.id as string, good, n, elig, label: `${good ? '✓ ' : ''}${p.full_name} (${studentsLabel(n)})${notes.length ? ` — ${notes.join(', ')}` : ''}` }
+      }).sort((a: any, b: any) => Number(b.good) - Number(a.good) || Number(b.elig === 'yes') - Number(a.elig === 'yes') || a.n - b.n)
     }
     return (
       <div>
