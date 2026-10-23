@@ -385,23 +385,38 @@ export async function markAwaiting(table: 'bookings' | 'hs_subscriptions' | 'pac
   revalidatePath('/portal')
 }
 
+export async function getChatContacts(): Promise<{ id: string; name: string; kind: string }[]> {
+  const supabase = createClient()
+  const { data } = await supabase.rpc('chat_contacts')
+  return (data || []) as { id: string; name: string; kind: string }[]
+}
+
 export async function sendMessage(formData: FormData) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return
   const body = formData.get('body') as string
   if (!body?.trim()) return
+  const staffId = String(formData.get('staffId') || '')
+  const replyTo = String(formData.get('replyTo') || '') || null
+  // only people the student is allowed to message
+  const { data: contacts } = await supabase.rpc('chat_contacts')
+  const target = (contacts || []).find((c: any) => c.id === staffId)
+  if (!target) return
   await supabase.from('messages').insert({
     student_id: user.id,
     sender: 'student',
+    staff_id: target.id,
+    reply_to: replyTo,
     body: body.trim(),
   })
   await supabase.from('notifications').insert({
     student_id: user.id,
     for_role: 'staff',
+    staff_id: target.id,
     message: `New message from a student`,
   })
-  await sendPushToRole('staff', 'New message', body.trim().slice(0, 100), '/tutor')
+  await sendPushToUser(target.id, 'New message', body.trim().slice(0, 100), target.kind === 'tutor' ? '/partner' : '/tutor')
   revalidatePath('/portal')
 }
 

@@ -16,6 +16,7 @@ export default function NotificationBell({ forRole }: { forRole: 'student' | 'st
       .eq('for_role', forRole)
       .or('read.is.null,read.eq.false')
     if (forRole === 'student' && user) q = q.eq('student_id', user.id)
+    else if (user) q = q.or(`staff_id.is.null,staff_id.eq.${user.id}`)
     const { count } = await q
     setUnread(count || 0)
   }

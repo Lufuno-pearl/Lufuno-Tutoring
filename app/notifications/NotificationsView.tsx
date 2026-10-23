@@ -46,6 +46,7 @@ export default function NotificationsView({ forRole, userId, home }: { forRole: 
       .order('created_at', { ascending: false })
       .limit(100)
     if (forRole === 'student') q = q.eq('student_id', userId)
+    else q = q.or(`staff_id.is.null,staff_id.eq.${userId}`)
     const { data } = await q
     setItems(data || [])
     setLoaded(true)
