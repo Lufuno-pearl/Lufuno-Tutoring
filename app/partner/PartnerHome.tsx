@@ -102,7 +102,6 @@ export default function PartnerHome({ markedToday, markAttendance, name, today, 
       <div>
         <h3 style={{ marginTop: 0 }}>Requests</h3>
         <div className="card-grid">
-          {tile('Open Requests', <Inbox size={36} color="#fff" />, 'linear-gradient(135deg, #C89B3C, #A87D24)', () => setSection('open'), openCount)}
           {tile('Homework & Video Requests', <Film size={36} color="#fff" />, 'linear-gradient(135deg, #E0956F, #C46B3E)', () => setSection('requests'), requestCount)}
           {tile('Upcoming Tests', <Target size={36} color="#fff" />, 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('tests'), testCount)}
         </div>

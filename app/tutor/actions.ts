@@ -112,7 +112,20 @@ export async function sendTutorMessage(studentId: string, formData: FormData) {
 
 export async function assignTutor(table: 'bookings' | 'hs_subscriptions', id: string, tutorId: string) {
   const supabase = createClient()
-  await supabase.from(table).update({ tutor_id: tutorId || null }).eq('id', id)
+  const { data: before } = await supabase.from(table).select('tutor_id').eq('id', id).single()
+  const { data } = await supabase.from(table).update({ tutor_id: tutorId || null }).eq('id', id).select('student_id').single()
+  if (data && tutorId && before?.tutor_id !== tutorId) {
+    const { data: stu } = await supabase.from('profiles').select('full_name').eq('id', data.student_id).single()
+    const name = stu?.full_name || 'A student'
+    await supabase.from('notifications').insert([
+      { student_id: data.student_id, for_role: 'student', message: 'A tutor has been assigned to your request.' },
+      { student_id: tutorId, for_role: 'student', message: `${name} has been assigned to you. Open My students.` },
+    ])
+    try {
+      await sendPushToUser(data.student_id, 'Tutor assigned', 'A tutor has been assigned to your request.', '/portal')
+      await sendPushToUser(tutorId, 'New student', `${name} has been assigned to you.`, '/partner')
+    } catch {}
+  }
   revalidatePath('/tutor')
 }
 

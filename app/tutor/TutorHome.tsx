@@ -182,6 +182,14 @@ function TutorInner({ section, setSection, tab, bookings, subs, orders, partners
   const [marksStudentId, setMarksStudentId] = useState<string | null>(null)
   const [marksSearch, setMarksSearch] = useState('')
   const pendingModules = (moduleRequests || []).filter((m: any) => m.status === 'requested').length
+  // how many different students each tutor has now (so work is shared fairly)
+  const studentCountOf = (tutorId: string) => {
+    const ids = new Set<string>()
+    ;[...(bookings || []), ...(subs || [])].forEach((x: any) => { if (x.tutor_id === tutorId && x.student_id) ids.add(x.student_id) })
+    ;(moduleRequests || []).forEach((m: any) => { if (m.status === 'available' && m.tutor_id === tutorId && m.student_id) ids.add(m.student_id) })
+    return ids.size
+  }
+  const studentsLabel = (n: number) => `${n} student${n === 1 ? '' : 's'}`
   const soonTests = (testPreps || []).filter((t: any) => daysUntil(t.test_date) >= 0 && daysUntil(t.test_date) <= 7).length
   const openHomework = (homeworkRequests || []).filter((h: any) => h.status !== 'solved').length
   const pendingVideos = (videoTopicRequests || []).filter((v: any) => v.status !== 'ready').length
@@ -403,8 +411,9 @@ function TutorInner({ section, setSection, tab, bookings, subs, orders, partners
         if (countGroups) notes.push(`${p.group_count || 0}/${GROUP_MAX} group students`)
         if (!p.available) notes.push('not available')
         const good = areaOk && oneOk
-        return { id: p.id as string, good, label: `${good ? '✓ ' : ''}${p.full_name}${notes.length ? ` — ${notes.join(', ')}` : ''}` }
-      }).sort((a: any, b: any) => Number(b.good) - Number(a.good))
+        const n = studentCountOf(p.id)
+        return { id: p.id as string, good, n, label: `${good ? '✓ ' : ''}${p.full_name} (${studentsLabel(n)})${notes.length ? ` — ${notes.join(', ')}` : ''}` }
+      }).sort((a: any, b: any) => Number(b.good) - Number(a.good) || a.n - b.n)
     }
     const renderItem = (r: any) => (
       <div className="panel" key={r.id}>
@@ -429,12 +438,19 @@ function TutorInner({ section, setSection, tab, bookings, subs, orders, partners
     return (
       <div>
         <Back />
+        <p className="meta">Only you and Neliswa assign students. Each tutor's name shows how many students they have, and the tutor with the fewest comes first.</p>
         <h3>University</h3>
-        {uniItems.length === 0 && <p className="meta">Nothing to assign.</p>}
-        {uniItems.map(renderItem)}
+        {uniItems.filter((r: any) => !r.tutor_id).length === 0 && <p className="meta">Nobody waiting for a tutor.</p>}
+        {uniItems.filter((r: any) => !r.tutor_id).map(renderItem)}
         <h3 style={{ marginTop: 20 }}>High School</h3>
-        {hsItems.length === 0 && <p className="meta">Nothing to assign.</p>}
-        {hsItems.map(renderItem)}
+        {hsItems.filter((r: any) => !r.tutor_id).length === 0 && <p className="meta">Nobody waiting for a tutor.</p>}
+        {hsItems.filter((r: any) => !r.tutor_id).map(renderItem)}
+        {[...uniItems, ...hsItems].filter((r: any) => r.tutor_id).length > 0 && (
+          <details style={{ marginTop: 22 }}>
+            <summary style={{ cursor: 'pointer', fontWeight: 800 }}>Already assigned ({[...uniItems, ...hsItems].filter((r: any) => r.tutor_id).length}). Open to change a tutor.</summary>
+            {[...uniItems, ...hsItems].filter((r: any) => r.tutor_id).map(renderItem)}
+          </details>
+        )}
       </div>
     )
   }
@@ -518,8 +534,9 @@ function TutorInner({ section, setSection, tab, bookings, subs, orders, partners
         if (oneOnOne) notes.push(p.takes_one_on_one ? 'takes 1-on-1' : 'no 1-on-1')
         if (!p.available) notes.push('not available')
         const good = areaOk && oneOk && !!mm
-        return { id: p.id as string, good, label: `${good ? '✓ ' : ''}${p.full_name}${notes.length ? ` — ${notes.join(', ')}` : ''}` }
-      }).sort((a: any, b: any) => Number(b.good) - Number(a.good))
+        const n = studentCountOf(p.id)
+        return { id: p.id as string, good, n, label: `${good ? '✓ ' : ''}${p.full_name} (${studentsLabel(n)})${notes.length ? ` — ${notes.join(', ')}` : ''}` }
+      }).sort((a: any, b: any) => Number(b.good) - Number(a.good) || a.n - b.n)
     }
     return (
       <div>

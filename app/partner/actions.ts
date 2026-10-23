@@ -10,19 +10,9 @@ export async function toggleAvailable(current: boolean) {
   revalidatePath('/partner')
 }
 
-export async function claim(table: 'bookings' | 'hs_subscriptions', id: string) {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return
-  const { data } = await supabase.from(table).update({ tutor_id: user.id }).eq('id', id).select('student_id').single()
-  if (data) {
-    await supabase.from('notifications').insert({
-      student_id: data.student_id,
-      for_role: 'student',
-      message: 'A tutor has been assigned to your request.',
-    })
-  }
-  revalidatePath('/partner')
+// Tutors can no longer claim students. Only the owners assign them (see app/tutor/actions.ts assignTutor).
+export async function claim(_table: 'bookings' | 'hs_subscriptions', _id: string) {
+  return
 }
 
 export async function setMeetingLink(table: 'bookings' | 'hs_subscriptions', id: string, url: string) {
