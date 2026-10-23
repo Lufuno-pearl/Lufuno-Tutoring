@@ -23,6 +23,7 @@ export default function LoginForm() {
 
   async function afterAuth(user: any, supabase: any) {
     if (!user) { router.push('/portal'); return }
+    if (tier === 'tutor') { router.push('/apply'); return }
     if (isAdminEmail(user.email)) { router.push('/tutor'); return }
     const { data: profile } = await supabase.from('profiles').select('role, tier').eq('id', user.id).single()
     if (profile?.role === 'partner') { router.push('/partner'); return }

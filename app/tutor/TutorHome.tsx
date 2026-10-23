@@ -167,7 +167,7 @@ function MonthSummary({ subs, schoolByStudent }: { subs: any[]; schoolByStudent:
   )
 }
 
-function TutorInner({ section, setSection, tab, bookings, subs, orders, partners, threadsByStudent, attendanceRows, myAvailable, openBookings, openSubs, myClaimedBookings, myClaimedSubs, videoRequests, customPackRequests, homeworkRequests, videoTopicRequests, moduleRequests, testPreps, marksByStudent, scheduleByStudent, schoolByStudent, actions }: any) {
+function TutorInner({ section, setSection, tab, bookings, subs, orders, partners, threadsByStudent, attendanceRows, myAvailable, openBookings, openSubs, myClaimedBookings, myClaimedSubs, videoRequests, customPackRequests, homeworkRequests, videoTopicRequests, moduleRequests, testPreps, marksByStudent, scheduleByStudent, schoolByStudent, pendingApps, actions }: any) {
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null)
   useEffect(() => {
     try {
@@ -208,6 +208,7 @@ function TutorInner({ section, setSection, tab, bookings, subs, orders, partners
           <div className="card-grid">
             {tile('Pending Requests', '⏳', 'linear-gradient(135deg, #8B6FD9, #6E4FC7)', () => setSection('pending'), pendingCount)}
             {tile('Assign Tutor', '🧑‍🏫', 'linear-gradient(135deg, #7C6FE0, #5B4FC0)', () => setSection('assign'), unassigned)}
+            <Link href="/tutor/applications" style={{ textDecoration: 'none', color: 'inherit' }}>{tile('Tutor Applications', '✨', 'linear-gradient(135deg, #3FA67A, #2E7D4F)', () => {}, pendingApps || 0)}</Link>
             {tile('Module Requests', '🎓', 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('modules'), pendingModules)}
             {tile('Homework Help', '📝', 'linear-gradient(135deg, #5FA3D9, #3F7FB8)', () => setSection('homework'), openHomework)}
             {tile('Video Requests', '🎞️', 'linear-gradient(135deg, #E0956F, #C46B3E)', () => setSection('videoreq'), pendingVideos)}
@@ -249,7 +250,7 @@ function TutorInner({ section, setSection, tab, bookings, subs, orders, partners
 
     // home: what needs the owner's attention
     const today = new Date().toISOString().slice(0, 10)
-    const needsAttention = pendingCount + unassigned + pendingModules + pendingVideos + openHomework + soonTests
+    const needsAttention = (pendingApps || 0) + pendingCount + unassigned + pendingModules + pendingVideos + openHomework + soonTests
     return (
       <div>
         <div className="hero">
