@@ -9,6 +9,8 @@ export default async function ApplyPage() {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login?tier=tutor')
+  const { data: me } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  if (me?.role === 'partner') redirect('/partner')
   const { data: app } = await supabase.from('tutor_applications').select('*').eq('user_id', user.id).maybeSingle()
   const { data: setting } = await supabase.from('app_settings').select('value').eq('key', 'accepting_tutors').maybeSingle()
   const full = setting?.value === 'false'
