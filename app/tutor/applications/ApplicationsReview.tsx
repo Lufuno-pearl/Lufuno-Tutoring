@@ -128,6 +128,18 @@ export default function ApplicationsReview({ apps, accepting: acc }: { apps: any
     )
   }
 
+  // each list is a folder: tap the title to open it and see the people
+  const folder = (title: string, count: number, children: React.ReactNode, color: string) => (
+    <details style={{ marginBottom: 12 }}>
+      <summary style={{ cursor: 'pointer', listStyle: 'none', display: 'flex', alignItems: 'center', gap: 10, background: 'var(--card)', border: '1px solid var(--line)', borderLeft: `6px solid ${color}`, borderRadius: 16, padding: '14px 16px', fontWeight: 800 }}>
+        <span style={{ flex: 1 }}>{title}</span>
+        <span style={{ background: count > 0 ? '#A6443A' : 'var(--line)', color: count > 0 ? '#fff' : 'inherit', borderRadius: 100, minWidth: 26, textAlign: 'center', padding: '2px 9px', fontSize: '0.85rem' }}>{count}</span>
+        <span aria-hidden="true">▾</span>
+      </summary>
+      <div style={{ marginTop: 10 }}>{children}</div>
+    </details>
+  )
+
   return (
     <div>
       <div className="panel" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -139,14 +151,9 @@ export default function ApplicationsReview({ apps, accepting: acc }: { apps: any
           <span style={{ position: 'absolute', top: 3, left: accepting ? 27 : 3, width: 24, height: 24, borderRadius: '50%', background: '#fff', transition: 'left .15s' }} />
         </button>
       </div>
-      <h4 style={{ marginBottom: 8 }}>Waiting for you ({pending.length})</h4>
-      {pending.length === 0 && <div className="meta" style={{ marginBottom: 16 }}>No new applications.</div>}
-      {pending.map(card)}
-      <h4 style={{ margin: '20px 0 8px' }}>Waiting list ({waiting.length})</h4>
-      {waiting.length === 0 && <div className="meta">Nobody on the waiting list.</div>}
-      {waiting.map((a, i) => <div key={a.id}><div className="meta" style={{ margin: '4px 4px' }}>#{i + 1} in the queue</div>{card(a)}</div>)}
-      {decided.length > 0 && <h4 style={{ margin: '20px 0 8px' }}>Already answered</h4>}
-      {decided.map(card)}
+      {folder('Waiting for you', pending.length, pending.length === 0 ? <div className="meta">No new applications.</div> : pending.map(card), '#F2C14E')}
+      {folder('Waiting list', waiting.length, waiting.length === 0 ? <div className="meta">Nobody on the waiting list.</div> : waiting.map((a, i) => <div key={a.id}><div className="meta" style={{ margin: '4px 4px' }}>#{i + 1} in the queue</div>{card(a)}</div>), '#B9A3F0')}
+      {folder('Already answered', decided.length, decided.length === 0 ? <div className="meta">Nobody yet.</div> : decided.map(card), '#4CAF7A')}
     </div>
   )
 }
