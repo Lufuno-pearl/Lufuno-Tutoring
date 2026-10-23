@@ -21,7 +21,9 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  await supabase.auth.getUser()
+  // Reads the saved sign-in from the cookie (and renews it when it is about to expire) without calling the auth server on every click.
+  // Every page still checks who you are before showing anything.
+  await supabase.auth.getSession()
   return response
 }
 

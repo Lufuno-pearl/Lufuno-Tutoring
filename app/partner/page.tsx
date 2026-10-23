@@ -26,7 +26,7 @@ async function PartnerDashboardInner() {
   const { data: profile } = await supabase.from('profiles').select('role, available, full_name').eq('id', user.id).single()
   if (!profile || (profile.role !== 'partner' && !isAdminEmail(user.email))) redirect('/portal')
 
-  const [{ data: openBookings }, { data: openSubs }, { data: myBookings }, { data: mySubs }, { data: attendanceRows }, { data: homeworkRows }, { data: videoRows }, { data: testRows }] = await Promise.all([
+  const [{ data: openBookings }, { data: openSubs }, { data: myBookings }, { data: mySubs }, { data: attendanceRows }, { data: homeworkRows }, { data: videoRows }, { data: testRows }, { data: avatarRow }, { data: myTeach }, { data: myMods }] = await Promise.all([
     supabase.from('bookings').select('*, profiles:profiles!bookings_student_id_fkey(full_name, email)').is('tutor_id', null).order('created_at', { ascending: false }),
     supabase.from('hs_subscriptions').select('*, profiles:profiles!hs_subscriptions_student_id_fkey(full_name, email)').is('tutor_id', null).order('created_at', { ascending: false }),
     supabase.from('bookings').select('*, profiles:profiles!bookings_student_id_fkey(full_name, email)').eq('tutor_id', user.id).order('created_at', { ascending: false }),
@@ -35,6 +35,10 @@ async function PartnerDashboardInner() {
     supabase.from('homework_requests').select('*').order('created_at', { ascending: false }),
     supabase.from('video_topic_requests').select('*').order('created_at', { ascending: false }),
     supabase.from('test_prep').select('*').eq('status', 'upcoming').order('test_date', { ascending: true }),
+    // photo, subjects and modules are read separately (so nothing breaks before their setup has been run), but at the same time as the rest
+    supabase.from('profiles').select('avatar_path').eq('id', user.id).single(),
+    supabase.from('profiles').select('teaches').eq('id', user.id).single(),
+    supabase.from('tutor_modules').select('module_name').eq('tutor_id', user.id),
   ])
 
   // attach student names (looked up separately so it never fails on a table link)
@@ -47,7 +51,6 @@ async function PartnerDashboardInner() {
   const videos = (videoRows || []).map((r: any) => ({ ...r, profiles: { full_name: nameOf(r.student_id) } }))
 
   // photo is read separately so nothing breaks before the photo setup has been run
-  const { data: avatarRow } = await supabase.from('profiles').select('avatar_path').eq('id', user.id).single()
   const avatarPath = (avatarRow as any)?.avatar_path || null
   // sessions this tutor marked present (for the streak and the month count)
   const streakRows = (attendanceRows || []).filter((a: any) => a.marked_by === user.id && a.status === 'present')
@@ -59,8 +62,6 @@ async function PartnerDashboardInner() {
   const myHomework = homework.filter((h: any) => myStudentIds.includes(h.student_id))
   const myVideos = videos.filter((v: any) => myStudentIds.includes(v.student_id))
   // and only manages videos for the subjects they teach (owners see everything)
-  const { data: myTeach } = await supabase.from('profiles').select('teaches').eq('id', user.id).single()
-  const { data: myMods } = await supabase.from('tutor_modules').select('module_name').eq('tutor_id', user.id)
   const videoOnly = isAdminEmail(user.email) ? null : allowedVideoSubjects({ teaches: (myTeach as any)?.teaches || [], modules: (myMods || []).map((m: any) => ({ name: m.module_name })) }, ALL_UNI_SUBJECTS, ALL_HS_SUBJECTS)
 
   // upcoming tests and exams for this tutor's own students
