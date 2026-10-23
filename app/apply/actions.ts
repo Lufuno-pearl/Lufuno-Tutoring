@@ -40,7 +40,8 @@ export async function submitApplication(d: Draft): Promise<Result> {
   if (!d.full_name.trim() || !d.phone.trim()) return { ok: false, message: 'Please add your name and phone number.' }
   if (!d.teaches_hs && !d.teaches_uni) return { ok: false, message: 'Choose what you would like to teach.' }
   if (!d.marks.length) return { ok: false, message: 'Add at least one mark.' }
-  if (!d.selfie_path || !d.proof_path || !d.results_path) return { ok: false, message: 'Please upload your selfie, proof of registration and results.' }
+  if (!d.selfie_path || !d.results_path) return { ok: false, message: 'Please upload your selfie and your results.' }
+  if (d.teaches_uni && !d.proof_path) return { ok: false, message: 'To teach university we need your proof of registration.' }
   if (!d.honesty) return { ok: false, message: 'Please tick the honesty promise.' }
   const saved = await saveDraft(d)
   if (!saved.ok) return saved

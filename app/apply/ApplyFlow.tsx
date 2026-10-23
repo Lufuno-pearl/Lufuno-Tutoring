@@ -90,8 +90,8 @@ export default function ApplyFlow({ userId, email, initial }: { userId: string; 
         {step === 0 && (<>
           <div className="field"><label>Full name</label><input value={d.full_name} onChange={e => set({ full_name: e.target.value })} /></div>
           <div className="field"><label>Phone number</label><input value={d.phone} onChange={e => set({ phone: e.target.value })} inputMode="tel" /></div>
-          <div className="field"><label>University or school</label><input value={d.institution} onChange={e => set({ institution: e.target.value })} placeholder="e.g. Wits" /></div>
-          <div className="field"><label>Year of study</label><input value={d.year_of_study} onChange={e => set({ year_of_study: e.target.value })} placeholder="e.g. 2nd year" /></div>
+          <div className="field"><label>What are you doing now?</label><input value={d.institution} onChange={e => set({ institution: e.target.value })} placeholder="e.g. Studying at Wits, or taking a gap year" /></div>
+          <div className="field"><label>Year of study (if you are studying)</label><input value={d.year_of_study} onChange={e => set({ year_of_study: e.target.value })} placeholder="e.g. 2nd year" /></div>
           <div className="meta">We will email you at <b>{email}</b>.</div>
         </>)}
 
@@ -114,7 +114,8 @@ export default function ApplyFlow({ userId, email, initial }: { userId: string; 
               <button type="button" className="btn btn-gold" onClick={() => { const s = other.trim(); if (s && !d.hs_subjects.includes(s)) set({ hs_subjects: [...d.hs_subjects, s] }); setOther('') }}>Add</button>
             </div>
           </>)}
-          {d.teaches_uni && <div className="meta" style={{ marginTop: 12 }}>For university, you will add the modules you can teach, with your marks, on the next step. You may tutor earlier years too, as long as you got a good mark.</div>}
+          {d.teaches_hs && !d.teaches_uni && <div className="meta" style={{ marginTop: 12 }}>You do not need to be at university to teach high school. If you finished Grade 12 with strong marks, you can apply.</div>}
+          {d.teaches_uni && <div className="meta" style={{ marginTop: 12 }}>To teach university you must be registered at a university. For university, you will add the modules you can teach, with your marks, on the next step. You may tutor earlier years too, as long as you got a good mark.</div>}
         </>)}
 
         {step === 2 && (<>
@@ -150,8 +151,8 @@ export default function ApplyFlow({ userId, email, initial }: { userId: string; 
 
         {step === 3 && (<>
           {file('Selfie', 'selfie', d.selfie_path, 'image/*', 'A clear photo of your face, so students know who is teaching them. Not your ID.', true)}
-          {file('Proof of registration', 'proof', d.proof_path, 'image/*,application/pdf', 'A screenshot or PDF showing you are registered this year.')}
-          {file('Results', 'results', d.results_path, 'image/*,application/pdf', 'Your latest academic record or matric results, matching the marks you added.')}
+          {d.teaches_uni ? file('Proof of registration', 'proof', d.proof_path, 'image/*,application/pdf', 'A screenshot or PDF showing you are registered this year. Needed to teach university.') : <div className="meta" style={{ marginBottom: 16 }}>No proof of registration needed, because you are teaching high school only.</div>}
+          {file('Results', 'results', d.results_path, 'image/*,application/pdf', d.teaches_uni ? 'Your latest university results (and matric), matching the marks you added.' : 'Your matric results, matching the marks you added.')}
           <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start', fontSize: '0.9rem', marginTop: 8 }}>
             <input type="checkbox" checked={d.honesty} onChange={e => set({ honesty: e.target.checked })} style={{ marginTop: 3 }} />
             <span>I promise that everything I have told you and uploaded is true. I understand I will be removed if it is not.</span>
@@ -166,7 +167,7 @@ export default function ApplyFlow({ userId, email, initial }: { userId: string; 
             Teaches: {[d.teaches_hs && 'High school', d.teaches_uni && 'University'].filter(Boolean).join(' and ')}<br />
             {d.hs_subjects.length > 0 && <>Subjects: {d.hs_subjects.join(', ')}<br /></>}
             Marks added: {d.marks.length}<br />
-            Selfie {d.selfie_path ? '✓' : '✗'} · Proof of registration {d.proof_path ? '✓' : '✗'} · Results {d.results_path ? '✓' : '✗'}<br />
+            Selfie {d.selfie_path ? '✓' : '✗'} · {d.teaches_uni ? `Proof of registration ${d.proof_path ? '✓' : '✗'} · ` : ''}Results {d.results_path ? '✓' : '✗'}<br />
             Honesty promise {d.honesty ? '✓' : '✗'}
           </div>
           <div className="meta" style={{ marginTop: 10 }}>After you apply, we email you our answer. If we have enough tutors we may put you on a waiting list.</div>
