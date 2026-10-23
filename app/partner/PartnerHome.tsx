@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useLayoutEffect, ReactNode } from 'react'
+import TodayAttendance from '../TodayAttendance'
 import TabBarPortal, { scrollPageToTop } from '../TabBarPortal'
 import { useRouter } from 'next/navigation'
 import { Calendar, Inbox, Film, Users, Video, MapPin, ScrollText, Target, Home, Settings, CalendarClock } from 'lucide-react'
@@ -7,11 +8,13 @@ import { Calendar, Inbox, Film, Users, Video, MapPin, ScrollText, Target, Home, 
 type Section = 'menu' | 'availability' | 'open' | 'requests' | 'students' | 'videos' | 'areas' | 'tests'
 type Tab = 'home' | 'students' | 'requests' | 'manage'
 
-type TodaySession = { id: string; subject: string; time: string; format: string; area?: string | null; meeting_link?: string | null; studentName: string }
+type TodaySession = { id: string; studentId?: string; subject: string; time: string; format: string; area?: string | null; meeting_link?: string | null; studentName: string }
 
 type Props = {
   name: string
   today: TodaySession[]
+  markedToday?: Record<string, string>
+  markAttendance?: (studentId: string, status: 'present' | 'absent') => Promise<any>
   openCount: number
   requestCount: number
   studentCount: number
@@ -42,7 +45,7 @@ function tabOf(section: Section): Tab | null {
 const SECTIONS: Section[] = ['menu', 'availability', 'open', 'requests', 'students', 'videos', 'areas', 'tests']
 const TABS: Tab[] = ['home', 'students', 'requests', 'manage']
 
-export default function PartnerHome({ name, today, openCount, requestCount, studentCount, testCount, tests, availability, open, requests, students, videos, areas }: Props) {
+export default function PartnerHome({ markedToday, markAttendance, name, today, openCount, requestCount, studentCount, testCount, tests, availability, open, requests, students, videos, areas }: Props) {
   const [section, setSection] = useState<Section>('menu')
   const [tab, setTab] = useState<Tab>('home')
   const router = useRouter()
@@ -144,7 +147,8 @@ export default function PartnerHome({ name, today, openCount, requestCount, stud
               {t.format !== 'physical' && t.meeting_link && (
                 <a className="btn btn-gold" href={t.meeting_link} target="_blank" rel="noopener noreferrer" style={{ marginTop: 8 }}>Join session</a>
               )}
-              {t.format !== 'physical' && !t.meeting_link && <div className="meta" style={{ marginTop: 6, marginBottom: 0 }}>Add the meeting link under My students.</div>}
+              {t.format !== 'physical' && !t.meeting_link && !String(t.id).startsWith('sch-') && <div className="meta" style={{ marginTop: 6, marginBottom: 0 }}>Add the meeting link under My students.</div>}
+              {t.studentId && markAttendance && <TodayAttendance studentId={t.studentId} initial={(markedToday || {})[t.studentId]} markAttendance={markAttendance} />}
             </div>
           ))}
         </div>

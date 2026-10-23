@@ -9,6 +9,7 @@ import VideoManager from './VideoManager'
 import VideoRequests from './VideoRequests'
 import FileBox from '../FileBox'
 import AttendanceButtons from '../AttendanceButtons'
+import TodayAttendance from '../TodayAttendance'
 import ReferralAdmin from './ReferralAdmin'
 import AvailabilityBoard from '../AvailabilityBoard'
 import TutorAreas from '../TutorAreas'
@@ -57,6 +58,10 @@ function ChatThread({ studentId, thread, actions, marks, schedule, format, alter
 
   return (
     <div>
+      <div style={{ background: '#E3F3E8', border: '1px solid #BFE0C8', borderRadius: 14, padding: '10px 12px', margin: '10px 0' }}>
+        <div className="meta" style={{ marginBottom: 6, fontWeight: 700, color: '#1F5C38' }}>Today's session</div>
+        <AttendanceButtons studentId={studentId} markAttendance={markAttendance} />
+      </div>
       <div style={{ margin: '10px 0' }}>
         {thread.msgs.length === 0 && <p className="meta">No messages yet.</p>}
         {thread.msgs.map((m: any) => (
@@ -76,10 +81,6 @@ function ChatThread({ studentId, thread, actions, marks, schedule, format, alter
       <div style={{ marginTop: 14, borderTop: '1px solid var(--line)', paddingTop: 12 }}>
         <h4 style={{ marginTop: 0 }}>Marks</h4>
         <MarksView marks={marks || []} subjects={[]} mode="tutor" studentId={studentId} />
-      </div>
-      <div style={{ marginTop: 14, borderTop: '1px solid var(--line)', paddingTop: 12 }}>
-        <div className="meta" style={{ marginBottom: 6 }}>Mark today's session</div>
-        <AttendanceButtons studentId={studentId} markAttendance={markAttendance} />
       </div>
     </div>
   )
@@ -249,13 +250,29 @@ function TutorInner({ section, setSection, tab, bookings, subs, orders, partners
     }
 
     // home: what needs the owner's attention
-    const today = new Date().toISOString().slice(0, 10)
+    const saToday = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString().slice(0, 10)
+    const todaySessions: any[] = []
+    Object.entries(scheduleByStudent || {}).forEach(([sid, rows]: any) => (rows || []).forEach((r: any) => { if (r.session_date === saToday) todaySessions.push({ ...r, studentId: sid, name: (threadsByStudent || {})[sid]?.name || 'Student' }) }))
+    todaySessions.sort((a, b) => String(a.session_time).localeCompare(String(b.session_time)))
+    const markedToday: Record<string, string> = {}
+    ;(attendanceRows || []).filter((a: any) => a.session_date === saToday).forEach((a: any) => { markedToday[a.student_id] = a.status })
     const needsAttention = (pendingApps || 0) + pendingCount + unassigned + pendingModules + pendingVideos + openHomework + soonTests
     return (
       <div>
         <div className="hero">
           <div className="hero-hi">Owner dashboard 👑</div>
           <div className="hero-sub">{needsAttention === 0 ? "You're all caught up." : `${needsAttention} thing${needsAttention === 1 ? '' : 's'} need your attention.`}</div>
+        </div>
+        <div className="next-card">
+          <div className="next-label">Today</div>
+          {todaySessions.length === 0 && <div className="next-title">No sessions today</div>}
+          {todaySessions.map((t: any) => (
+            <div key={t.id} style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--line)' }}>
+              <div className="next-title" style={{ marginTop: 0, fontSize: '1.05rem' }}>{t.subject} · {t.name}</div>
+              <div className="next-when">{String(t.session_time).slice(0, 5)} · {t.format === 'physical' ? 'In person' : 'Online'}</div>
+              <TodayAttendance studentId={t.studentId} initial={markedToday[t.studentId]} markAttendance={markAttendance} />
+            </div>
+          ))}
         </div>
         <MonthSummary subs={subs || []} schoolByStudent={schoolByStudent || {}} />
         {pendingCount > 0 && (
