@@ -33,7 +33,7 @@ export default function BottomNav() {
     return () => { listener.subscription.unsubscribe() }
   }, [pathname])
 
-  if (pathname?.startsWith('/portal') || pathname?.startsWith('/partner')) return null
+  if (pathname?.startsWith('/portal') || pathname?.startsWith('/partner') || pathname?.startsWith('/become-a-tutor') || pathname?.startsWith('/apply')) return null
 
   return (
     <div className="bottom-nav">
