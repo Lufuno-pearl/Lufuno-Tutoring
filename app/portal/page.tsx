@@ -55,6 +55,7 @@ export default async function Portal({ searchParams }: { searchParams?: { view?:
       <div>
         <h2>Welcome — one quick question</h2>
         <p className="meta">This decides what shows up in your portal.</p>
+        <p className="meta" style={{ fontWeight: 700, color: 'var(--purple-dark)' }}>🔒 Pick carefully: you can only choose once. High school students can't switch to university later, and university students can't go back to high school. Picked wrong? Message us and we will fix it.</p>
         <form action={async () => { 'use server'; await setTier('university') }} style={{ marginBottom: 12 }}>
           <button className="btn btn-primary" style={{ width: '100%' }}>I'm a university student</button>
         </form>

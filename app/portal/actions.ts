@@ -467,7 +467,7 @@ export async function setTier(tier: 'university' | 'highschool') {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return
-  await supabase.from('profiles').update({ tier }).eq('id', user.id)
+  await supabase.from('profiles').update({ tier }).eq('id', user.id).is('tier', null)
   revalidatePath('/portal')
 }
 
