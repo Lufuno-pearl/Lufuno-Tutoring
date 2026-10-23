@@ -42,3 +42,21 @@ export async function setAccepting(on: boolean): Promise<{ ok: boolean; message?
   revalidatePath('/apply')
   return { ok: true }
 }
+
+export async function makeTutor(id: string): Promise<{ ok: boolean; message?: string }> {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user || !isAdminEmail(user.email)) return { ok: false, message: 'Only the owners can do this.' }
+  const { error } = await supabase.rpc('make_tutor', { app_id: id })
+  if (error) return { ok: false, message: error.message }
+  const { data: app } = await supabase.from('tutor_applications').select('user_id, email, full_name').eq('id', id).single()
+  if (app) {
+    const first = (app.full_name || 'there').split(' ')[0]
+    await supabase.from('notifications').insert({ student_id: app.user_id, for_role: 'student', message: 'Your tutor dashboard is open. Welcome!' })
+    try { await sendPushToUser(app.user_id, 'Your tutor dashboard is open', 'Open the app to get started.', '/partner') } catch {}
+    await sendEmail(app.email, 'Your Aid & Ace tutor dashboard is open', `Hi ${first},\n\nYour tutor dashboard is now open. Sign in at https://lufuno-tutoring.vercel.app and tap "Become a Tutor" to reach it.\n\nAid & Ace Tutoring`)
+  }
+  revalidatePath('/tutor/applications')
+  revalidatePath('/tutor')
+  return { ok: true }
+}

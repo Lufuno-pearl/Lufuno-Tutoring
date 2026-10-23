@@ -40,8 +40,10 @@ export default async function TutorDashboard() {
   const todayISO = new Date().toISOString().slice(0, 10)
   // subjects each tutor teaches (separate query so the page still loads before the SQL is run)
   const { data: teachRows } = await supabase.from('profiles').select('id, teaches').eq('role', 'partner')
+  const { data: modRows } = await supabase.from('tutor_modules').select('tutor_id, module_name, mark')
   const partnersFull = (partners || []).map((p: any) => ({
     ...p,
+    modules: (modRows || []).filter((m: any) => m.tutor_id === p.id).map((m: any) => ({ name: m.module_name as string, mark: m.mark as number | null })),
     teaches: ((teachRows || []).find((t: any) => t.id === p.id)?.teaches || []) as string[],
     areas: (areaRows || []).filter((a: any) => a.tutor_id === p.id).map((a: any) => a.name),
     group_count: (subs || []).filter((s: any) => s.tutor_id === p.id && s.session_type !== 'one_on_one' && ['pending', 'awaiting', 'confirmed'].includes(s.status) && (!s.end_date || s.end_date >= todayISO)).length,

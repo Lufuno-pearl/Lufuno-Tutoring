@@ -494,10 +494,13 @@ function TutorInner({ section, setSection, tab, bookings, subs, orders, partners
         const areaOk = !wantsArea || (p.areas || []).some((a: string) => a.toLowerCase() === wantsArea)
         const oneOk = !oneOnOne || !!p.takes_one_on_one
         const notes: string[] = []
+        const modName = String(r.module?.name || '').trim().toLowerCase()
+        const mm = modName ? (p.modules || []).find((x: any) => String(x.name).trim().toLowerCase() === modName) : null
+        if (mm) notes.push(`teaches this${mm.mark != null ? ` (${mm.mark}%)` : ''}`)
         if (wantsArea) notes.push(areaOk ? `covers ${r.area}` : `not in ${r.area}`)
         if (oneOnOne) notes.push(p.takes_one_on_one ? 'takes 1-on-1' : 'no 1-on-1')
         if (!p.available) notes.push('not available')
-        const good = areaOk && oneOk
+        const good = areaOk && oneOk && !!mm
         return { id: p.id as string, good, label: `${good ? '✓ ' : ''}${p.full_name}${notes.length ? ` — ${notes.join(', ')}` : ''}` }
       }).sort((a: any, b: any) => Number(b.good) - Number(a.good))
     }

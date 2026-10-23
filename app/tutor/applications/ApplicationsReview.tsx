@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { decideApplication, setAccepting } from './actions'
+import { decideApplication, setAccepting, makeTutor } from './actions'
 
 function Doc({ label, url, pdf }: { label: string; url: string | null; pdf?: boolean }) {
   if (!url) return <div className="meta">{label}: not uploaded</div>
@@ -28,6 +28,13 @@ export default function ApplicationsReview({ apps, accepting: acc }: { apps: any
   const [busy, setBusy] = useState(false)
   const [result, setResult] = useState<Record<string, { emailed: boolean; mailto: string; ok: boolean; message?: string; decision: string }>>({})
   const [declining, setDeclining] = useState(false)
+  const [madeTutor, setMadeTutor] = useState<Record<string, string>>({})
+  async function promote(a: any) {
+    setBusy(true)
+    const r = await makeTutor(a.id)
+    setBusy(false)
+    setMadeTutor(prev => ({ ...prev, [a.id]: r.ok ? 'ok' : (r.message || 'Something went wrong') }))
+  }
 
   const pending = apps.filter(a => a.status === 'submitted')
   const waiting = apps.filter(a => a.status === 'waitlist')
@@ -89,6 +96,15 @@ export default function ApplicationsReview({ apps, accepting: acc }: { apps: any
                   <button className="btn" style={{ flex: 1, background: '#F3D6D0', color: '#8A2E22' }} disabled={busy} onClick={() => setDeclining(true)}>Decline</button>
                 </div>
               )
+            )}
+            {a.status === 'accepted' && (
+              a.isTutor || madeTutor[a.id] === 'ok'
+                ? <div style={{ marginTop: 10, background: '#DCEEE0', borderRadius: 12, padding: '10px 14px', fontSize: '0.9rem' }}>✓ This person is a tutor. Their subjects and modules are saved, so they show up when you match tutors to module requests.</div>
+                : <div style={{ marginTop: 10 }}>
+                    <button className="btn btn-gold" style={{ width: '100%' }} disabled={busy} onClick={() => promote(a)}>{busy ? 'Working...' : 'Make tutor'}</button>
+                    <div className="meta" style={{ marginTop: 4 }}>Tap this after they have signed the agreement. It opens their tutor dashboard.</div>
+                    {madeTutor[a.id] && madeTutor[a.id] !== 'ok' && <div style={{ color: '#A6443A', fontSize: '0.88rem', marginTop: 4 }}>{madeTutor[a.id]}</div>}
+                  </div>
             )}
             {res && (
               <div style={{ marginTop: 10, background: res.ok ? '#DCEEE0' : '#FBE9E6', borderRadius: 12, padding: '10px 14px', fontSize: '0.9rem' }}>
