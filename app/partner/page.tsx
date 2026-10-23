@@ -5,7 +5,8 @@ import { setMeetingLink, markAttendance, sendPartnerMessage } from './actions'
 import { signOut } from '../portal/actions'
 import HeaderTools from '../HeaderTools'
 import PartnerStudents from './PartnerStudents'
-import VideoManager from '../tutor/VideoManager'
+import VideoManager, { ALL_UNI_SUBJECTS, ALL_HS_SUBJECTS } from '../tutor/VideoManager'
+import { allowedVideoSubjects } from '../../lib/matching'
 import PartnerRequests from './PartnerRequests'
 import AvailabilityBoard from '../AvailabilityBoard'
 import PartnerHome from './PartnerHome'
@@ -53,6 +54,13 @@ export default async function PartnerDashboard() {
   const monthSessions = streakRows.filter((a: any) => String(a.session_date || '').slice(0, 7) === saMonth).length
 
   const myStudentIds = Array.from(new Set([...(myBookings || []).map(b => b.student_id), ...(mySubs || []).map(s => s.student_id)]))
+  // a tutor only sees homework and video requests from their own students
+  const myHomework = homework.filter((h: any) => myStudentIds.includes(h.student_id))
+  const myVideos = videos.filter((v: any) => myStudentIds.includes(v.student_id))
+  // and only manages videos for the subjects they teach (owners see everything)
+  const { data: myTeach } = await supabase.from('profiles').select('teaches').eq('id', user.id).single()
+  const { data: myMods } = await supabase.from('tutor_modules').select('module_name').eq('tutor_id', user.id)
+  const videoOnly = isAdminEmail(user.email) ? null : allowedVideoSubjects({ teaches: (myTeach as any)?.teaches || [], modules: (myMods || []).map((m: any) => ({ name: m.module_name })) }, ALL_UNI_SUBJECTS, ALL_HS_SUBJECTS)
 
   // upcoming tests and exams for this tutor's own students
   const myTests = (testRows || [])
@@ -154,13 +162,13 @@ export default async function PartnerDashboard() {
         markedToday={markedToday}
         markAttendance={markAttendance}
         openCount={0}
-        requestCount={homework.filter((h: any) => h.status !== 'solved').length + videos.filter((v: any) => v.status !== 'ready').length}
+        requestCount={myHomework.filter((h: any) => h.status !== 'solved').length + myVideos.filter((v: any) => v.status !== 'ready').length}
         studentCount={myStudentIds.length}
         testCount={myTests.filter((t: any) => daysUntil(t.test_date) <= 7).length}
         tests={<TestList rows={myTests} showStudent empty="No upcoming tests or exams for your students." />}
         availability={<AvailabilityBoard />}
         open={openRequests}
-        requests={<PartnerRequests userId={user.id} homework={homework} videos={videos} />}
+        requests={<PartnerRequests userId={user.id} homework={myHomework} videos={myVideos} />}
         students={
           <PartnerStudents
             allSubs={mySubs || []}
@@ -174,7 +182,7 @@ export default async function PartnerDashboard() {
             actions={{ setMeetingLink, sendPartnerMessage, markAttendance }}
           />
         }
-        videos={<VideoManager />}
+        videos={<VideoManager only={videoOnly} />}
         areas={<TutorAreas />}
       />
     </div>

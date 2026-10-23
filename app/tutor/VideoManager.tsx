@@ -83,13 +83,20 @@ function SubjectVideos({ subject }: { subject: string }) {
   )
 }
 
-export default function VideoManager() {
+export const ALL_UNI_SUBJECTS = UNI_SUBJECTS
+export const ALL_HS_SUBJECTS = HS_SUBJECTS
+
+// `only` limits the list to the subjects a tutor teaches. Leave it out to show everything (owners).
+export default function VideoManager({ only }: { only?: { uni: string[]; hs: string[] } | null }) {
+  const uni = only ? only.uni : UNI_SUBJECTS
+  const hs = only ? only.hs : HS_SUBJECTS
   return (
     <div>
-      <h4 style={{ marginBottom: 8 }}>University</h4>
-      {UNI_SUBJECTS.map(s => <SubjectVideos key={s} subject={s} />)}
-      <h4 style={{ marginTop: 20, marginBottom: 8 }}>High School</h4>
-      {HS_SUBJECTS.map(s => <SubjectVideos key={s} subject={s} />)}
+      {only && uni.length === 0 && hs.length === 0 && <p className="meta">You can manage videos for the subjects you teach. None are saved on your profile yet, so please ask Aid &amp; Ace to update them.</p>}
+      {uni.length > 0 && <h4 style={{ marginBottom: 8 }}>University</h4>}
+      {uni.map(s => <SubjectVideos key={s} subject={s} />)}
+      {hs.length > 0 && <h4 style={{ marginTop: 20, marginBottom: 8 }}>High School</h4>}
+      {hs.map(s => <SubjectVideos key={s} subject={s} />)}
     </div>
   )
 }
