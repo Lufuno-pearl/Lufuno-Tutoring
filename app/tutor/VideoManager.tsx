@@ -2,8 +2,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '../../lib/supabase/client'
 
-const UNI_SUBJECTS = ['Basic Analysis', 'Multi-Variable Calculus', 'Mathematical Modelling & Methods', 'Scientific Computing', 'Abstract Mathematics', 'Statistics']
-const HS_SUBJECTS = ['Mathematics', 'Physical Sciences']
+import { UNI_SUBJECTS, HS_SUBJECTS } from '../../lib/videoSubjects'
 
 function SubjectVideos({ subject }: { subject: string }) {
   const [open, setOpen] = useState(false)
@@ -83,8 +82,6 @@ function SubjectVideos({ subject }: { subject: string }) {
   )
 }
 
-export const ALL_UNI_SUBJECTS = UNI_SUBJECTS
-export const ALL_HS_SUBJECTS = HS_SUBJECTS
 
 // `only` limits the list to the subjects a tutor teaches. Leave it out to show everything (owners).
 export default function VideoManager({ only }: { only?: { uni: string[]; hs: string[] } | null }) {
