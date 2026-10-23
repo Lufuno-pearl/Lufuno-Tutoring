@@ -47,9 +47,11 @@ export async function submitApplication(d: Draft): Promise<Result> {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { ok: false, message: 'You are not signed in.' }
-  const { error } = await supabase.from('tutor_applications').update({ status: 'submitted', submitted_at: new Date().toISOString(), owner_note: null }).eq('user_id', user.id).eq('status', 'draft')
+  const { data: setting } = await supabase.from('app_settings').select('value').eq('key', 'accepting_tutors').maybeSingle()
+  const full = setting?.value === 'false'
+  const { error } = await supabase.from('tutor_applications').update({ status: full ? 'waitlist' : 'submitted', submitted_at: new Date().toISOString(), owner_note: null }).eq('user_id', user.id).eq('status', 'draft')
   if (error) return { ok: false, message: error.message }
-  try { await sendPushToRole('staff', 'New tutor application', `${d.full_name.trim()} applied to become a tutor.`, '/tutor/applications') } catch {}
+  try { await sendPushToRole('staff', full ? 'New waiting-list applicant' : 'New tutor application', `${d.full_name.trim()} applied to become a tutor.`, '/tutor/applications') } catch {}
   revalidatePath('/apply')
   revalidatePath('/tutor')
   return { ok: true }
