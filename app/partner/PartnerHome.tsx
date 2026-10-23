@@ -3,6 +3,7 @@ import { useState, useEffect, useLayoutEffect, ReactNode } from 'react'
 import TodayAttendance from '../TodayAttendance'
 import TabBarPortal, { scrollPageToTop } from '../TabBarPortal'
 import { useRouter } from 'next/navigation'
+import InstallButton from '../InstallButton'
 import { Hero, QuoteCloud, StreakCard, TUTOR_QUOTES } from '../portal/HomeParts'
 import { Calendar, Inbox, Film, Users, Video, MapPin, ScrollText, Target, Home, Settings, CalendarClock } from 'lucide-react'
 
@@ -133,6 +134,7 @@ export default function PartnerHome({ avatarPath, streakRows, monthSessions, mar
         <Hero name={name} avatarPath={avatarPath} />
         <QuoteCloud quotes={TUTOR_QUOTES} />
         <StreakCard attendance={streakRows || []} mode="tutor" />
+        <InstallButton hideWhenInstalled />
         <div className="stats">
           <div className="stat" style={{ background: '#E8DEFB' }}><small>My students</small><div className="ic">🎓</div><div className="n">{studentCount}</div></div>
           <div className="stat" style={{ background: '#FDE3D6' }}><small>Sessions this month</small><div className="ic">📚</div><div className="n">{monthSessions || 0}</div></div>

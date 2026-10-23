@@ -3,6 +3,7 @@ import { useState, useEffect, useLayoutEffect } from 'react'
 import TabBarPortal, { scrollPageToTop } from '../TabBarPortal'
 import Link from 'next/link'
 import { Home, Inbox, Users, MoreHorizontal, Clock, UserCog, BookOpen, ClipboardList, MessageCircle, ChevronRight, Star, Video, Film, Gift, Calendar, GraduationCap, Target } from 'lucide-react'
+import InstallButton from '../InstallButton'
 import TutorMaterials from './TutorMaterials'
 import PackUpload from './PackUpload'
 import VideoManager from './VideoManager'
@@ -274,6 +275,7 @@ function TutorInner({ section, setSection, tab, bookings, subs, orders, partners
           <div className="hero-hi">Owner dashboard 👑</div>
           <div className="hero-sub">{needsAttention === 0 ? "You're all caught up." : `${needsAttention} thing${needsAttention === 1 ? '' : 's'} need your attention.`}</div>
         </div>
+        <InstallButton hideWhenInstalled />
         <div className="next-card">
           <div className="next-label">Today</div>
           {todaySessions.length === 0 && <div className="next-title">No sessions today</div>}

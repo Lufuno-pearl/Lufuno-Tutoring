@@ -6,7 +6,7 @@ function isStandalone() {
   return window.matchMedia('(display-mode: standalone)').matches || (navigator as any).standalone === true
 }
 
-export default function InstallButton() {
+export default function InstallButton({ hideWhenInstalled = false }: { hideWhenInstalled?: boolean }) {
   const [ready, setReady] = useState(false)
   const [installed, setInstalled] = useState(false)
   const [ios, setIos] = useState(false)
@@ -30,13 +30,15 @@ export default function InstallButton() {
     setReady(false)
   }
 
+  if (installed && hideWhenInstalled) return null
   if (installed) {
-    return <div className="panel" style={{ background: '#DCEEE0' }}><strong>Aid &amp; Ace is installed on this phone. ✓</strong></div>
+    return <div className="panel" style={{ background: '#DCEEE0' }}><strong>Aid &amp; Ace is installed on this device. ✓</strong></div>
   }
 
   return (
     <div className="panel" style={{ borderLeft: '5px solid #F2C14E' }}>
       <h4 style={{ marginTop: 0 }}>Install the app</h4>
+      <p className="meta" style={{ marginTop: 0 }}>Works on phones and computers. Opens like any other app.</p>
       {ios ? (
         <p className="meta" style={{ marginBottom: 0 }}>iPhones don't allow an install button. Follow the iPhone steps below: tap Share, then "Add to Home Screen".</p>
       ) : (
