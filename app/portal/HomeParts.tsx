@@ -37,13 +37,16 @@ export function computeStreak(attendance: any[], today: string) {
   return { streak: n, attendedThisWeek, days, todayIndex: dayNumber(today) - cur }
 }
 
-export function StreakCard({ attendance }: { attendance: any[] }) {
+export function StreakCard({ attendance, mode = 'student' }: { attendance: any[]; mode?: 'student' | 'tutor' }) {
   const today = saToday()
   const s = computeStreak(attendance, today)
   const letters = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+  const verb = mode === 'tutor' ? 'taught' : 'attended'
+  const act = mode === 'tutor' ? 'Teach' : 'Attend'
   const line = s.attendedThisWeek
-    ? 'You have attended this week. Great work!'
-    : s.streak > 0 ? 'Attend a session this week to keep your streak going.' : 'Attend a session this week to start your streak.'
+    ? (mode === 'tutor' ? 'You taught this week. Great work!' : 'You have attended this week. Great work!')
+    : s.streak > 0 ? `${act} a session this week to keep your streak going.` : `${act} a session this week to start your streak.`
+  void verb
   return (
     <div className="panel">
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -293,15 +296,30 @@ const QUOTES = [
   'Ace the exam by fixing one gap at a time.',
 ]
 
-function todaysQuote() {
+export const TUTOR_QUOTES = [
+  'Every lesson you teach is a gap someone gets to close.',
+  'You are not just teaching maths. You are building confidence.',
+  'A patient tutor can change how a learner sees themselves.',
+  'Small wins in your sessions become big marks later.',
+  'Thank you for showing up for your learners today.',
+  'The best explanation is the one this learner understands. Try another way.',
+  'Your kindness is part of the lesson.',
+  'Every question a learner asks is a chance to help them grow.',
+  'Great tutors make hard topics feel possible.',
+  'You are helping someone ace their exam. That matters.',
+  'Celebrate every bit of progress, however small.',
+  'Consistency from you builds consistency in them.',
+]
+
+function todaysQuote(quotes: string[] = QUOTES) {
   const sa = new Date(Date.now() + 2 * 60 * 60 * 1000)
   const day = Math.floor(sa.getTime() / 86400000)
-  return QUOTES[day % QUOTES.length]
+  return quotes[day % quotes.length]
 }
 
-export function QuoteCloud() {
+export function QuoteCloud({ quotes }: { quotes?: string[] }) {
   const [quote, setQuote] = useState('')
-  useEffect(() => { setQuote(todaysQuote()) }, [])
+  useEffect(() => { setQuote(todaysQuote(quotes || QUOTES)) }, [quotes])
   return (
     <div className="cloud-card">
       <CloudMascot />

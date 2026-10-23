@@ -44,6 +44,14 @@ export default async function PartnerDashboard() {
   const homework = (homeworkRows || []).map((r: any) => ({ ...r, profiles: { full_name: nameOf(r.student_id) } }))
   const videos = (videoRows || []).map((r: any) => ({ ...r, profiles: { full_name: nameOf(r.student_id) } }))
 
+  // photo is read separately so nothing breaks before the photo setup has been run
+  const { data: avatarRow } = await supabase.from('profiles').select('avatar_path').eq('id', user.id).single()
+  const avatarPath = (avatarRow as any)?.avatar_path || null
+  // sessions this tutor marked present (for the streak and the month count)
+  const streakRows = (attendanceRows || []).filter((a: any) => a.marked_by === user.id && a.status === 'present')
+  const saMonth = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString().slice(0, 7)
+  const monthSessions = streakRows.filter((a: any) => String(a.session_date || '').slice(0, 7) === saMonth).length
+
   const myStudentIds = Array.from(new Set([...(myBookings || []).map(b => b.student_id), ...(mySubs || []).map(s => s.student_id)]))
 
   // upcoming tests and exams for this tutor's own students
@@ -139,6 +147,9 @@ export default async function PartnerDashboard() {
 
       <PartnerHome
         name={profile.full_name || ''}
+        avatarPath={avatarPath}
+        streakRows={streakRows}
+        monthSessions={monthSessions}
         today={todaySessions}
         markedToday={markedToday}
         markAttendance={markAttendance}
