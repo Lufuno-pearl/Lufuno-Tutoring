@@ -55,6 +55,8 @@ export async function sendPartnerMessage(studentId: string, formData: FormData) 
     student_id: studentId,
     sender: 'tutor',
     sender_id: user.id,
+    staff_id: user.id,
+    reply_to: String(formData.get('replyTo') || '') || null,
     body: body.trim(),
   })
   await supabase.from('notifications').insert({

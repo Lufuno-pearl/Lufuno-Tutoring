@@ -20,6 +20,7 @@ import QuestionOfDay from './QuestionOfDay'
 import { StreakCard, CountdownCard, PlanCard, GetStarted, WhatYouGet, PriceStrip, ReferBanner, HelpButton, Hero, QuoteCloud, StatTrio } from './HomeParts'
 import { daysUntil, whenLabel } from '../TestList'
 import { getAreas } from './actions'
+import StudentChat from './StudentChat'
 import { hsPrice, hsSessions, UNI_PRICE, GROUP_MAX, SessionType } from '../../lib/pricing'
 
 
@@ -434,7 +435,7 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
       getAreas().then(a => setAreas(a)).catch(() => {})
     }
   }, [section])
-  const { createBooking, createHsSub, buyPack, markAwaiting, sendMessage, requestCustomPack, requestVideoAccess, submitHomework, requestVideoTopic, respondToSession } = actions
+  const { createBooking, createHsSub, buyPack, markAwaiting, sendMessage, getChatContacts, requestCustomPack, requestVideoAccess, submitHomework, requestVideoTopic, respondToSession } = actions
 
   const todayISO = new Date().toISOString().slice(0, 10)
   const hasActiveSub = (subs || []).some((s: any) => s.status === 'confirmed' && s.end_date && s.end_date >= todayISO)
@@ -797,17 +798,8 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
     return (
       <div>
         <Back />
-        <h3>Message Lufuno</h3>
-        <div className="panel">
-          {(messages || []).length === 0 && <p className="meta">No messages yet — say hello.</p>}
-          {(messages || []).map((m: any) => (
-            <div key={m.id} style={{ marginBottom: 10, textAlign: m.sender === 'student' ? 'right' : 'left' }}>
-              <MessageMeta id={m.id} createdAt={m.created_at} label={m.sender === 'student' ? 'You' : 'Lufuno'} mine={m.sender === 'student'} />
-              <div style={{ display: 'inline-block', background: m.sender === 'student' ? '#DCEEE0' : '#F3EFE4', padding: '8px 12px', borderRadius: 6 }}>{m.body}</div>
-            </div>
-          ))}
-        </div>
-        <ChatBox sendMessage={sendMessage} />
+        <h3>Chat</h3>
+        <StudentChat messages={messages || []} sendMessage={sendMessage} getChatContacts={getChatContacts} />
         {actions.userId && <MaterialsSection userId={actions.userId} />}
       </div>
     )

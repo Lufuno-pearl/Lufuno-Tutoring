@@ -4,7 +4,7 @@ import { ChevronRight } from 'lucide-react'
 import AttendanceButtons from '../AttendanceButtons'
 import TutorMaterials from '../tutor/TutorMaterials'
 import MarksView from '../MarksView'
-import MessageMeta from '../MessageMeta'
+import { ChatBubble, ReplyBar } from '../ChatParts'
 import ScheduleManager, { studentFormat, studentAlternate, classmatesOf } from '../ScheduleManager'
 
 function subjectLabel(choice?: string) {
@@ -16,6 +16,7 @@ export default function PartnerStudents({ allSubs, scheduleByStudent, marksByStu
   const [search, setSearch] = useState('')
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
+  const [replyTo, setReplyTo] = useState<any | null>(null)
   const { setMeetingLink, sendPartnerMessage, markAttendance } = actions
 
   async function handleSend(sid: string) {
@@ -26,7 +27,9 @@ export default function PartnerStudents({ allSubs, scheduleByStudent, marksByStu
     try {
       const fd = new FormData()
       fd.set('body', body)
+      if (replyTo) fd.set('replyTo', replyTo.id)
       await sendPartnerMessage(sid, fd)
+      setReplyTo(null)
     } catch (e) {
       setText(body)
       alert('Could not send. Please try again.')
@@ -109,12 +112,10 @@ export default function PartnerStudents({ allSubs, scheduleByStudent, marksByStu
       <div style={{ margin: '10px 0' }}>
         {(thread.msgs || []).length === 0 && <p className="meta">No messages yet.</p>}
         {(thread.msgs || []).map((m: any) => (
-          <div key={m.id} style={{ marginBottom: 8, textAlign: m.sender === 'tutor' ? 'right' : 'left' }}>
-            <MessageMeta id={m.id} createdAt={m.created_at} label={m.sender === 'tutor' ? 'You' : thread.name} mine={m.sender === 'tutor'} />
-            <div style={{ display: 'inline-block', background: m.sender === 'tutor' ? '#DCEEE0' : '#F3EFE4', padding: '8px 12px', borderRadius: 6 }}>{m.body}</div>
-          </div>
+          <ChatBubble key={m.id} m={m} all={thread.msgs} label={m.sender === 'tutor' ? 'You' : thread.name} mine={m.sender === 'tutor'} otherLabel={thread.name} onReply={setReplyTo} />
         ))}
       </div>
+      <ReplyBar to={replyTo} onCancel={() => setReplyTo(null)} />
       <div style={{ display: 'flex', gap: 8 }}>
         <input value={text} onChange={e => setText(e.target.value)} placeholder="Reply..." style={{ flex: 1, padding: 8, border: '1px solid var(--line)' }} />
         <button className="btn btn-primary" onClick={() => handleSend(sid)} disabled={sending}>{sending ? 'Sending...' : 'Send'}</button>

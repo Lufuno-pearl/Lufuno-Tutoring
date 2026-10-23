@@ -86,19 +86,27 @@ export async function markAttendance(studentId: string, status: 'present' | 'abs
 
 export async function sendTutorMessage(studentId: string, formData: FormData) {
   const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
   const body = formData.get('body') as string
   if (!body?.trim()) return
+  const replyTo = String(formData.get('replyTo') || '') || null
+  const { data: me } = await supabase.from('profiles').select('full_name').eq('id', user.id).single()
+  const first = (me?.full_name || '').trim().split(' ')[0] || 'us'
   await supabase.from('messages').insert({
     student_id: studentId,
     sender: 'tutor',
+    sender_id: user.id,
+    staff_id: user.id,
+    reply_to: replyTo,
     body: body.trim(),
   })
   await supabase.from('notifications').insert({
     student_id: studentId,
     for_role: 'student',
-    message: 'You have a new message from Lufuno.',
+    message: `You have a new message from ${first}.`,
   })
-  await sendPushToUser(studentId, 'New message from Lufuno', body.trim().slice(0, 100), '/portal')
+  await sendPushToUser(studentId, `New message from ${first}`, body.trim().slice(0, 100), '/portal')
   revalidatePath('/tutor')
 }
 
