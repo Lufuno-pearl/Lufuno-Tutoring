@@ -10,7 +10,9 @@ export async function getMyReferral() {
     console.error('[my_referral]', error.message)
     return null
   }
-  return data as any
+  // this month's progress for the monthly bonus (read separately so nothing breaks before the SQL is run)
+  const { data: month } = await supabase.rpc('my_referral_month')
+  return { ...(data as any), month: month || null }
 }
 
 export async function applyReferralCode(code: string): Promise<{ ok: boolean; message: string }> {

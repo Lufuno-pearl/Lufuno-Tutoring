@@ -8,6 +8,7 @@ type Info = {
   waiting: number
   used_code: boolean
   rewards: { kind: string; amount: number; milestone: number; status: string }[]
+  month?: { month_count: number; bonus_open: boolean } | null
 }
 
 const SITE = 'https://lufuno-tutoring.vercel.app'
@@ -80,9 +81,12 @@ export default function ReferralBox({ subscribed, onRequest }: { subscribed: boo
   const counted = info.counted
   let goal = 5
   let goalText = 'R50 off'
-  if (counted >= 5 && counted < 30) { goal = 30; goalText = 'R150 payout' }
-  if (counted >= 30) { goal = 30 + (Math.floor((counted - 30) / 10) + 1) * 10; goalText = 'another R150 payout' }
-  const pct = Math.min(100, Math.round((counted / goal) * 100))
+  if (counted >= 5 && counted < 15) { goal = 15; goalText = 'R150 payout' }
+  const monthly = counted >= 15
+  const monthCount = info.month?.month_count ?? 0
+  const bonusOpen = !!info.month?.bonus_open
+  const pct = monthly ? (bonusOpen ? Math.min(100, Math.round((monthCount / 5) * 100)) : 100) : Math.min(100, Math.round((counted / goal) * 100))
+  const monthName = (ym: number) => new Date(Math.floor(ym / 100), (ym % 100) - 1, 1).toLocaleString('en-ZA', { month: 'long', year: 'numeric' })
 
   const shareText = `Join me on Aid & Ace Tutoring! Use my code ${info.code} when you sign up: ${SITE}`
   const waLink = `https://wa.me/?text=${encodeURIComponent(shareText)}`
@@ -114,7 +118,11 @@ export default function ReferralBox({ subscribed, onRequest }: { subscribed: boo
 
       <div className="panel">
         <h4 style={{ marginTop: 0 }}>Your progress</h4>
-        <div className="meta">{counted} {counted === 1 ? 'friend' : 'friends'} counted · next reward at {goal}: {goalText}</div>
+        {monthly ? (
+          <div className="meta">{counted} friends counted · {bonusOpen ? `this month: ${monthCount} of 5 new friends for your R150 bonus` : 'your monthly R150 bonus starts next month: bring 5 new friends in a month'}</div>
+        ) : (
+          <div className="meta">{counted} {counted === 1 ? 'friend' : 'friends'} counted · next reward at {goal}: {goalText}</div>
+        )}
         <div style={{ height: 12, background: '#E6E0F0', borderRadius: 100, marginTop: 8, overflow: 'hidden' }}>
           <div style={{ width: `${pct}%`, height: '100%', background: 'var(--purple-dark)' }} />
         </div>
@@ -125,7 +133,7 @@ export default function ReferralBox({ subscribed, onRequest }: { subscribed: boo
           <p style={{ marginTop: 10, fontWeight: 600 }}>You've earned R50 off! Lufuno will apply it to your next payment.</p>
         )}
         {dueReward.map(r => (
-          <p key={r.milestone} style={{ marginTop: 10, fontWeight: 600 }}>You've reached {r.milestone} friends! R{r.amount} is on its way to you.</p>
+          <p key={r.milestone} style={{ marginTop: 10, fontWeight: 600 }}>{r.milestone > 1000 ? `Monthly bonus for ${monthName(r.milestone)}: R${r.amount} is on its way to you!` : `You've reached ${r.milestone} friends! R${r.amount} is on its way to you.`}</p>
         ))}
       </div>
 
@@ -133,7 +141,8 @@ export default function ReferralBox({ subscribed, onRequest }: { subscribed: boo
         <h4 style={{ marginTop: 0 }}>How it works</h4>
         <p className="meta" style={{ marginBottom: 6 }}>Your code only works once you're subscribed yourself.</p>
         <p className="meta" style={{ marginBottom: 6 }}>5 friends who subscribe: R50 off (once).</p>
-        <p className="meta" style={{ marginBottom: 6 }}>30 friends: R150 paid to you, then R150 again for every 10 more.</p>
+        <p className="meta" style={{ marginBottom: 6 }}>15 friends: R150 paid to you.</p>
+        <p className="meta" style={{ marginBottom: 6 }}>After that, every month you bring 5 or more new friends: R150 again.</p>
         <p className="meta" style={{ marginBottom: 0 }}>A friend only counts after their first payment is confirmed.</p>
       </div>
 

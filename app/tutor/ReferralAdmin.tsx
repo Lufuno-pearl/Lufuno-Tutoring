@@ -55,7 +55,7 @@ export default function ReferralAdmin() {
       {due.map(r => (
         <div className="panel" key={r.id}>
           <h4 style={{ marginTop: 0 }}>{r.name}</h4>
-          <div className="meta">Code {r.code} · {r.milestone} friends counted</div>
+          <div className="meta">Code {r.code} · {r.milestone > 1000 ? `monthly bonus ${r.milestone}` : `${r.milestone} friends counted`}</div>
           <p style={{ fontWeight: 600, margin: '8px 0' }}>
             {r.kind === 'discount' ? 'R50 off: take it off their next payment' : `Pay R${r.amount} to this student`}
           </p>
@@ -78,7 +78,7 @@ export default function ReferralAdmin() {
         <>
           <h4 style={{ marginTop: 24 }}>Done</h4>
           {finished.map(r => (
-            <div className="meta" key={r.id}>{r.name} · {r.kind === 'discount' ? 'R50 off' : `R${r.amount} paid`} · {r.milestone} friends</div>
+            <div className="meta" key={r.id}>{r.name} · {r.kind === 'discount' ? 'R50 off' : `R${r.amount} paid`} · {r.milestone > 1000 ? `monthly bonus ${r.milestone}` : `${r.milestone} friends`}</div>
           ))}
         </>
       )}
