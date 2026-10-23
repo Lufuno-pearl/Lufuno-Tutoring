@@ -28,6 +28,11 @@ export default async function Portal({ searchParams }: { searchParams?: { view?:
   // the owners open the owner dashboard by default; ?view=student lets them see the student side
   const isAdmin = isAdminEmail(user.email)
   if (isAdmin && searchParams?.view !== 'student') redirect('/tutor')
+  // tutors never see the student side: the installed app opens here, so send them to their own dashboard
+  if (!isAdmin) {
+    const { data: roleRow } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+    if (roleRow?.role === 'partner') redirect('/partner')
+  }
 
   const [{ data: profile }, { data: bookings }, { data: subs }, { data: orders }, { data: messages }, { data: attendance }, { data: videoRequests }, { data: videoTopicRequests }, { data: homeworkRequests }, { data: moduleRequests }, { data: testPreps }, { data: marks }, { data: scheduled }] = await Promise.all([
     supabase.from('profiles').select('tier, full_name').eq('id', user.id).single(),
