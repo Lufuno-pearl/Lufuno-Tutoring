@@ -54,7 +54,7 @@ export async function makeTutor(id: string): Promise<{ ok: boolean; message?: st
     const first = (app.full_name || 'there').split(' ')[0]
     await supabase.from('notifications').insert({ student_id: app.user_id, for_role: 'student', message: 'Your tutor dashboard is open. Welcome!' })
     try { await sendPushToUser(app.user_id, 'Your tutor dashboard is open', 'Open the app to get started.', '/partner') } catch {}
-    await sendEmail(app.email, 'Your Aid & Ace tutor dashboard is open', `Hi ${first},\n\nYour tutor dashboard is now open. Sign in at https://lufuno-tutoring.vercel.app and tap "Become a Tutor" to reach it.\n\nAid & Ace Tutoring`)
+    await sendEmail(app.email, 'Your Aid & Ace tutor dashboard is open', `Hi ${first},\n\nYour tutor dashboard is now open. Sign in at https://lufuno-tutoring.vercel.app and tap "Become a Tutor" to reach it.\n\nTip: add the app to your phone's home screen so it opens like an app and you get notifications. Steps: https://lufuno-tutoring.vercel.app/install\n\nAid & Ace Tutoring`)
   }
   revalidatePath('/tutor/applications')
   revalidatePath('/tutor')
