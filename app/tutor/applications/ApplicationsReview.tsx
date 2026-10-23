@@ -78,7 +78,7 @@ export default function ApplicationsReview({ apps, accepting: acc }: { apps: any
               ))}
             </div>
             <Doc label="Selfie" url={a.selfie} />
-            <Doc label="Proof of registration" url={a.proof} pdf={a.proofIsPdf} />
+            {a.teaches_uni ? <Doc label="Proof of registration" url={a.proof} pdf={a.proofIsPdf} /> : <div className="meta" style={{ marginBottom: 10 }}>Proof of registration: not needed (high school only)</div>}
             <Doc label="Results" url={a.results} pdf={a.resultsIsPdf} />
             {(a.status === 'submitted' || a.status === 'waitlist') && !res && (
               declining ? (
