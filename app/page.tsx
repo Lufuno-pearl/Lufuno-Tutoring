@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { GraduationCap, HandHeart, Sparkles } from 'lucide-react'
+import { GraduationCap, HandHeart } from 'lucide-react'
 
 export default function Home() {
   return (
@@ -23,13 +23,7 @@ export default function Home() {
         </div>
       </Link>
 
-      <Link href="/login?tier=tutor" style={{ textDecoration: 'none' }}>
-        <div className="panel" style={{ padding: 28, marginTop: 18 }}>
-          <Sparkles size={40} color="#2E7D4F" strokeWidth={1.5} />
-          <h3 style={{ margin: '10px 0 2px' }}>Become a Tutor</h3>
-          <div className="meta">Share what you know and earn with Aid & Ace</div>
-        </div>
-      </Link>
+      <p className="meta" style={{ marginTop: 22 }}>🔒 You pick once: high school or university.</p>
     </div>
   )
 }
