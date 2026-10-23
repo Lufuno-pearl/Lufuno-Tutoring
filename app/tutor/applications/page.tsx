@@ -12,7 +12,9 @@ export default async function ApplicationsPage() {
   if (!user) redirect('/login')
   if (!isAdminEmail(user.email)) redirect('/portal')
 
-  const { data: rows } = await supabase.from('tutor_applications').select('*').in('status', ['submitted', 'accepted', 'declined', 'waitlist']).order('submitted_at', { ascending: false })
+  const { data: rows } = await supabase.from('tutor_applications').select('*').in('status', ['submitted', 'accepted', 'declined', 'waitlist']).order('submitted_at', { ascending: true })
+  const { data: setting } = await supabase.from('app_settings').select('value').eq('key', 'accepting_tutors').maybeSingle()
+  const accepting = setting?.value !== 'false'
   const apps = await Promise.all((rows || []).map(async (a: any) => {
     const sign = async (p: string | null) => p ? (await supabase.storage.from('tutor-docs').createSignedUrl(p, 3600)).data?.signedUrl || null : null
     const [selfie, proof, results] = await Promise.all([sign(a.selfie_path), sign(a.proof_path), sign(a.results_path)])
@@ -23,7 +25,7 @@ export default async function ApplicationsPage() {
     <div>
       <Link href="/tutor" className="meta">← Back</Link>
       <h2 style={{ margin: '8px 0 4px' }}>Tutor applications</h2>
-      <ApplicationsReview apps={apps} />
+      <ApplicationsReview apps={apps} accepting={accepting} />
     </div>
   )
 }

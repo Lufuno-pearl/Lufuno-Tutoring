@@ -10,6 +10,9 @@ export default async function ApplyPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login?tier=tutor')
   const { data: app } = await supabase.from('tutor_applications').select('*').eq('user_id', user.id).maybeSingle()
+  const { data: setting } = await supabase.from('app_settings').select('value').eq('key', 'accepting_tutors').maybeSingle()
+  const full = setting?.value === 'false'
+  const { data: pos } = app?.status === 'waitlist' ? await supabase.rpc('waitlist_position') : { data: null }
 
   const wrap = (children: React.ReactNode) => (
     <div style={{ maxWidth: 560, margin: '0 auto' }}>
@@ -38,6 +41,7 @@ export default async function ApplyPage() {
       <div style={{ fontSize: '2.4rem' }}>⏳</div>
       <h3>You are on our waiting list</h3>
       <p className="meta">We have enough tutors right now. We will email you as soon as a place opens.</p>
+      {pos ? <p style={{ fontWeight: 700 }}>Your place in the queue: {pos}</p> : null}
     </div>
   )
 
@@ -48,6 +52,12 @@ export default async function ApplyPage() {
           <b>Your last application was not accepted.</b>
           {app.owner_note && <div className="meta" style={{ marginTop: 4 }}>{app.owner_note}</div>}
           <div className="meta" style={{ marginTop: 4 }}>You can update your details and apply again.</div>
+        </div>
+      )}
+      {full && (
+        <div className="panel" style={{ background: '#FFF6DD' }}>
+          <b>We have enough tutors right now.</b>
+          <div className="meta" style={{ marginTop: 4 }}>You can still apply. You will join our waiting list and we will email you when a place opens.</div>
         </div>
       )}
       <ApplyFlow userId={user.id} email={user.email || ''} initial={app || null} />
