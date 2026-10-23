@@ -98,11 +98,19 @@ export default function ApplicationsReview({ apps, accepting: acc }: { apps: any
               )
             )}
             {a.status === 'accepted' && (
+              <div style={{ marginTop: 10, background: a.signedAt ? '#DCEEE0' : '#FFF6DD', borderRadius: 12, padding: '10px 14px', fontSize: '0.9rem' }}>
+                {a.signedAt ? <>✓ Agreement signed by <b>{a.signedName}</b> on {new Date(a.signedAt).toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' })}.</> : <>⏳ Agreement not signed yet{a.agreement_deadline ? <>. Deadline: <b>{new Date(a.agreement_deadline).toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' })}</b>{new Date(a.agreement_deadline) < new Date() ? ' (passed)' : ''}</> : ''}.</>}
+                {a.bank && (
+                  <div style={{ marginTop: 6 }}>🏦 <b>Pay to:</b> {a.bank.account_holder} · {a.bank.bank_name} · {a.bank.account_type} · acc {a.bank.account_number}{a.bank.branch_code ? ` · branch ${a.bank.branch_code}` : ''}</div>
+                )}
+              </div>
+            )}
+            {a.status === 'accepted' && (
               a.isTutor || madeTutor[a.id] === 'ok'
                 ? <div style={{ marginTop: 10, background: '#DCEEE0', borderRadius: 12, padding: '10px 14px', fontSize: '0.9rem' }}>✓ This person is a tutor. Their subjects and modules are saved, so they show up when you match tutors to module requests.</div>
                 : <div style={{ marginTop: 10 }}>
-                    <button className="btn btn-gold" style={{ width: '100%' }} disabled={busy} onClick={() => promote(a)}>{busy ? 'Working...' : 'Make tutor'}</button>
-                    <div className="meta" style={{ marginTop: 4 }}>Tap this after they have signed the agreement. It opens their tutor dashboard.</div>
+                    <button className="btn btn-gold" style={{ width: '100%', opacity: a.signedAt ? 1 : 0.5 }} disabled={busy || !a.signedAt} onClick={() => promote(a)}>{busy ? 'Working...' : 'Make tutor'}</button>
+                    <div className="meta" style={{ marginTop: 4 }}>{a.signedAt ? 'They have signed. Tap this to open their tutor dashboard.' : 'This unlocks once they have signed the agreement.'}</div>
                     {madeTutor[a.id] && madeTutor[a.id] !== 'ok' && <div style={{ color: '#A6443A', fontSize: '0.88rem', marginTop: 4 }}>{madeTutor[a.id]}</div>}
                   </div>
             )}
@@ -110,7 +118,7 @@ export default function ApplicationsReview({ apps, accepting: acc }: { apps: any
               <div style={{ marginTop: 10, background: res.ok ? '#DCEEE0' : '#FBE9E6', borderRadius: 12, padding: '10px 14px', fontSize: '0.9rem' }}>
                 {!res.ok ? res.message : res.emailed ? `✓ ${res.decision === 'accepted' ? 'Accepted' : res.decision === 'waitlist' ? 'Waitlisted' : 'Declined'}. The applicant was emailed.` : (
                   <>✓ {res.decision === 'accepted' ? 'Accepted' : res.decision === 'waitlist' ? 'Waitlisted' : 'Declined'}. Automatic email is not set up yet, so tap to send it yourself:<br />
-                    <a href={res.mailto} className="btn btn-gold" style={{ marginTop: 8 }}>Open the email</a></>
+                    <a href={res.mailto} target="_blank" rel="noopener noreferrer" className="btn btn-gold" style={{ marginTop: 8 }}>Open in Gmail</a><div className="meta" style={{ marginTop: 4 }}>If Gmail asks, sign in with aidandace27@gmail.com.</div></>
                 )}
               </div>
             )}

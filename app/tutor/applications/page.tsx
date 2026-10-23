@@ -18,10 +18,14 @@ export default async function ApplicationsPage() {
   const acceptedIds = (rows || []).filter((a: any) => a.status === 'accepted').map((a: any) => a.user_id)
   const { data: tutorRows } = acceptedIds.length ? await supabase.from('profiles').select('id, role').in('id', acceptedIds) : { data: [] as any[] }
   const tutorIds = new Set((tutorRows || []).filter((p: any) => p.role === 'partner').map((p: any) => p.id))
+  const { data: agreeRows } = acceptedIds.length ? await supabase.from('tutor_agreements').select('user_id, signed_name, signed_at').in('user_id', acceptedIds) : { data: [] as any[] }
+  const { data: bankRows } = acceptedIds.length ? await supabase.from('tutor_bank').select('*').in('user_id', acceptedIds) : { data: [] as any[] }
+  const agreeBy: Record<string, any> = {}; (agreeRows || []).forEach((r: any) => { agreeBy[r.user_id] = r })
+  const bankBy: Record<string, any> = {}; (bankRows || []).forEach((r: any) => { bankBy[r.user_id] = r })
   const apps = await Promise.all((rows || []).map(async (a: any) => {
     const sign = async (p: string | null) => p ? (await supabase.storage.from('tutor-docs').createSignedUrl(p, 3600)).data?.signedUrl || null : null
     const [selfie, proof, results] = await Promise.all([sign(a.selfie_path), sign(a.proof_path), sign(a.results_path)])
-    return { ...a, isTutor: tutorIds.has(a.user_id), selfie, proof, results, proofIsPdf: /\.pdf$/i.test(a.proof_path || ''), resultsIsPdf: /\.pdf$/i.test(a.results_path || '') }
+    return { ...a, signedAt: agreeBy[a.user_id]?.signed_at || null, signedName: agreeBy[a.user_id]?.signed_name || '', bank: bankBy[a.user_id] || null, isTutor: tutorIds.has(a.user_id), selfie, proof, results, proofIsPdf: /\.pdf$/i.test(a.proof_path || ''), resultsIsPdf: /\.pdf$/i.test(a.results_path || '') }
   }))
 
   return (

@@ -3,6 +3,8 @@ import Link from 'next/link'
 import { createClient } from '../../lib/supabase/server'
 import ApplyFlow from './ApplyFlow'
 import HeaderTools from '../HeaderTools'
+import AgreementForm from './AgreementForm'
+import { formatDeadline } from '../../lib/tutorAgreement'
 
 export const dynamic = 'force-dynamic'
 
@@ -38,13 +40,17 @@ export default async function ApplyPage() {
       <p className="meta">Thank you, {app.full_name?.split(' ')[0]}. We are going through it and will email you at <b>{app.email}</b>.</p>
     </div>
   )
-  if (app && app.status === 'accepted') return wrap(
-    <div className="panel" style={{ textAlign: 'center' }}>
-      <div style={{ fontSize: '2.4rem' }}>🎉</div>
-      <h3>You are in!</h3>
-      <p className="meta">Welcome to the team. We will email you your tutor agreement, and your tutor dashboard opens once you have signed it.</p>
-    </div>
-  )
+  if (app && app.status === 'accepted') {
+    const { data: signedRow } = await supabase.from('tutor_agreements').select('signed_at').eq('user_id', user.id).maybeSingle()
+    if (!signedRow) return wrap(<AgreementForm firstName={(app.full_name || 'there').split(' ')[0]} fullName={app.full_name || ''} deadline={app.agreement_deadline || null} />)
+    return wrap(
+      <div className="panel" style={{ textAlign: 'center' }}>
+        <div style={{ fontSize: '2.4rem' }}>✅</div>
+        <h3>Agreement signed. Thank you!</h3>
+        <p className="meta">You signed on {formatDeadline(signedRow.signed_at)}. Aid &amp; Ace will open your tutor dashboard soon, and we will notify you. Please keep notifications on.</p>
+      </div>
+    )
+  }
   if (app && app.status === 'waitlist') return wrap(
     <div className="panel" style={{ textAlign: 'center' }}>
       <div style={{ fontSize: '2.4rem' }}>⏳</div>
