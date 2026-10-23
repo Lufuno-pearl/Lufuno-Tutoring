@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: 'Aid & Ace Tutoring',
     short_name: 'Aid & Ace',
     description: 'Fix the gaps. Ace the exam.',
-    start_url: '/portal',
+    start_url: '/',
     display: 'standalone',
     background_color: '#F7F4EC',
     theme_color: '#2B1766',
