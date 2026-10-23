@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { isAdminEmail } from '../../../lib/admin'
 import { sendEmail } from '../../../lib/email'
 import { sendPushToUser } from '../../../lib/push'
+import { agreementDeadline, formatDeadline } from '../../../lib/tutorAgreement'
 
 export async function decideApplication(id: string, decision: 'accepted' | 'declined' | 'waitlist', note: string): Promise<{ ok: boolean; message?: string; emailed?: boolean; mailto?: string }> {
   const supabase = createClient()
@@ -16,19 +17,25 @@ export async function decideApplication(id: string, decision: 'accepted' | 'decl
   if (error) return { ok: false, message: error.message }
 
   const first = (app.full_name || 'there').split(' ')[0]
+  let deadlineText = ''
+  if (decision === 'accepted') {
+    const dl = agreementDeadline()
+    deadlineText = formatDeadline(dl)
+    await supabase.from('tutor_applications').update({ agreement_deadline: dl.toISOString() }).eq('id', id) // ignored if the agreement SQL has not been run yet
+  }
   const subject = decision === 'accepted' ? 'Welcome to Aid & Ace Tutoring!' : decision === 'waitlist' ? 'You are on the Aid & Ace waiting list' : 'Your Aid & Ace tutor application'
   const promoted = decision === 'accepted' && app.status === 'waitlist'
   const body = decision === 'waitlist'
     ? `Hi ${first},\n\nThank you for applying to become an Aid & Ace tutor. We have enough tutors right now, so we have put you on our waiting list. We will email you as soon as a place opens.\n\nAid & Ace Tutoring\naidandace27@gmail.com | 067 381 2727`
     : decision === 'accepted'
-    ? `Hi ${first},\n\nGreat news: ${promoted ? 'a place has opened up and your application to become an Aid & Ace tutor has been accepted' : 'your application to become an Aid & Ace tutor has been accepted'}. Welcome to the team!\n\nWe will send you your tutor agreement by email shortly. Once you have signed it, your tutor dashboard will open.\n\nFix the gaps. Ace the exam.\nAid & Ace Tutoring\naidandace27@gmail.com | 067 381 2727`
+    ? `Hi ${first},\n\nGreat news: ${promoted ? 'a place has opened up and your application to become an Aid & Ace tutor has been accepted' : 'you are accepted as an Aid & Ace tutor'}. Welcome to the team!\n\nNext step: your tutor agreement. Please sign in at https://lufuno-tutoring.vercel.app, read the agreement, add your bank details, tick the box and type your full name. That is your signature and it sends the agreement back to us. Please do this by ${deadlineText}. Your tutor dashboard opens after you have signed.\n\nThe main points:\n- You earn 90% of your learners' monthly fees, paid on the 7th for the previous month.\n- Confirm each session at least 24 hours before.\n- Record an online session only when a learner tells you beforehand they have an emergency (screen and voice only), and upload it within 48 hours.\n- Aid & Ace assigns your students.\n\nWhen your dashboard opens, please also fill in My Availability and Subjects & Areas so we can assign you students. Tip: add the app to your home screen.\n\nFix the gaps. Ace the exam.\nAid & Ace Tutoring\naidandace27@gmail.com | 067 381 2727`
     : `Hi ${first},\n\nThank you for applying to become an Aid & Ace tutor. After looking at your application, we are not able to offer you a place right now.${cleanNote ? `\n\n${cleanNote}` : ''}\n\nYou are welcome to update your details and apply again.\n\nAid & Ace Tutoring\naidandace27@gmail.com | 067 381 2727`
   const emailed = await sendEmail(app.email, subject, body)
-  await supabase.from('notifications').insert({ student_id: app.user_id, for_role: 'student', message: decision === 'accepted' ? 'Your tutor application was accepted. Check your email.' : decision === 'waitlist' ? 'You are on the tutor waiting list. Check your email.' : 'Your tutor application has an update. Check your email.' })
+  await supabase.from('notifications').insert({ student_id: app.user_id, for_role: 'student', message: decision === 'accepted' ? 'Your tutor application was accepted. Open Become a tutor to sign your agreement.' : decision === 'waitlist' ? 'You are on the tutor waiting list. Check your email.' : 'Your tutor application has an update. Check your email.' })
   try { await sendPushToUser(app.user_id, subject, decision === 'accepted' ? 'You are in! Check your email.' : decision === 'waitlist' ? 'You are on the waiting list.' : 'Open the app to see the update.', '/apply') } catch {}
   revalidatePath('/tutor/applications')
   revalidatePath('/tutor')
-  const mailto = `mailto:${app.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+  const mailto = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(app.email)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
   return { ok: true, emailed, mailto }
 }
 
@@ -47,6 +54,9 @@ export async function makeTutor(id: string): Promise<{ ok: boolean; message?: st
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user || !isAdminEmail(user.email)) return { ok: false, message: 'Only the owners can do this.' }
+  const { data: appRow } = await supabase.from('tutor_applications').select('user_id').eq('id', id).single()
+  const { data: signedRow } = appRow ? await supabase.from('tutor_agreements').select('user_id').eq('user_id', appRow.user_id).maybeSingle() : { data: null }
+  if (!signedRow) return { ok: false, message: 'This person has not signed the agreement yet.' }
   const { error } = await supabase.rpc('make_tutor', { app_id: id })
   if (error) return { ok: false, message: error.message }
   const { data: app } = await supabase.from('tutor_applications').select('user_id, email, full_name').eq('id', id).single()
