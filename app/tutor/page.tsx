@@ -99,6 +99,9 @@ export default async function TutorDashboard() {
     threadsByStudent[sid].msgs.push(m)
   })
 
+  // ratings are read separately so the dashboard still loads before tutor-ratings.sql has been run
+  const { data: ratingRows } = await supabase.from('tutor_ratings').select('id, stars, comment, created_at, tutor_id, student_id, tutor:profiles!tutor_ratings_tutor_id_fkey(full_name), student:profiles!tutor_ratings_student_id_fkey(full_name)').order('created_at', { ascending: false })
+
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -123,6 +126,7 @@ export default async function TutorDashboard() {
         videoTopicRequests={videoTopicRequests}
         moduleRequests={moduleRequests}
         pendingApps={pendingApps || 0}
+        ratings={ratingRows || []}
         testPreps={testPreps || []}
         marksByStudent={marksByStudent}
         schoolByStudent={schoolByStudent}

@@ -1,7 +1,25 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
+import { createClient } from '../lib/supabase/server'
+import { isAdminEmail } from '../lib/admin'
 import { GraduationCap, HandHeart } from 'lucide-react'
 
-export default function Home() {
+export const dynamic = 'force-dynamic'
+
+export default async function Home() {
+  // Signed-in people go straight to their dashboard. The sign-up choices only show when signed out.
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (user) {
+    if (isAdminEmail(user.email)) redirect('/tutor')
+    const { data: me } = await supabase.from('profiles').select('role, tier').eq('id', user.id).single()
+    if (me?.role === 'partner') redirect('/partner')
+    if (!me?.tier) {
+      const { data: app } = await supabase.from('tutor_applications').select('id').eq('user_id', user.id).maybeSingle()
+      if (app) redirect('/apply')
+    }
+    redirect('/portal')
+  }
   return (
     <div style={{ textAlign: 'center', paddingTop: 40 }}>
       <h1 style={{ fontSize: '2rem', marginBottom: 8 }}>Aid & Ace Tutoring</h1>
