@@ -1,7 +1,7 @@
 import { createClient } from '../../lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { isAdminEmail } from '../../lib/admin'
-import { claim, setMeetingLink, markAttendance, sendPartnerMessage } from './actions'
+import { setMeetingLink, markAttendance, sendPartnerMessage } from './actions'
 import { signOut } from '../portal/actions'
 import HeaderTools from '../HeaderTools'
 import PartnerStudents from './PartnerStudents'
@@ -105,29 +105,9 @@ export default async function PartnerDashboard() {
   })
 
   const openRequests = (
-    <div>
-      <h4 style={{ marginTop: 12 }}>University</h4>
-      {(openBookings || []).length === 0 && <p className="meta">Nothing open right now.</p>}
-      {(openBookings || []).map(b => (
-        <div className="panel" key={b.id}>
-          <h4>{b.subject}</h4>
-          <div className="meta">{b.profiles?.full_name} · {b.day} at {b.time} · {kindLabel(b)}</div>
-          <form action={async () => { 'use server'; await claim('bookings', b.id) }}>
-            <button className="btn btn-primary">Claim this student</button>
-          </form>
-        </div>
-      ))}
-      <h4 style={{ marginTop: 20 }}>High School</h4>
-      {(openSubs || []).length === 0 && <p className="meta">Nothing open right now.</p>}
-      {(openSubs || []).map(s => (
-        <div className="panel" key={s.id}>
-          <h4>{s.month}</h4>
-          <div className="meta">{s.profiles?.full_name}{s.grade ? ` · Gr ${s.grade}` : ''} · {s.subject_choice === 'maths' ? 'Mathematics' : s.subject_choice === 'physics' ? 'Physical Sciences' : 'Maths & Physical Sciences'} · {kindLabel(s)}</div>
-          <form action={async () => { 'use server'; await claim('hs_subscriptions', s.id) }}>
-            <button className="btn btn-primary">Claim this student</button>
-          </form>
-        </div>
-      ))}
+    <div className="panel">
+      <h4>Aid &amp; Ace assigns your students</h4>
+      <div className="meta" style={{ marginBottom: 0 }}>You do not need to claim anyone. When a student is assigned to you, you will get a notification and they will appear under My students.</div>
     </div>
   )
 
@@ -162,7 +142,7 @@ export default async function PartnerDashboard() {
         today={todaySessions}
         markedToday={markedToday}
         markAttendance={markAttendance}
-        openCount={(openBookings || []).length + (openSubs || []).length}
+        openCount={0}
         requestCount={homework.filter((h: any) => h.status !== 'solved').length + videos.filter((v: any) => v.status !== 'ready').length}
         studentCount={myStudentIds.length}
         testCount={myTests.filter((t: any) => daysUntil(t.test_date) <= 7).length}
