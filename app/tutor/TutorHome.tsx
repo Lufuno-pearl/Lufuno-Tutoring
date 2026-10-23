@@ -514,7 +514,7 @@ function TutorInner({ section, setSection, tab, bookings, subs, orders, partners
             <h4>{r.module?.name || 'Module'}</h4>
             <div className="meta">{r.module?.university}{r.module?.year ? ` · Year ${r.module.year}` : ''}{r.module?.field ? ` · ${r.module.field}` : ''}</div>
             <div className="meta">{r.profiles?.full_name} · {r.profiles?.email}</div>
-            <div className="meta">{kindLabel({ session_type: r.session_type, format: r.format, area: r.area })} · wants {r.day} at {r.time} · R{UNI_PRICE[r.session_type === 'one_on_one' ? 'one_on_one' : 'group']} for 3 sessions of 1h30</div>
+            <div className="meta">{kindLabel({ session_type: r.session_type, format: r.format, area: r.area })} · wants {r.day} at {r.time} · R{UNI_PRICE[r.session_type === 'one_on_one' ? 'one_on_one' : 'group']} a month (5 sessions of 1h30)</div>
             <form action={async (formData: FormData) => { await answerModuleRequest(r.id, true, String(formData.get('tutorId') || '')) }} style={{ display: 'flex', gap: 8, marginTop: 8 }}>
               <select name="tutorId" defaultValue="" style={{ flex: 1, padding: 8, border: '1px solid var(--line)', borderRadius: 100 }}>
                 <option value="">Tutor to be chosen later</option>

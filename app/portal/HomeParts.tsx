@@ -229,8 +229,8 @@ export function PriceStrip({ tier, onRequest }: { tier: string; onRequest: () =>
         </>
       ) : (
         <>
-          <div className="pay-line"><span>Group (up to 10)</span><span>R{UNI_PRICE.group} for 3 sessions of 1h30</span></div>
-          <div className="pay-line"><span>One-on-one</span><span>R{UNI_PRICE.one_on_one} for 3 sessions of 1h30</span></div>
+          <div className="pay-line"><span>Group (up to 10)</span><span>R{UNI_PRICE.group} a month (5 sessions of 1h30)</span></div>
+          <div className="pay-line"><span>One-on-one</span><span>R{UNI_PRICE.one_on_one} a month (5 sessions of 1h30)</span></div>
         </>
       )}
       <button className="btn btn-primary" style={{ marginTop: 12 }} onClick={onRequest}>Request tutoring</button>
