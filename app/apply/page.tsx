@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '../../lib/supabase/server'
 import ApplyFlow from './ApplyFlow'
+import HeaderTools from '../HeaderTools'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,8 +19,14 @@ export default async function ApplyPage() {
 
   const wrap = (children: React.ReactNode) => (
     <div style={{ maxWidth: 560, margin: '0 auto' }}>
-      <h2 style={{ marginBottom: 4 }}>Become a tutor</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h2 style={{ marginBottom: 4 }}>Become a tutor</h2>
+        <HeaderTools forRole="student" />
+      </div>
       <p className="meta" style={{ marginTop: 0 }}>Aid &amp; Ace Tutoring · Fix the gaps. Ace the exam.</p>
+      <div style={{ background: '#FFF6DD', borderRadius: 14, padding: '10px 14px', marginBottom: 16, fontSize: '0.88rem' }}>
+        🔔 Tap the bell at the top and turn on notifications, so you hear our answer straight away. We will also email you.
+      </div>
       {children}
     </div>
   )
