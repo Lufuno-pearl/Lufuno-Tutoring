@@ -33,6 +33,9 @@ export default async function TutorDashboard() {
     supabase.from('scheduled_sessions').select('*').order('session_date', { ascending: true }).limit(2000),
   ])
 
+  // new tutor applications waiting (separate query so the page loads before the SQL is run)
+  const { count: pendingApps } = await supabase.from('tutor_applications').select('id', { count: 'exact', head: true }).eq('status', 'submitted')
+
   // each tutor's areas and how many group students they already have
   const todayISO = new Date().toISOString().slice(0, 10)
   // subjects each tutor teaches (separate query so the page still loads before the SQL is run)
@@ -117,6 +120,7 @@ export default async function TutorDashboard() {
         homeworkRequests={homeworkRequests}
         videoTopicRequests={videoTopicRequests}
         moduleRequests={moduleRequests}
+        pendingApps={pendingApps || 0}
         testPreps={testPreps || []}
         marksByStudent={marksByStudent}
         schoolByStudent={schoolByStudent}
