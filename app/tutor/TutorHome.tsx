@@ -22,7 +22,7 @@ import HomeworkSection from './HomeworkSection'
 import TestList, { daysUntil } from '../TestList'
 
 type Tab = 'home' | 'requests' | 'students' | 'chat' | 'more'
-type Section = 'menu' | 'pending' | 'assign' | 'packs' | 'sessions' | 'chat' | 'mytutoring' | 'homework' | 'videos' | 'videoreq' | 'referrals' | 'availability' | 'modules' | 'tests'
+type Section = 'menu' | 'pending' | 'assign' | 'packs' | 'sessions' | 'chat' | 'mytutoring' | 'homework' | 'videos' | 'videoreq' | 'referrals' | 'availability' | 'modules' | 'tests' | 'ratings'
 
 function subjectLabel(choice?: string) {
   return choice === 'maths' ? 'Mathematics' : choice === 'physics' ? 'Physical Sciences' : 'Maths & Physical Sciences'
@@ -168,7 +168,7 @@ function MonthSummary({ subs, schoolByStudent }: { subs: any[]; schoolByStudent:
   )
 }
 
-function TutorInner({ section, setSection, tab, bookings, subs, orders, partners, threadsByStudent, attendanceRows, myAvailable, openBookings, openSubs, myClaimedBookings, myClaimedSubs, videoRequests, customPackRequests, homeworkRequests, videoTopicRequests, moduleRequests, testPreps, marksByStudent, scheduleByStudent, schoolByStudent, pendingApps, actions }: any) {
+function TutorInner({ section, setSection, tab, bookings, subs, orders, partners, threadsByStudent, attendanceRows, myAvailable, openBookings, openSubs, myClaimedBookings, myClaimedSubs, videoRequests, customPackRequests, homeworkRequests, videoTopicRequests, moduleRequests, testPreps, marksByStudent, scheduleByStudent, schoolByStudent, pendingApps, ratings, actions }: any) {
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null)
   useEffect(() => {
     try {
@@ -209,6 +209,7 @@ function TutorInner({ section, setSection, tab, bookings, subs, orders, partners
     )
     const pendingCount = (bookings || []).filter((b: any) => b.status === 'awaiting').length + (subs || []).filter((x: any) => x.status === 'awaiting').length
     const unassigned = (openBookings || []).length + (openSubs || []).length
+    const lowRecent = (ratings || []).filter((r: any) => r.stars <= 2 && Date.now() - new Date(r.created_at).getTime() < 30 * 86400000).length
 
     if (tab === 'requests') {
       return (
@@ -218,6 +219,7 @@ function TutorInner({ section, setSection, tab, bookings, subs, orders, partners
             {tile('Pending Requests', '⏳', 'linear-gradient(135deg, #8B6FD9, #6E4FC7)', () => setSection('pending'), pendingCount)}
             {tile('Assign Tutor', '🧑‍🏫', 'linear-gradient(135deg, #7C6FE0, #5B4FC0)', () => setSection('assign'), unassigned)}
             <Link href="/tutor/applications" style={{ textDecoration: 'none', color: 'inherit' }}>{tile('Tutor Applications', '✨', 'linear-gradient(135deg, #3FA67A, #2E7D4F)', () => {}, pendingApps || 0)}</Link>
+            {tile('Tutor Ratings', '⭐', 'linear-gradient(135deg, #E8A93A, #C4841B)', () => setSection('ratings'), lowRecent)}
             {tile('Module Requests', '🎓', 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('modules'), pendingModules)}
             {tile('Homework Help', '📝', 'linear-gradient(135deg, #5FA3D9, #3F7FB8)', () => setSection('homework'), openHomework)}
             {tile('Video Requests', '🎞️', 'linear-gradient(135deg, #E0956F, #C46B3E)', () => setSection('videoreq'), pendingVideos)}
@@ -390,6 +392,48 @@ function TutorInner({ section, setSection, tab, bookings, subs, orders, partners
       <div>
         <Back />
         <HomeworkSection requests={homeworkRequests || []} partners={partners || []} markSolved={markHomeworkSolved} />
+      </div>
+    )
+  }
+
+  if (section === 'ratings') {
+    const byTutor: Record<string, { name: string; list: any[] }> = {}
+    ;(ratings || []).forEach((r: any) => {
+      if (!byTutor[r.tutor_id]) byTutor[r.tutor_id] = { name: r.tutor?.full_name || 'Tutor', list: [] }
+      byTutor[r.tutor_id].list.push(r)
+    })
+    const summary = Object.entries(byTutor).map(([id, t]) => ({ id, name: t.name, list: t.list, avg: t.list.reduce((a: number, r: any) => a + r.stars, 0) / t.list.length })).sort((a, b) => a.avg - b.avg)
+    const stars = (n: number) => '★'.repeat(n) + '☆'.repeat(5 - n)
+    const lows = (ratings || []).filter((r: any) => r.stars <= 2)
+    return (
+      <div>
+        <Back />
+        <h3>Tutor ratings</h3>
+        <p className="meta">Students rate their tutor after every 3 sessions. Only you and Neliswa see this. Tutors never do.</p>
+        {(ratings || []).length === 0 && <p className="meta">No ratings yet.</p>}
+        {lows.length > 0 && (
+          <div className="panel" style={{ borderLeft: '5px solid #A6443A', background: '#FBE9E6' }}>
+            <h4 style={{ marginTop: 0 }}>Needs attention ({lows.length})</h4>
+            {lows.map((r: any) => (
+              <div key={r.id} style={{ marginBottom: 8 }}>
+                <b>{r.tutor?.full_name || 'Tutor'}</b> · <span style={{ color: '#C4841B' }}>{stars(r.stars)}</span>
+                <div style={{ fontSize: '0.9rem' }}>{r.comment}</div>
+                <div className="meta" style={{ marginBottom: 0 }}>{r.student?.full_name || 'Student'} · {new Date(r.created_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' })}</div>
+              </div>
+            ))}
+          </div>
+        )}
+        {summary.map(t => (
+          <div className="panel" key={t.id}>
+            <h4 style={{ margin: 0 }}>{t.name}</h4>
+            <div className="meta">Average <b style={{ color: t.avg < 3 ? '#A6443A' : 'inherit' }}>{t.avg.toFixed(1)}</b> from {t.list.length} rating{t.list.length === 1 ? '' : 's'}</div>
+            {t.list.slice(0, 5).map((r: any) => (
+              <div key={r.id} style={{ fontSize: '0.88rem', marginTop: 4 }}>
+                <span style={{ color: '#C4841B' }}>{stars(r.stars)}</span> {r.comment ? `· ${r.comment}` : ''} <span className="meta">({r.student?.full_name || 'Student'})</span>
+              </div>
+            ))}
+          </div>
+        ))}
       </div>
     )
   }

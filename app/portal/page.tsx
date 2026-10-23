@@ -2,6 +2,7 @@ import { createClient } from '../../lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { isAdminEmail } from '../../lib/admin'
+import { submitRating } from './ratingActions'
 import { createBooking, createHsSub, buyPack, markAwaiting, sendMessage, getChatContacts, signOut, setTier, requestVideoAccess, requestCustomPack, requestVideoTopic, submitHomework, respondToSession } from './actions'
 import PortalHome from './PortalHome'
 import HeaderTools from '../HeaderTools'
@@ -43,6 +44,8 @@ export default async function Portal({ searchParams }: { searchParams?: { view?:
     supabase.from('marks').select('*').eq('student_id', user.id).order('taken_on', { ascending: true }),
     supabase.from('scheduled_sessions').select('*').eq('student_id', user.id).order('session_date', { ascending: true }),
   ])
+
+  const { data: ratingDueRows } = await supabase.rpc('rating_due') // empty until tutor-ratings.sql has been run
 
   // school is read separately so the portal still loads if the school columns are not set up yet
   const { data: schoolRow } = await supabase.from('profiles').select('school, province').eq('id', user.id).single()
@@ -109,12 +112,13 @@ export default async function Portal({ searchParams }: { searchParams?: { view?:
         testPreps={testPreps || []}
         marks={marks || []}
         scheduled={scheduled || []}
+        ratingDue={(ratingDueRows as any) || []}
         avatarPath={avatarPath}
         hasSchool={!!(schoolRow as any)?.school}
         mySchool={(schoolRow as any)?.school || ''}
         myProvince={(schoolRow as any)?.province || ''}
         canTestPrep={hasTutorAccess(subs, bookings)}
-        actions={{ createBooking, createHsSub, buyPack, markAwaiting, sendMessage, getChatContacts, requestVideoAccess, requestCustomPack, requestVideoTopic, submitHomework, respondToSession, userId: user.id }}
+        actions={{ submitRating, createBooking, createHsSub, buyPack, markAwaiting, sendMessage, getChatContacts, requestVideoAccess, requestCustomPack, requestVideoTopic, submitHomework, respondToSession, userId: user.id }}
       />
     </div>
   )

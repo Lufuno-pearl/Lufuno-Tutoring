@@ -13,6 +13,7 @@ import ReferralBox from './ReferralBox'
 import MarksView from '../MarksView'
 import MessageMeta from '../MessageMeta'
 import SchoolCard from './SchoolCard'
+import RateTutor from './RateTutor'
 import ModuleFinder from './ModuleFinder'
 import NextSession from './NextSession'
 import TestPrep from './TestPrep'
@@ -416,7 +417,7 @@ function SessionConfirm({ rows, respondToSession, onAnswered }: { rows: any[]; r
   )
 }
 
-function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visiblePacks, bookings, subs, orders, messages, attendance, videoRequests, myVideoSubjects, homeworkRequests, videoTopicRequests, moduleRequests, testPreps, canTestPrep, marks, scheduled, hasSchool, mySchool, myProvince, avatarPath, actions }: any) {
+function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visiblePacks, bookings, subs, orders, messages, attendance, videoRequests, myVideoSubjects, homeworkRequests, videoTopicRequests, moduleRequests, testPreps, canTestPrep, marks, scheduled, ratingDue, hasSchool, mySchool, myProvince, avatarPath, actions }: any) {
   const router = useRouter()
   const [bookingSubmitting, setBookingSubmitting] = useState(false)
   const [thankYou, setThankYou] = useState('')
@@ -525,6 +526,7 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
           <QuoteCloud />
           {tier === 'highschool' && !hasSchool && <SchoolCard />}
           {payWaiting}
+          <RateTutor due={ratingDue || []} submit={actions.submitRating} />
           <SessionConfirm rows={toConfirm} respondToSession={respondToSession} onAnswered={(id: string) => setAnswered(a => [...a, id])} />
           <GetStarted hasRequested={hasRequested} hasTutor={false} onRequest={() => setSection('book')} />
           <WhatYouGet tier={tier} />
@@ -543,6 +545,7 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
         <QuoteCloud />
         {tier === 'highschool' && !hasSchool && <SchoolCard />}
         {payWaiting}
+        <RateTutor due={ratingDue || []} submit={actions.submitRating} />
         <SessionConfirm rows={toConfirm} respondToSession={respondToSession} onAnswered={(id: string) => setAnswered(a => [...a, id])} />
         <CountdownCard tests={testPreps || []} onOpen={() => setSection('testprep')} />
         <StreakCard attendance={attendance || []} />
