@@ -87,6 +87,10 @@ export default function PartnerStudents({ allSubs, scheduleByStudent, marksByStu
     <div>
       <div className="meta" style={{ cursor: 'pointer', marginBottom: 16, color: 'var(--purple-dark)', fontWeight: 600 }} onClick={() => setSelectedId(null)}>&larr; Back to students</div>
       <h3>{thread.name}</h3>
+      <div style={{ background: '#E3F3E8', border: '1px solid #BFE0C8', borderRadius: 14, padding: '10px 12px', margin: '10px 0' }}>
+        <div className="meta" style={{ marginBottom: 6, fontWeight: 700, color: '#1F5C38' }}>Today's session</div>
+        <AttendanceButtons studentId={sid} markAttendance={markAttendance} />
+      </div>
       {bookingsHere.map((b: any) => (
         <div key={b.id} style={{ marginBottom: 8 }}>
           <div className="meta">{b.subject} — {b.day} {b.time} · {b.format === 'physical' ? 'Physical' : 'Online'}</div>
@@ -130,10 +134,7 @@ export default function PartnerStudents({ allSubs, scheduleByStudent, marksByStu
         <MarksView marks={(marksByStudent || {})[sid] || []} subjects={[]} mode="tutor" studentId={sid} />
       </div>
       <div style={{ marginTop: 14, borderTop: '1px solid var(--line)', paddingTop: 12 }}>
-        <div className="meta" style={{ marginBottom: 6 }}>Mark today's session</div>
-        <div style={{ marginBottom: 10 }}>
-          <AttendanceButtons studentId={sid} markAttendance={markAttendance} />
-        </div>
+        <div className="meta" style={{ marginBottom: 6 }}>Recent sessions</div>
         {(attendanceByStudent[sid] || []).slice(0, 5).map((a: any) => (
           <div key={a.id} className="meta">{a.session_date} — {String(a.status).replace('_', ' ')}</div>
         ))}

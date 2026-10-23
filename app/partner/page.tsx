@@ -132,10 +132,18 @@ export default async function PartnerDashboard() {
 
   // confirmed one-off sessions that are today (South Africa is UTC+2)
   const saToday = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString().slice(0, 10)
-  const todaySessions = (myBookings || [])
+  const todaySessions: any[] = (myBookings || [])
     .filter((b: any) => b.status === 'confirmed' && b.day === saToday)
     .sort((a: any, b: any) => String(a.time).localeCompare(String(b.time)))
-    .map((b: any) => ({ id: b.id, subject: b.subject, time: b.time, format: b.format, area: b.area, meeting_link: b.meeting_link, studentName: b.profiles?.full_name || 'Student' }))
+    .map((b: any) => ({ id: b.id, studentId: b.student_id as string, subject: b.subject, time: b.time, format: b.format, area: b.area, meeting_link: b.meeting_link, studentName: b.profiles?.full_name || 'Student' }))
+  // sessions the tutor put on the schedule for today
+  const nameOfStudent = (sid: string) => (myBookings || []).find((b: any) => b.student_id === sid)?.profiles?.full_name || (mySubs || []).find((s: any) => s.student_id === sid)?.profiles?.full_name || 'Student'
+  ;(schedRows || []).filter((r: any) => r.session_date === saToday).forEach((r: any) => {
+    todaySessions.push({ id: `sch-${r.id}`, studentId: r.student_id, subject: r.subject, time: r.session_time, format: r.format, area: null, meeting_link: null, studentName: nameOfStudent(r.student_id) })
+  })
+  todaySessions.sort((a: any, b: any) => String(a.time).localeCompare(String(b.time)))
+  const markedToday: Record<string, string> = {}
+  ;(attendanceRows || []).filter((a: any) => a.session_date === saToday && a.marked_by === user.id).forEach((a: any) => { markedToday[a.student_id] = a.status })
 
   return (
     <div>
@@ -151,6 +159,8 @@ export default async function PartnerDashboard() {
       <PartnerHome
         name={profile.full_name || ''}
         today={todaySessions}
+        markedToday={markedToday}
+        markAttendance={markAttendance}
         openCount={(openBookings || []).length + (openSubs || []).length}
         requestCount={homework.filter((h: any) => h.status !== 'solved').length + videos.filter((v: any) => v.status !== 'ready').length}
         studentCount={myStudentIds.length}
