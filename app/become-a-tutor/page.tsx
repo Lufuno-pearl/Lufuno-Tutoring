@@ -7,7 +7,7 @@ export const metadata = { title: 'Become a Tutor · Aid & Ace Tutoring' }
 const steps = [
   ['1', 'Tell us about you', 'Your name, what you study and what you can teach.'],
   ['2', 'Add your marks', 'The subjects and modules you did well in.'],
-  ['3', 'Upload proof', 'A selfie, proof of registration and your results. No ID needed.'],
+  ['3', 'Upload proof', 'A selfie and your results. Teaching university? Add proof you are registered. No ID needed.'],
   ['4', 'We answer by email', 'If we have enough tutors, you join our waiting list.'],
 ]
 
@@ -29,7 +29,8 @@ export default function BecomeATutor() {
           <li>You keep <b>90%</b> of what students pay</li>
           <li>We find the students for you</li>
           <li>Teach online or in person, around your timetable</li>
-          <li>High school (Gr 10–12) and university students welcome</li>
+          <li>Finished Grade 12 with strong marks? You can teach high school, even on a gap year</li>
+          <li>Registered at a university? You can teach university too</li>
         </ul>
       </div>
 
