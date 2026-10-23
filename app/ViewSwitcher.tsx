@@ -8,6 +8,7 @@ import { isAdminEmail } from '../lib/admin'
 const VIEWS = [
   { label: 'Owner dashboard', emoji: '👑', href: '/tutor', match: (p: string) => p === '/tutor' },
   { label: 'Tutor applications', emoji: '📋', href: '/tutor/applications', match: (p: string) => p.startsWith('/tutor/applications') },
+  { label: 'Tutor dashboard', emoji: '🧑‍🏫', href: '/partner', match: (p: string) => p.startsWith('/partner') },
   { label: 'Student view', emoji: '👩‍🎓', href: '/portal?view=student', match: (p: string) => p.startsWith('/portal') },
   { label: 'Apply as a tutor', emoji: '✨', href: '/apply', match: (p: string) => p.startsWith('/apply') },
 ]

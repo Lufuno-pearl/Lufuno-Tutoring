@@ -1,5 +1,6 @@
 import { createClient } from '../../lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { isAdminEmail } from '../../lib/admin'
 import { claim, setMeetingLink, markAttendance, sendPartnerMessage } from './actions'
 import { signOut } from '../portal/actions'
 import HeaderTools from '../HeaderTools'
@@ -21,7 +22,7 @@ export default async function PartnerDashboard() {
   if (!user) redirect('/login')
 
   const { data: profile } = await supabase.from('profiles').select('role, available, full_name').eq('id', user.id).single()
-  if (!profile || profile.role !== 'partner') redirect('/portal')
+  if (!profile || (profile.role !== 'partner' && !isAdminEmail(user.email))) redirect('/portal')
 
   const [{ data: openBookings }, { data: openSubs }, { data: myBookings }, { data: mySubs }, { data: attendanceRows }, { data: homeworkRows }, { data: videoRows }, { data: testRows }] = await Promise.all([
     supabase.from('bookings').select('*, profiles:profiles!bookings_student_id_fkey(full_name, email)').is('tutor_id', null).order('created_at', { ascending: false }),
