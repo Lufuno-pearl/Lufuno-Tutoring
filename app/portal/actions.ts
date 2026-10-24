@@ -360,7 +360,9 @@ export async function buyPacks(items: { id: string; name: string; scope: string 
     .eq('student_id', user.id)
     .in('status', ['pending', 'awaiting', 'confirmed'])
   const taken = new Set((existing || []).map((e: any) => e.pack_id))
-  const fresh = items.filter(i => !taken.has(i.id))
+  const fresh = items
+    .map(i => ({ id: String(i.id || '').slice(0, 80), name: String(i.name || '').trim().slice(0, 80), scope: i.scope }))
+    .filter(i => i.id && i.name && !taken.has(i.id))
   if (fresh.length === 0) return { ok: false, message: 'You already ordered these packs.' }
 
   const reference = await getReference(supabase, user.id)
