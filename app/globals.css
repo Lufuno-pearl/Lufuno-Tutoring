@@ -276,3 +276,8 @@ html[data-mode="dark"] [style*="rgb(255, 227, 214)"],html[data-mode="dark"] [sty
 /* date and time boxes must not run off the screen on phones */
 .field{min-width:0;}
 .field input[type="date"],.field input[type="time"]{min-width:0;max-width:100%;-webkit-appearance:none;appearance:none;height:44px;}
+
+/* Pure white and pure black backgrounds */
+html[data-bg="white"]{--paper:#FFFFFF;--bg-art:none;--card:#FFFFFF;--line:#E4E4EA;}
+html[data-mode="dark"][data-bg="black"]{--paper:#000000;--bg-art:none;--card:#121212;--line:#2B2B2B;--ink:#F2F2F2;--unread:#1E1E1E;}
+html[data-bg="black"] body{background:#000;}

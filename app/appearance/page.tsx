@@ -11,6 +11,8 @@ const BACKGROUNDS = [
   { id: 'mint', name: 'Fresh mint', swatch: 'linear-gradient(135deg,#E4F6EF,#5FBF9F)' },
   { id: 'sky', name: 'Sky blue', swatch: 'linear-gradient(135deg,#E4F1FC,#5FA3D9)' },
   { id: 'plain', name: 'Plain', swatch: '#F1ECFB' },
+  { id: 'white', name: 'Pure white', swatch: '#FFFFFF' },
+  { id: 'black', name: 'Pure black', swatch: '#000000' },
 ]
 
 function apply(mode: string, bg: string) {
@@ -82,7 +84,14 @@ export default function AppearancePage() {
     setPath(null); setPhotoBusy(false)
   }
 
-  const choose = (m: string, b: string) => { setMode(m); setBg(b); apply(m, b) }
+  const choose = (m: string, b: string) => {
+    if (b === 'black') m = 'dark'
+    else if (b === 'white') m = 'light'
+    else if (m === 'light' && b === 'black') b = 'plain'
+    if (m === 'dark' && b === 'white') b = 'black'
+    if (m === 'light' && b === 'black') b = 'white'
+    setMode(m); setBg(b); apply(m, b)
+  }
 
   return (
     <div>
