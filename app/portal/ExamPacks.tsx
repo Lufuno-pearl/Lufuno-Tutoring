@@ -26,14 +26,28 @@ export default function ExamPacks({ tier, packs, takenIds, buyPacks, onOrdered }
   const [scopes, setScopes] = useState<Record<string, Scope>>({})
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [customs, setCustoms] = useState<Pack[]>([])
+  const [customName, setCustomName] = useState('')
   const [result, setResult] = useState<{ total: number; count: number } | null>(null)
 
+  const allPacks = [...packs, ...customs]
   const n = picked.length
   const total = packTotal(n)
-  const bundleOffer = packs.length >= BUNDLE_SIZE
-  const chosen = packs.filter(p => picked.includes(p.id))
+  const bundleOffer = true // students can add their own subjects, so any 5 can be bundled
+  const chosen = allPacks.filter(p => picked.includes(p.id))
   const get = (id: string): Scope => scopes[id] || { text: '', scopeFiles: [], materialFiles: [] }
   const set = (id: string, patch: Partial<Scope>) => setScopes(s => ({ ...s, [id]: { ...get(id), ...patch } }))
+
+  function addCustom() {
+    const name = customName.trim().replace(/\s+/g, ' ').slice(0, 60)
+    if (!name) return
+    const id = 'custom-' + name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+    if (allPacks.some(p => p.id === id || p.name.toLowerCase() === (name + ' pack').toLowerCase() || p.name.toLowerCase().startsWith(name.toLowerCase()))) { setError('That one is already on the list.'); return }
+    setError('')
+    setCustoms(c => [...c, { id, name: `${name} Pack` }])
+    setPicked(p => [...p, id])
+    setCustomName('')
+  }
 
   function toggle(id: string) {
     setPicked(p => (p.includes(id) ? p.filter(x => x !== id) : [...p, id]))
@@ -141,7 +155,7 @@ export default function ExamPacks({ tier, packs, takenIds, buyPacks, onOrdered }
         🔥 R{PACK_PRICE} per pack{bundleOffer ? ` · any ${BUNDLE_SIZE} packs for R${BUNDLE_PRICE}` : ''}
       </div>
       <div className="panel" style={{ marginTop: 12 }}>
-        {packs.map(p => {
+        {allPacks.map(p => {
           const taken = takenIds.includes(p.id)
           const on = picked.includes(p.id)
           return (
@@ -152,6 +166,14 @@ export default function ExamPacks({ tier, packs, takenIds, buyPacks, onOrdered }
             </div>
           )
         })}
+        <div style={{ paddingTop: 12 }}>
+          <div style={{ fontWeight: 700, fontSize: '0.9rem', marginBottom: 6 }}>➕ {uni ? 'Add your own module' : 'Add your own subject'}</div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <input value={customName} onChange={e => setCustomName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') addCustom() }} placeholder={uni ? 'e.g. Linear Algebra' : 'e.g. Life Sciences'} style={{ flex: 1, minWidth: 0, padding: 10, border: '1px solid var(--line)', borderRadius: 10, font: 'inherit' }} />
+            <button className="btn btn-primary" style={{ padding: '8px 16px' }} onClick={addCustom}>Add</button>
+          </div>
+          <div className="meta" style={{ marginBottom: 0 }}>Not on the list? Add it here and we build a pack for it, R{PACK_PRICE} like the rest.</div>
+        </div>
       </div>
       {n > 0 && (
         <div className="panel" style={{ background: 'var(--purple-dark)', color: '#fff', marginTop: 12 }}>

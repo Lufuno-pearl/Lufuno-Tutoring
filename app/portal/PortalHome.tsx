@@ -859,7 +859,6 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
             </div>
           )
         })}
-        <CustomPackBox requestCustomPack={requestCustomPack} />
       </div>
     )
   }
