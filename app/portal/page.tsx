@@ -3,10 +3,11 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { isAdminEmail } from '../../lib/admin'
 import { submitRating } from './ratingActions'
-import { createBooking, createHsSub, buyPack, markAwaiting, sendMessage, getChatContacts, signOut, setTier, requestVideoAccess, requestCustomPack, requestVideoTopic, submitHomework, respondToSession } from './actions'
+import { createBooking, createHsSub, buyPack, buyPacks, markAwaiting, sendMessage, getChatContacts, signOut, setTier, requestVideoAccess, requestCustomPack, requestVideoTopic, submitHomework, respondToSession } from './actions'
 import PortalHome from './PortalHome'
 import HeaderTools from '../HeaderTools'
 import { hasTutorAccess } from '../../lib/testPrepAccess'
+import { isExamLocked } from '../../lib/examSpecial'
 
 const UNI_SUBJECTS = ['Basic Analysis', 'Multi-Variable Calculus', 'Mathematical Modelling & Methods', 'Scientific Computing', 'Abstract Mathematics', 'Statistics']
 const PACKS = [
@@ -68,7 +69,7 @@ export default async function Portal({ searchParams }: { searchParams?: { view?:
           <button className="btn btn-primary" style={{ width: '100%' }}>I'm a university student</button>
         </form>
         <form action={async () => { 'use server'; await setTier('highschool') }}>
-          <button className="btn" style={{ width: '100%', background: 'none', border: '1px solid var(--purple-dark)', color: 'var(--purple-dark)' }}>I'm a high schooler (Gr 10–12)</button>
+          <button className="btn" style={{ width: '100%', background: 'none', border: '1px solid var(--purple-dark)', color: 'var(--purple-dark)' }}>I'm a high schooler (Gr 8–12)</button>
         </form>
       </div>
     )
@@ -87,6 +88,8 @@ export default async function Portal({ searchParams }: { searchParams?: { view?:
   })
 
   const visiblePacks = PACKS.filter(p => p.tier === tier)
+  // until the open date, students with nothing requested yet can only use study packs, chat and the guide
+  const locked = !isAdmin && isExamLocked({ bookings, subs, videoRequests, moduleRequests })
 
   return (
     <div>
@@ -119,11 +122,12 @@ export default async function Portal({ searchParams }: { searchParams?: { view?:
         scheduled={scheduled || []}
         ratingDue={(ratingDueRows as any) || []}
         avatarPath={avatarPath}
+        locked={locked}
         hasSchool={!!(schoolRow as any)?.school}
         mySchool={(schoolRow as any)?.school || ''}
         myProvince={(schoolRow as any)?.province || ''}
         canTestPrep={hasTutorAccess(subs, bookings)}
-        actions={{ submitRating, createBooking, createHsSub, buyPack, markAwaiting, sendMessage, getChatContacts, requestVideoAccess, requestCustomPack, requestVideoTopic, submitHomework, respondToSession, userId: user.id }}
+        actions={{ submitRating, createBooking, createHsSub, buyPack, buyPacks, markAwaiting, sendMessage, getChatContacts, requestVideoAccess, requestCustomPack, requestVideoTopic, submitHomework, respondToSession, userId: user.id }}
       />
     </div>
   )

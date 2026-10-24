@@ -23,7 +23,7 @@ export default function PackDownload({ orderId }: { orderId: string }) {
     URL.revokeObjectURL(url)
   }
 
-  if (files.length === 0) return <p className="meta" style={{ marginTop: 8 }}>Confirmed — Lufuno will upload your pack shortly.</p>
+  if (files.length === 0) return <p className="meta" style={{ marginTop: 8 }}>Payment accepted ✅ Your pack will be here within 2 hours. You will get a notification and a chat message when it is ready.</p>
 
   return (
     <div style={{ marginTop: 8 }}>
