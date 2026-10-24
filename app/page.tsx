@@ -36,7 +36,7 @@ export default async function Home() {
       <Link href="/login?tier=highschool" style={{ textDecoration: 'none' }}>
         <div className="panel" style={{ padding: 28 }}>
           <HandHeart size={40} color="#C89B3C" strokeWidth={1.5} />
-          <h3 style={{ margin: '10px 0 2px' }}>High Schooler (Gr 10–12)</h3>
+          <h3 style={{ margin: '10px 0 2px' }}>High Schooler (Gr 8–12)</h3>
           <div className="meta">Mathematics & Physical Sciences</div>
         </div>
       </Link>

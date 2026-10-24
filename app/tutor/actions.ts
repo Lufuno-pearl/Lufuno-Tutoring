@@ -3,6 +3,7 @@ import { createClient } from '../../lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { sendPushToUser, sendPushToRole } from '../../lib/push'
 import { UNI_PRICE, toSessionType } from '../../lib/pricing'
+import { DELIVERY_PROMISE } from '../../lib/examSpecial'
 
 async function countReferral(supabase: any, studentId: string) {
   const { data: res, error } = await supabase.rpc('count_referral', { p_student: studentId })
@@ -42,16 +43,27 @@ export async function confirmPayment(table: 'bookings' | 'hs_subscriptions' | 'p
   }
 
   const { data } = await supabase.from(table).update(updates).eq('id', id).select('student_id').single()
+  // packs ordered together are paid once: confirm every pack in the bundle
+  let packCount = 0
+  if (data && table === 'pack_orders') {
+    const { data: first } = await supabase.from('pack_orders').select('bundle_id').eq('id', id).single()
+    packCount = 1
+    if (first?.bundle_id) {
+      const { data: all } = await supabase.from('pack_orders').update({ status: 'confirmed' }).eq('bundle_id', first.bundle_id).select('id')
+      packCount = all?.length || 1
+    }
+  }
   if (data) {
-    const message = table === 'hs_subscriptions'
+    let message = table === 'hs_subscriptions'
       ? 'Your subscription is confirmed — active for the next 30 days!'
       : 'Your payment has been confirmed!'
+    if (table === 'pack_orders') message = `Payment accepted! We are getting your study pack${packCount > 1 ? 's' : ''} ready. You will have ${packCount > 1 ? 'them' : 'it'} ${DELIVERY_PROMISE}.`
     await supabase.from('notifications').insert({
       student_id: data.student_id,
       for_role: 'student',
       message,
     })
-    await sendPushToUser(data.student_id, 'Payment confirmed', message, '/portal')
+    await sendPushToUser(data.student_id, table === 'pack_orders' ? 'Payment accepted ✅' : 'Payment confirmed', message, '/portal')
     if (table === 'hs_subscriptions' || table === 'bookings' || table === 'video_access_requests') {
       try {
         await countReferral(supabase, data.student_id)
@@ -129,14 +141,28 @@ export async function assignTutor(table: 'bookings' | 'hs_subscriptions', id: st
   revalidatePath('/tutor')
 }
 
-export async function notifyPackReady(studentId: string) {
+export async function notifyPackReady(studentId: string, packName?: string) {
   const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  const { data: stu } = await supabase.from('profiles').select('full_name').eq('id', studentId).single()
+  const first = (stu?.full_name || '').trim().split(' ')[0] || 'there'
+  const what = packName ? `Your ${packName.replace(/ Pack$/, '')} pack` : 'Your study pack'
   await supabase.from('notifications').insert({
     student_id: studentId,
     for_role: 'student',
-    message: 'Your study pack file is ready to download.',
+    message: `${what} is ready to download.`,
   })
-  await sendPushToUser(studentId, 'Study pack ready', 'Your study pack file is ready to download.', '/portal')
+  // a chat message too, so it is waiting in Chat
+  if (user) {
+    await supabase.from('messages').insert({
+      student_id: studentId,
+      sender: 'tutor',
+      sender_id: user.id,
+      staff_id: user.id,
+      body: `Hi ${first}! 🎉 ${what} is ready. Open Learn → Study Packs to download it. Good luck with your exams!`,
+    })
+  }
+  await sendPushToUser(studentId, 'Your study pack is ready 🎉', `${what} is ready to download.`, '/portal')
 }
 
 export async function toggleAvailable(current: boolean) {

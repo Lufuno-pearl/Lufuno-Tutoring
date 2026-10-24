@@ -3,12 +3,28 @@ import { createClient } from '../../lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { sendPushToRole, sendPushToUser } from '../../lib/push'
 import { hsPrice, toSessionType, UNI_PRICE } from '../../lib/pricing'
+import { randomUUID } from 'crypto'
 import { hasTutorAccess } from '../../lib/testPrepAccess'
+import { beforeOpen, isExamLocked, FEATURES_OPEN_LABEL, rowPrices, packTotal } from '../../lib/examSpecial'
 
 function makeReference(name: string) {
   const clean = (name || 'STUDENT').replace(/[^a-zA-Z]/g, '').toUpperCase().slice(0, 10) || 'STUDENT'
   const digits = Math.floor(1000 + Math.random() * 9000)
   return `${clean}${digits}`
+}
+
+
+// Until the open date, students with nothing requested yet can only order study packs.
+const LOCKED_MESSAGE = `Tutoring and the other features open on ${FEATURES_OPEN_LABEL}. Study packs are open now!`
+async function examBlocked(supabase: any, userId: string) {
+  if (!beforeOpen()) return false
+  const [b, s, v, m] = await Promise.all([
+    supabase.from('bookings').select('status').eq('student_id', userId).limit(1),
+    supabase.from('hs_subscriptions').select('status').eq('student_id', userId).limit(1),
+    supabase.from('video_access_requests').select('status').eq('student_id', userId).limit(1),
+    supabase.from('module_requests').select('status').eq('student_id', userId).limit(1),
+  ])
+  return isExamLocked({ bookings: b.data, subs: s.data, videoRequests: v.data, moduleRequests: m.data })
 }
 
 async function getReference(supabase: any, userId: string) {
@@ -130,6 +146,7 @@ export async function createBooking(formData: FormData) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { ok: false }
+  if (await examBlocked(supabase, user.id)) return { ok: false, message: LOCKED_MESSAGE }
 
   const subject = formData.get('subject') as string
   const day = formData.get('day') as string
@@ -179,6 +196,7 @@ export async function requestVideoAccess(subject: string) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { ok: false }
+  if (await examBlocked(supabase, user.id)) return { ok: false, message: LOCKED_MESSAGE }
 
   const { data: existing } = await supabase
     .from('video_access_requests')
@@ -220,6 +238,7 @@ export async function createHsSub(formData: FormData) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { ok: false }
+  if (await examBlocked(supabase, user.id)) return { ok: false, message: LOCKED_MESSAGE }
 
   const rawFormat = formData.get('format') as string
   // "both" means in person with some sessions online: stored as physical plus an alternate flag
@@ -327,6 +346,51 @@ export async function buyPack(packId: string, packName: string) {
   return { ok: true, duplicate: false, reference }
 }
 
+
+// Exam Special: one request for one or more packs, each with the student's scope. Packs ordered together share a bundle and one payment.
+export async function buyPacks(items: { id: string; name: string; scope: string }[]) {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, message: 'Please sign in again.' }
+  if (!items || items.length === 0) return { ok: false, message: 'Pick at least one pack.' }
+
+  const { data: existing } = await supabase
+    .from('pack_orders')
+    .select('pack_id')
+    .eq('student_id', user.id)
+    .in('status', ['pending', 'awaiting', 'confirmed'])
+  const taken = new Set((existing || []).map((e: any) => e.pack_id))
+  const fresh = items.filter(i => !taken.has(i.id))
+  if (fresh.length === 0) return { ok: false, message: 'You already ordered these packs.' }
+
+  const reference = await getReference(supabase, user.id)
+  const bundleId = randomUUID()
+  const prices = rowPrices(fresh.length)
+  const rows = fresh.map((i, k) => ({
+    student_id: user.id,
+    pack_id: i.id,
+    pack_name: i.name,
+    price: prices[k],
+    reference,
+    bundle_id: bundleId,
+    scope_text: (i.scope || '').trim().slice(0, 4000) || null,
+  }))
+  const { data: inserted, error } = await supabase.from('pack_orders').insert(rows).select('id, pack_id, price')
+  if (error || !inserted) return { ok: false, message: 'Something went wrong. Please try again.' }
+
+  const names = fresh.map(i => i.name.replace(/ Pack$/, '')).join(', ')
+  await supabase.from('notifications').insert({
+    student_id: user.id,
+    for_role: 'staff',
+    message: `New Exam Special pack request (${fresh.length}): ${names}`,
+  })
+  await sendPushToRole('staff', 'New study pack request', `${fresh.length} pack${fresh.length === 1 ? '' : 's'}: ${names}`, '/tutor')
+  revalidatePath('/portal')
+  const orderIds: Record<string, string> = {}
+  inserted.forEach((r: any) => { orderIds[r.pack_id] = r.id })
+  return { ok: true, bundleId, reference, total: packTotal(fresh.length), orderIds }
+}
+
 export async function requestCustomPack(subjectName: string, details: string) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -338,7 +402,7 @@ export async function requestCustomPack(subjectName: string, details: string) {
     student_id: user.id,
     course_name: subjectName,
     module_name: details || subjectName,
-    price: 100,
+    price: 60,
     reference,
   })
   await supabase.from('notifications').insert({
@@ -355,6 +419,15 @@ export async function markAwaiting(table: 'bookings' | 'hs_subscriptions' | 'pac
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   await supabase.from(table).update({ status: 'awaiting' }).eq('id', id)
+  // packs ordered together are paid once: mark every pack in the bundle
+  let bundleCount = 1
+  if (table === 'pack_orders') {
+    const { data: first } = await supabase.from('pack_orders').select('bundle_id').eq('id', id).single()
+    if (first?.bundle_id) {
+      const { data: all } = await supabase.from('pack_orders').update({ status: 'awaiting' }).eq('bundle_id', first.bundle_id).select('id')
+      bundleCount = all?.length || 1
+    }
+  }
 
   let label = 'a payment'
   if (table === 'bookings') {
@@ -366,6 +439,7 @@ export async function markAwaiting(table: 'bookings' | 'hs_subscriptions' | 'pac
   } else if (table === 'pack_orders') {
     const { data } = await supabase.from('pack_orders').select('pack_name').eq('id', id).single()
     label = data?.pack_name || label
+    if (bundleCount > 1) label = `Exam Special (${bundleCount} packs)`
   } else if (table === 'other_course_requests') {
     const { data } = await supabase.from('other_course_requests').select('course_name').eq('id', id).single()
     label = data?.course_name || label

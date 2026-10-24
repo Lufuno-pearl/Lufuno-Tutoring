@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { CalendarPlus, BookOpen, MessageCircle, Landmark, History, Video, HelpCircle, ClipboardList, Gift, ScrollText, Target, Home, CalendarCheck, MoreHorizontal } from 'lucide-react'
 import MaterialsSection from './MaterialsSection'
 import PackDownload from './PackDownload'
+import ExamPacks from './ExamPacks'
+import { OPEN_SECTIONS, FEATURES_OPEN_LABEL, DELIVERY_PROMISE } from '../../lib/examSpecial'
 import MyVideos from './MyVideos'
 import FileBox from '../FileBox'
 import { createClient } from '../../lib/supabase/client'
@@ -183,7 +185,7 @@ function CustomPackBox({ requestCustomPack }: { requestCustomPack: any }) {
   return (
     <div className="panel" style={{ marginTop: 20 }}>
       <h4>Need a different subject?</h4>
-      <p className="meta">Not on the list above? Tell us what subject and topic you need, and we'll put a pack together — same R100.</p>
+      <p className="meta">Not on the list above? Tell us what subject and topic you need, and we'll put a pack together for R60.</p>
       <div className="field"><label>Subject</label><input value={subjectName} onChange={e => setSubjectName(e.target.value)} placeholder="e.g. Life Sciences" /></div>
       <div className="field"><label>Topic / details (optional)</label><input value={details} onChange={e => setDetails(e.target.value)} placeholder="e.g. Photosynthesis" /></div>
       <button className="btn btn-primary" onClick={handleSubmit} disabled={sending}>{sending ? 'Sending...' : 'Request this pack'}</button>
@@ -417,8 +419,13 @@ function SessionConfirm({ rows, respondToSession, onAnswered }: { rows: any[]; r
   )
 }
 
-function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visiblePacks, bookings, subs, orders, messages, attendance, videoRequests, myVideoSubjects, homeworkRequests, videoTopicRequests, moduleRequests, testPreps, canTestPrep, marks, scheduled, ratingDue, hasSchool, mySchool, myProvince, avatarPath, actions }: any) {
+function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visiblePacks, bookings, subs, orders, messages, attendance, videoRequests, myVideoSubjects, homeworkRequests, videoTopicRequests, moduleRequests, testPreps, canTestPrep, marks, scheduled, ratingDue, hasSchool, mySchool, myProvince, avatarPath, locked, actions }: any) {
   const router = useRouter()
+  const [lockNote, setLockNote] = useState(false)
+  // before the open date, students with nothing requested yet can only use the open sections
+  if (locked && !OPEN_SECTIONS.includes(section)) section = 'menu'
+  const rawSetSection = setSection
+  setSection = (s: Section) => { if (locked && !OPEN_SECTIONS.includes(s)) { setLockNote(true); return } setLockNote(false); rawSetSection(s) }
   const [bookingSubmitting, setBookingSubmitting] = useState(false)
   const [thankYou, setThankYou] = useState('')
   const [hsGrade, setHsGrade] = useState('')
@@ -456,10 +463,22 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
   if (section === 'menu') {
     const waitingPay = [...(bookings || []), ...(subs || []), ...(orders || [])].filter((x: any) => x.status === 'pending').length
 
-    const tile = (label: string, icon: any, gradient: string, onClick: () => void) => (
-      <div className="tile" style={{ cursor: 'pointer' }} onClick={onClick}>
-        <div className="tile-art" style={{ background: gradient }}><span style={{ fontSize: '3rem', lineHeight: 1, filter: 'drop-shadow(0 3px 6px rgba(0,0,0,.25))' }}>{icon}</span></div>
-        <div className="tile-body"><div className="name">{label}</div></div>
+    const tile = (label: string, icon: any, gradient: string, onClick: () => void, sec?: Section) => {
+      const isLocked = !!locked && !!sec && !OPEN_SECTIONS.includes(sec)
+      return (
+        <div className="tile" style={{ cursor: 'pointer', opacity: isLocked ? 0.55 : 1 }} onClick={onClick}>
+          <div className="tile-art" style={{ background: isLocked ? 'linear-gradient(135deg, #B9B2CF, #9A92B8)' : gradient, position: 'relative' }}>
+            <span style={{ fontSize: '3rem', lineHeight: 1, filter: 'drop-shadow(0 3px 6px rgba(0,0,0,.25))' }}>{icon}</span>
+            {isLocked && <span style={{ position: 'absolute', top: 8, right: 10, fontSize: '1.2rem' }}>🔒</span>}
+          </div>
+          <div className="tile-body"><div className="name">{label}</div>{isLocked && <div className="meta" style={{ margin: 0, fontSize: '0.75rem' }}>Opens {FEATURES_OPEN_LABEL}</div>}</div>
+        </div>
+      )
+    }
+    const lockBanner = locked && lockNote && (
+      <div className="panel" style={{ background: '#FFF3D0', borderLeft: '5px solid #F2C14E', fontWeight: 700, marginBottom: 12 }}>
+        🔒 This opens on {FEATURES_OPEN_LABEL}. Study Packs are open now!
+        <div><button className="btn btn-primary" style={{ marginTop: 8 }} onClick={() => setSection('packs')}>Get my study packs</button></div>
       </div>
     )
 
@@ -467,11 +486,12 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
       return (
         <div>
           <h3 style={{ marginTop: 0 }}>Tutoring</h3>
+          {lockBanner}
           <div className="card-grid">
-            {tile('Request Tutoring', '🙋', 'linear-gradient(135deg, #8B6FD9, #6E4FC7)', () => setSection('book'))}
-            {tile('My Bookings & Attendance', '🗓️', 'linear-gradient(135deg, #9B7FE8, #7A5FD0)', () => setSection('history'))}
-            {tile('My Marks', '📈', 'linear-gradient(135deg, #2E7D4F, #1F5C38)', () => setSection('marks'))}
-            {tile('Test & Exam Prep', '🎯', 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('testprep'))}
+            {tile('Request Tutoring', '🙋', 'linear-gradient(135deg, #8B6FD9, #6E4FC7)', () => setSection('book'), 'book')}
+            {tile('My Bookings & Attendance', '🗓️', 'linear-gradient(135deg, #9B7FE8, #7A5FD0)', () => setSection('history'), 'history')}
+            {tile('My Marks', '📈', 'linear-gradient(135deg, #2E7D4F, #1F5C38)', () => setSection('marks'), 'marks')}
+            {tile('Test & Exam Prep', '🎯', 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('testprep'), 'testprep')}
           </div>
         </div>
       )
@@ -481,11 +501,12 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
       return (
         <div>
           <h3 style={{ marginTop: 0 }}>Learn</h3>
+          {lockBanner}
           <div className="card-grid">
-            {tile(canTestPrep ? 'Question of the Day' : 'Question of the Day 🔒', '💡', 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('qotd'))}
-            {tile('Study Packs', '📚', 'linear-gradient(135deg, #C89B3C, #A87D24)', () => setSection('packs'))}
-            {tile('Video Lessons', '🎬', 'linear-gradient(135deg, #1FB6A3, #17897B)', () => setSection('video'))}
-            {tier === 'highschool' && tile('Homework Help', '📝', 'linear-gradient(135deg, #E0956F, #C46B3E)', () => setSection('homework'))}
+            {tile(canTestPrep ? 'Question of the Day' : 'Question of the Day 🔒', '💡', 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('qotd'), 'qotd')}
+            {tile('Study Packs', '📚', 'linear-gradient(135deg, #C89B3C, #A87D24)', () => setSection('packs'), 'packs')}
+            {tile('Video Lessons', '🎬', 'linear-gradient(135deg, #1FB6A3, #17897B)', () => setSection('video'), 'video')}
+            {tier === 'highschool' && tile('Homework Help', '📝', 'linear-gradient(135deg, #E0956F, #C46B3E)', () => setSection('homework'), 'homework')}
           </div>
         </div>
       )
@@ -495,10 +516,11 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
       return (
         <div>
           <h3 style={{ marginTop: 0 }}>More</h3>
+          {lockBanner}
           <div className="card-grid">
-            {tile('Refer & Earn', '🎁', 'linear-gradient(135deg, #F2C14E, #D9A32E)', () => setSection('referral'))}
-            {tier === 'highschool' && tile('My School', '🏫', 'linear-gradient(135deg, #5FA3D9, #3F7FB8)', () => setSection('school'))}
-            {tile('How It Works', '❓', 'linear-gradient(135deg, #B98CE0, #8B5FC7)', () => setSection('guide'))}
+            {tile('Refer & Earn', '🎁', 'linear-gradient(135deg, #F2C14E, #D9A32E)', () => setSection('referral'), 'referral')}
+            {tier === 'highschool' && tile('My School', '🏫', 'linear-gradient(135deg, #5FA3D9, #3F7FB8)', () => setSection('school'), 'school')}
+            {tile('How It Works', '❓', 'linear-gradient(135deg, #B98CE0, #8B5FC7)', () => setSection('guide'), 'guide')}
             {tile('Terms & Conditions', '📜', 'linear-gradient(135deg, #7A8FB0, #566B8F)', () => router.push('/terms'))}
             {tile('Privacy', '🔒', 'linear-gradient(135deg, #6BB59A, #4A9279)', () => router.push('/privacy'))}
             {tile('Add to Phone', '📲', 'linear-gradient(135deg, #E39B6B, #C97B49)', () => router.push('/install'))}
@@ -512,12 +534,38 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
     const hasRequested = (bookings || []).length + (subs || []).length + (moduleRequests || []).length > 0
 
     const payWaiting = waitingPay > 0 && (
-      <div className="panel" style={{ cursor: 'pointer', borderLeft: '5px solid #F2C14E' }} onClick={() => setSection('book')}>
+      <div className="panel" style={{ cursor: 'pointer', borderLeft: '5px solid #F2C14E' }} onClick={() => setSection(orders && orders.some((o: any) => o.status === 'pending') && locked ? 'packs' : 'book')}>
         <div className="meta" style={{ marginBottom: 2 }}>Waiting for payment</div>
         <h4 style={{ margin: 0 }}>{waitingPay === 1 ? '1 request needs payment' : `${waitingPay} requests need payment`}</h4>
         <div className="meta" style={{ marginBottom: 0 }}>Tap to pay and lock in your session.</div>
       </div>
     )
+
+    if (locked) {
+      const soon = [['🙋', 'Tutoring with real tutors'], ['🎬', 'Video lessons'], ['📈', 'Marks and test prep'], ['🎁', 'Refer and earn']]
+      return (
+        <div>
+          <Hero name={name || ''} avatarPath={avatarPath} />
+          {payWaiting}
+          <div className="panel" style={{ background: 'linear-gradient(135deg, #2B1766, #4a2fa0)', color: '#fff', position: 'relative', overflow: 'hidden', paddingRight: 120 }}>
+            <div style={{ fontWeight: 800, fontSize: '0.8rem', color: '#F2C14E' }}>🚀 LAUNCHING IN DECEMBER</div>
+            <h3 style={{ margin: '6px 0', color: '#fff' }}>Welcome to Aid &amp; Ace{name ? `, ${name.trim().split(' ')[0]}` : ''}!</h3>
+            <div style={{ fontSize: '0.9rem', opacity: 0.9 }}>Tutoring, videos and more are coming. Online for every student, wherever you are.</div>
+            <img src="/mascot.svg" alt="" style={{ position: 'absolute', right: -6, bottom: -4, width: 108 }} />
+          </div>
+          <div className="panel" style={{ background: 'linear-gradient(135deg, #F9D6E6, #FFE4A8)', border: '3px dashed #fff' }}>
+            <h4 style={{ margin: 0, color: '#E0457B' }}>📚 Exam Special is open now!</h4>
+            <p className="meta" style={{ margin: '4px 0 10px' }}>Fact sheets, formulas and lots of practice questions, organised topic by topic. Pick your packs, tell us your scope, and your pack is with you {DELIVERY_PROMISE} of your payment being accepted.</p>
+            <button className="btn btn-gold" style={{ width: '100%' }} onClick={() => setSection('packs')}>Get my study packs</button>
+          </div>
+          <div className="panel">
+            <h4 style={{ marginTop: 0 }}>Coming on {FEATURES_OPEN_LABEL}</h4>
+            {soon.map(([i, t]) => <div key={t} style={{ padding: '6px 0', opacity: 0.7 }}>{i} {t} 🔒</div>)}
+          </div>
+          <HelpButton />
+        </div>
+      )
+    }
 
     if (!canTestPrep) {
       return (
@@ -777,22 +825,41 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
 }
 
   if (section === 'packs') {
+    // packs ordered together share a bundle and one payment
+    const groups: { key: string; rows: any[] }[] = []
+    const seen: Record<string, { key: string; rows: any[] }> = {}
+    ;(orders || []).forEach((o: any) => {
+      const key = o.bundle_id || o.id
+      if (!seen[key]) { seen[key] = { key, rows: [] }; groups.push(seen[key]) }
+      seen[key].rows.push(o)
+    })
+    const takenIds = (orders || []).filter((o: any) => ['pending', 'awaiting', 'confirmed'].includes(o.status)).map((o: any) => o.pack_id)
     return (
       <div>
         <Back />
-        <h3>Study packs — R100 each</h3>
-        {visiblePacks.map((p: any) => (
-          <PackButton key={p.id} id={p.id} name={p.name} buyPack={buyPack} />
-        ))}
+        <ExamPacks tier={tier} packs={visiblePacks} takenIds={takenIds} buyPacks={actions.buyPacks} onOrdered={() => router.refresh()} />
+        {groups.length > 0 && <h4 style={{ marginTop: 22 }}>My pack orders</h4>}
+        {groups.map(g => {
+          const first = g.rows[0]
+          const total = g.rows.reduce((t: number, r: any) => t + (r.price || 0), 0)
+          const title = g.rows.length > 1 ? `Exam Special · ${g.rows.length} packs` : first.pack_name
+          return (
+            <div className="panel" key={g.key} style={{ marginTop: 12 }}>
+              <h4>{title}</h4>
+              {g.rows.length > 1 && <div className="meta">{g.rows.map((r: any) => r.pack_name.replace(/ Pack$/, '')).join(' · ')}</div>}
+              <StatusPill status={first.status} />
+              {first.status === 'pending' && <div style={{ marginTop: 12 }}><PayBlock kind="pack_orders" id={first.id} label={title} price={total} reference={first.reference} markAwaiting={markAwaiting} /></div>}
+              {first.status === 'awaiting' && <p className="meta" style={{ marginTop: 8 }}>We are checking your payment. Once it is accepted you will get a notification, and your pack will be with you {DELIVERY_PROMISE}.</p>}
+              {first.status === 'confirmed' && g.rows.map((r: any) => (
+                <div key={r.id} style={{ marginTop: 8 }}>
+                  {g.rows.length > 1 && <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{r.pack_name.replace(/ Pack$/, '')}</div>}
+                  <PackDownload orderId={r.id} />
+                </div>
+              ))}
+            </div>
+          )
+        })}
         <CustomPackBox requestCustomPack={requestCustomPack} />
-        {(orders || []).map((o: any) => (
-          <div className="panel" key={o.id} style={{ marginTop: 12 }}>
-            <h4>{o.pack_name}</h4>
-            <StatusPill status={o.status} />
-            {o.status === 'pending' && <div style={{ marginTop: 12 }}><PayBlock kind="pack_orders" id={o.id} label={o.pack_name} price={o.price} reference={o.reference} markAwaiting={markAwaiting} /></div>}
-            {o.status === 'confirmed' && <PackDownload orderId={o.id} />}
-          </div>
-        ))}
       </div>
     )
   }

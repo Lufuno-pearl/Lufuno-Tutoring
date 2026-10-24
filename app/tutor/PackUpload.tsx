@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '../../lib/supabase/client'
 import { notifyPackReady } from './actions'
 
-export default function PackUpload({ orderId, studentId }: { orderId: string; studentId: string }) {
+export default function PackUpload({ orderId, studentId, packName }: { orderId: string; studentId: string; packName?: string }) {
   const [files, setFiles] = useState<{ name: string }[]>([])
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
@@ -25,7 +25,7 @@ export default function PackUpload({ orderId, studentId }: { orderId: string; st
     if (error) setError(error.message)
     else {
       loadFiles()
-      await notifyPackReady(studentId)
+      await notifyPackReady(studentId, packName)
     }
   }
 

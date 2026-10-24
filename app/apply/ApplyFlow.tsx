@@ -101,7 +101,7 @@ export default function ApplyFlow({ userId, email, initial }: { userId: string; 
           </div>
           <label className="meta">What would you like to teach?</label>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: '8px 0 16px' }}>
-            <button type="button" style={chip(d.teaches_hs)} onClick={() => set({ teaches_hs: !d.teaches_hs })}>High school (Gr 10–12)</button>
+            <button type="button" style={chip(d.teaches_hs)} onClick={() => set({ teaches_hs: !d.teaches_hs })}>High school (Gr 8–12)</button>
             <button type="button" style={chip(d.teaches_uni)} onClick={() => set({ teaches_uni: !d.teaches_uni })}>University</button>
           </div>
           {d.teaches_hs && (<>

@@ -5,7 +5,7 @@ import ViewSwitcher from './ViewSwitcher'
 
 export const metadata = {
   title: 'Aid & Ace Tutoring',
-  description: 'Online tutoring in Maths, Applied Maths and Statistics for Wits students, and Maths & Physical Sciences for Gr 10-12.',
+  description: 'Online tutoring in Maths, Applied Maths and Statistics for Wits students, and Maths & Physical Sciences for Gr 8-12.',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

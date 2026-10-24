@@ -6,6 +6,7 @@ import { Home, Inbox, Users, MoreHorizontal, Clock, UserCog, BookOpen, Clipboard
 import InstallButton from '../InstallButton'
 import TutorMaterials from './TutorMaterials'
 import PackUpload from './PackUpload'
+import ScopeFiles from './ScopeFiles'
 import VideoManager from './VideoManager'
 import VideoRequests from './VideoRequests'
 import FileBox from '../FileBox'
@@ -515,14 +516,16 @@ function TutorInner({ section, setSection, tab, bookings, subs, orders, partners
         {(orders || []).map((o: any) => (
           <div className="panel" key={o.id}>
             <h4>{o.pack_name}</h4>
-            <div className="meta">{o.profiles?.full_name} · {o.profiles?.email} · R{o.price}{o.reference ? ` · Ref: ${o.reference}` : ''}</div>
+            <div className="meta">{o.profiles?.full_name} · {o.profiles?.email} · {o.profiles?.tier === 'highschool' ? 'High school' : 'University'} · R{o.price}{o.reference ? ` · Ref: ${o.reference}` : ''}</div>
+            {o.bundle_id && <div className="meta">Paid together with the other packs in this order (Mark paid confirms them all).</div>}
             <StatusPill status={o.status} />
+            <ScopeFiles orderId={o.id} scopeText={o.scope_text} />
             {o.status !== 'confirmed' && (
               <form action={async () => { await confirmPayment('pack_orders', o.id) }} style={{ marginTop: 8 }}>
                 <button className="btn btn-gold">Mark paid</button>
               </form>
             )}
-            {o.status === 'confirmed' && <PackUpload orderId={o.id} studentId={o.student_id} />}
+            {o.status === 'confirmed' && <PackUpload orderId={o.id} studentId={o.student_id} packName={o.pack_name} />}
           </div>
         ))}
         <h3>Custom pack requests</h3>
