@@ -109,7 +109,7 @@ export async function endRoom(roomId: string) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { ok: false }
-  await supabase.from('session_rooms').update({ ended_at: new Date().toISOString() }).eq('id', roomId).eq('tutor_id', user.id)
+  await supabase.from('session_rooms').update({ ended_at: new Date().toISOString(), link: null }).eq('id', roomId).eq('tutor_id', user.id)
   revalidatePath('/partner'); revalidatePath('/tutor')
   return { ok: true }
 }
