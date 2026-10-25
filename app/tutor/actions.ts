@@ -162,7 +162,7 @@ export async function notifyPackReady(studentId: string, packName?: string) {
       body: `Hi ${first}! 🎉 ${what} is ready. Open Learn → Study Packs to download it. Good luck with your exams!`,
     })
   }
-  await sendPushToUser(studentId, 'Your study pack is ready 🎉', `${what} is ready to download.`, '/portal')
+  await sendPushToUser(studentId, 'Your study pack is ready 🎉', `${what} is ready to download.`, '/portal?section=packs')
 }
 
 export async function toggleAvailable(current: boolean) {

@@ -6,10 +6,18 @@ export default function PackDownload({ orderId }: { orderId: string }) {
   const [files, setFiles] = useState<{ name: string }[]>([])
   const supabase = createClient()
 
-  useEffect(() => {
+  function load() {
     supabase.storage.from('study-packs').list(orderId).then(({ data, error }) => {
       if (!error && data) setFiles(data.filter(f => f.name !== '.emptyFolderPlaceholder'))
     })
+  }
+  useEffect(() => {
+    load()
+    // keep checking, so a pack that arrives while the student is on this screen shows up by itself
+    const t = setInterval(load, 15000)
+    const onVis = () => { if (document.visibilityState === 'visible') load() }
+    document.addEventListener('visibilitychange', onVis)
+    return () => { clearInterval(t); document.removeEventListener('visibilitychange', onVis) }
   }, [])
 
   async function handleDownload(name: string) {
