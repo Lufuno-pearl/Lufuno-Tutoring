@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useLayoutEffect } from 'react'
+import GroupSchedule from '../GroupSchedule'
 import RoomPanel from '../room/RoomPanel'
 import MeetingLinkForm from '../MeetingLinkForm'
 import TabBarPortal, { scrollPageToTop } from '../TabBarPortal'
@@ -24,12 +25,12 @@ import { eligibility } from '../../lib/matching'
 import { GROUP_MAX, UNI_PRICE } from '../../lib/pricing'
 import MarksView from '../MarksView'
 import { ChatBubble, ReplyBar } from '../ChatParts'
-import ScheduleManager, { studentFormat, studentAlternate, classmatesOf } from '../ScheduleManager'
+import ScheduleManager, { studentFormat, studentAlternate, classmatesOf, isGroupStudent } from '../ScheduleManager'
 import HomeworkSection from './HomeworkSection'
 import TestList, { daysUntil } from '../TestList'
 
 type Tab = 'home' | 'requests' | 'students' | 'chat' | 'more'
-type Section = 'menu' | 'pending' | 'assign' | 'packs' | 'sessions' | 'chat' | 'mytutoring' | 'homework' | 'videos' | 'videoreq' | 'referrals' | 'availability' | 'modules' | 'tests' | 'ratings'
+type Section = 'menu' | 'schedule' | 'pending' | 'assign' | 'packs' | 'sessions' | 'chat' | 'mytutoring' | 'homework' | 'videos' | 'videoreq' | 'referrals' | 'availability' | 'modules' | 'tests' | 'ratings'
 
 function subjectLabel(choice?: string) {
   return choice === 'maths' ? 'Mathematics' : choice === 'physics' ? 'Physical Sciences' : 'Maths & Physical Sciences'
@@ -44,7 +45,7 @@ function StatusPill({ status }: { status: string }) {
   return <span className={`status ${status}`}>{label}</span>
 }
 
-function ChatThread({ studentId, thread, actions, marks, schedule, format, alternate, classmates }: { studentId: string; thread: any; actions: any; marks?: any[]; schedule?: any[]; format?: 'online' | 'physical'; alternate?: boolean; classmates?: { id: string; name: string }[] }) {
+function ChatThread({ studentId, thread, actions, marks, schedule, format, alternate, classmates, groupOnly }: { groupOnly?: boolean; studentId: string; thread: any; actions: any; marks?: any[]; schedule?: any[]; format?: 'online' | 'physical'; alternate?: boolean; classmates?: { id: string; name: string }[] }) {
   const { markAttendance, sendTutorMessage } = actions
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
@@ -78,7 +79,7 @@ function ChatThread({ studentId, thread, actions, marks, schedule, format, alter
       </div>
       <div style={{ marginTop: 14, borderTop: '1px solid var(--line)', paddingTop: 12 }}>
         <h4 style={{ marginTop: 0 }}>Schedule</h4>
-        <ScheduleManager studentId={studentId} rows={schedule || []} defaultFormat={format || 'online'} alternateDefault={!!alternate} classmates={classmates || []} />
+        <ScheduleManager readOnly={!!groupOnly} studentId={studentId} rows={schedule || []} defaultFormat={format || 'online'} alternateDefault={!!alternate} classmates={classmates || []} />
       </div>
       <TutorMaterials studentId={studentId} studentName={thread.name} />
       <div style={{ marginTop: 14, borderTop: '1px solid var(--line)', paddingTop: 12 }}>
@@ -240,6 +241,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
             {tile('Sessions Log', '📋', 'linear-gradient(135deg, #9B7FE8, #7A5FD0)', () => setSection('sessions'))}
             {tile('Upcoming Tests', '🎯', 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('tests'), soonTests)}
             {tile('Referrals', '🎁', 'linear-gradient(135deg, #F2C14E, #D9A32E)', () => setSection('referrals'))}
+            {tile('Schedule', '📅', 'linear-gradient(135deg, #8B6FD9, #6E4FC7)', () => setSection('schedule'))}
             {tile('My Tutoring', '⭐', 'linear-gradient(135deg, #C89B3C, #A87D24)', () => { setSection('mytutoring'); setMyStudentId(null); setMyView('menu'); setMarksStudentId(null) })}
           </div>
         </div>
@@ -405,6 +407,16 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
       <div>
         <Back />
         <HomeworkSection requests={homeworkRequests || []} partners={partners || []} markSolved={markHomeworkSolved} />
+      </div>
+    )
+  }
+
+  if (section === 'schedule') {
+    return (
+      <div>
+        <Back />
+        <h3>Schedule</h3>
+        <GroupSchedule />
       </div>
     )
   }
@@ -743,7 +755,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
               )}
             </div>
           ))}
-          <ChatThread studentId={myStudentId} thread={thread} actions={{ markAttendance, sendTutorMessage }} marks={(marksByStudent || {})[myStudentId]} schedule={(scheduleByStudent || {})[myStudentId]} format={studentFormat(myStudentId, bookings || [], subs || [])} alternate={studentAlternate(myStudentId, bookings || [], subs || [])} classmates={classmatesOf(myStudentId, subs || [])} />
+          <ChatThread studentId={myStudentId} thread={thread} actions={{ markAttendance, sendTutorMessage }} marks={(marksByStudent || {})[myStudentId]} schedule={(scheduleByStudent || {})[myStudentId]} format={studentFormat(myStudentId, bookings || [], subs || [])} alternate={studentAlternate(myStudentId, bookings || [], subs || [])} classmates={classmatesOf(myStudentId, subs || [])} groupOnly={isGroupStudent(myStudentId, [...(myClaimedBookings || [])], [...(myClaimedSubs || [])])} />
         </div>
       )
     }

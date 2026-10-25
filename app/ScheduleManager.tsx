@@ -29,7 +29,13 @@ export function classmatesOf(studentId: string, subs: any[]): { id: string; name
   return out
 }
 
-export default function ScheduleManager({ studentId, rows, defaultFormat = 'online', alternateDefault = false, classmates = [] }: { studentId: string; rows: Row[]; defaultFormat?: 'online' | 'physical'; alternateDefault?: boolean; classmates?: { id: string; name: string }[] }) {
+// a student is a group student when every active plan they have is a group plan
+export function isGroupStudent(studentId: string, bookings: any[], subs: any[]): boolean {
+  const mine = [...(subs || []), ...(bookings || [])].filter((x: any) => x.student_id === studentId && x.status !== 'cancelled' && x.status !== 'rejected')
+  return mine.length > 0 && mine.every((x: any) => x.session_type !== 'one_on_one')
+}
+
+export default function ScheduleManager({ readOnly = false, studentId, rows, defaultFormat = 'online', alternateDefault = false, classmates = [] }: { readOnly?: boolean; studentId: string; rows: Row[]; defaultFormat?: 'online' | 'physical'; alternateDefault?: boolean; classmates?: { id: string; name: string }[] }) {
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
   const [ok, setOk] = useState(false)
@@ -47,6 +53,23 @@ export default function ScheduleManager({ studentId, rows, defaultFormat = 'onli
     setOk(res.ok)
     setMessage(res.message)
     if (res.ok) setFormKey(k => k + 1)
+  }
+
+  if (readOnly) {
+    return (
+      <div>
+        <div className="meta" style={{ marginBottom: 8 }}>This student is in a group. Group times are set on the Schedule screen, so they are the same for everyone in the group.</div>
+        {upcoming.length === 0 && <p className="meta">No group sessions scheduled yet.</p>}
+        {upcoming.map(r => (
+          <div key={r.id} style={{ padding: '6px 0', borderTop: '1px solid var(--line)' }}>
+            <div style={{ fontWeight: 600 }}>{r.subject}</div>
+            <div className="meta" style={{ marginBottom: 0 }}>
+              {new Date(r.session_date + 'T12:00:00Z').toLocaleDateString('en-ZA', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' })} at {r.session_time.slice(0, 5)} · {r.format === 'physical' ? 'In person' : 'Online'}
+            </div>
+          </div>
+        ))}
+      </div>
+    )
   }
 
   return (

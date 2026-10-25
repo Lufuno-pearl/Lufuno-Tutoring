@@ -6,7 +6,7 @@ import AttendanceButtons from '../AttendanceButtons'
 import TutorMaterials from '../tutor/TutorMaterials'
 import MarksView from '../MarksView'
 import { ChatBubble, ReplyBar } from '../ChatParts'
-import ScheduleManager, { studentFormat, studentAlternate, classmatesOf } from '../ScheduleManager'
+import ScheduleManager, { studentFormat, studentAlternate, classmatesOf, isGroupStudent } from '../ScheduleManager'
 
 function subjectLabel(choice?: string) {
   return choice === 'maths' ? 'Mathematics' : choice === 'physics' ? 'Physical Sciences' : 'Maths & Physical Sciences'
@@ -139,7 +139,7 @@ export default function PartnerStudents({ allSubs, scheduleByStudent, marksByStu
       </div>
       <div style={{ marginTop: 14, borderTop: '1px solid var(--line)', paddingTop: 12 }}>
         <h4 style={{ marginTop: 0 }}>Schedule</h4>
-        <ScheduleManager studentId={sid} rows={(scheduleByStudent || {})[sid] || []} defaultFormat={studentFormat(sid, bookingsHere, subsHere)} alternateDefault={studentAlternate(sid, bookingsHere, subsHere)} classmates={classmatesOf(sid, allSubs || [])} />
+        <ScheduleManager readOnly={isGroupStudent(sid, bookingsHere, subsHere)} studentId={sid} rows={(scheduleByStudent || {})[sid] || []} defaultFormat={studentFormat(sid, bookingsHere, subsHere)} alternateDefault={studentAlternate(sid, bookingsHere, subsHere)} classmates={classmatesOf(sid, allSubs || [])} />
       </div>
       <TutorMaterials studentId={sid} studentName={thread.name} />
       <div style={{ marginTop: 14, borderTop: '1px solid var(--line)', paddingTop: 12 }}>
