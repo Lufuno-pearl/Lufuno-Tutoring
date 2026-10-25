@@ -62,7 +62,7 @@ async function PartnerDashboardInner() {
   const myHomework = homework.filter((h: any) => myStudentIds.includes(h.student_id))
   const myVideos = videos.filter((v: any) => myStudentIds.includes(v.student_id))
   // and only manages videos for the subjects they teach (owners see everything)
-  const videoOnly = isAdminEmail(user.email) ? null : allowedVideoSubjects({ teaches: (myTeach as any)?.teaches || [], modules: (myMods || []).map((m: any) => ({ name: m.module_name })) }, ALL_UNI_SUBJECTS, ALL_HS_SUBJECTS)
+  const videoOnly = isAdminEmail(user.email) ? null : allowedVideoSubjects({ teaches: (myTeach as any)?.teaches || [], modules: (myMods || []).map((m: any) => ({ name: m.module_name })) }, ALL_UNI_SUBJECTS, ALL_HS_SUBJECTS, { hsChoices: (mySubs || []).map((s: any) => s.subject_choice), uniSubjects: (myBookings || []).map((b: any) => b.subject) })
 
   // upcoming tests and exams for this tutor's own students
   const myTests = (testRows || [])

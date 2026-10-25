@@ -171,7 +171,7 @@ function MonthSummary({ subs, schoolByStudent }: { subs: any[]; schoolByStudent:
   )
 }
 
-function TutorInner({ section, setSection, tab, bookings, subs, orders, partners, threadsByStudent, attendanceRows, myAvailable, openBookings, openSubs, myClaimedBookings, myClaimedSubs, videoRequests, customPackRequests, homeworkRequests, videoTopicRequests, moduleRequests, testPreps, marksByStudent, scheduleByStudent, schoolByStudent, pendingApps, ratings, actions }: any) {
+function TutorInner({ videoOnly, section, setSection, tab, bookings, subs, orders, partners, threadsByStudent, attendanceRows, myAvailable, openBookings, openSubs, myClaimedBookings, myClaimedSubs, videoRequests, customPackRequests, homeworkRequests, videoTopicRequests, moduleRequests, testPreps, marksByStudent, scheduleByStudent, schoolByStudent, pendingApps, ratings, actions }: any) {
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null)
   useEffect(() => {
     try {
@@ -574,7 +574,7 @@ function TutorInner({ section, setSection, tab, bookings, subs, orders, partners
       <div>
         <Back />
         <h3>Manage videos</h3>
-        <VideoManager />
+        <VideoManager only={videoOnly} />
       </div>
     )
   }
