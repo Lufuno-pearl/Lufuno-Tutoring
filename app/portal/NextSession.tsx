@@ -71,9 +71,6 @@ export default function NextSession({ name, bookings, subs, scheduled, onRequest
             <div className="next-where">
               {next.b.format === 'physical' ? <><MapPin size={14} /> In person{next.b.area ? ` · ${next.b.area}` : ''}</> : <><Video size={14} /> Online</>}
             </div>
-            {next.b.format !== 'physical' && (next.b.meeting_link || classLink?.meeting_link) && (
-              <div className="meta" style={{ marginTop: 10, marginBottom: 0 }}>When your tutor opens the session, a Join button appears at the top of your home screen.</div>
-            )}
             {next.b.format === 'physical' && (
               asked ? (
                 <div className="meta" style={{ marginTop: 10, marginBottom: 0 }}>Request sent. Your tutor will reply in Chat.</div>
@@ -86,7 +83,7 @@ export default function NextSession({ name, bookings, subs, scheduled, onRequest
                 }} style={{ background: 'none', border: 'none', color: 'var(--purple-dark)', fontWeight: 600, padding: 0, marginTop: 10, cursor: 'pointer', fontSize: '0.85rem' }}>Can't make it in person? Ask for online</button>
               )
             )}
-            {next.b.format !== 'physical' && !next.b.meeting_link && !classLink?.meeting_link && <div className="meta" style={{ marginTop: 10, marginBottom: 0 }}>Your tutor will add the meeting link here.</div>}
+            {next.b.format !== 'physical' && <div className="meta" style={{ marginTop: 10, marginBottom: 0 }}>Your tutor will send the link when the session starts. A Join button then appears at the top of your home screen.</div>}
             {next.b.note && <div className="meta" style={{ marginTop: 8, marginBottom: 0 }}>📝 {next.b.note}</div>}
             {rest.length > 0 && (
               <div style={{ marginTop: 14, borderTop: '1px solid var(--line)', paddingTop: 10 }}>
@@ -102,8 +99,8 @@ export default function NextSession({ name, bookings, subs, scheduled, onRequest
         {now && !next && classLink && (
           <>
             <div className="next-title">Your online class</div>
-            <div className="next-when">Join your lesson with your tutor.</div>
-            <a className="btn btn-gold" href={classLink.meeting_link!} target="_blank" rel="noopener noreferrer" style={{ marginTop: 12 }}>Join class</a>
+            <div className="next-when">Your tutor will send the link for your next session.</div>
+            <div className="meta" style={{ marginTop: 10, marginBottom: 0 }}>When they start it, a Join button appears at the top of your home screen.</div>
           </>
         )}
         {now && !next && !classLink && (() => {

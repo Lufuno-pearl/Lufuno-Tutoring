@@ -1141,7 +1141,7 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
             <div className="meta">{b.day} at {b.time} · {b.format === 'physical' ? 'Physical' : 'Online'}{b.session_type === 'one_on_one' ? ' · One-on-one' : ' · Group'}{b.area ? ` · ${b.area}` : ''} · R{b.price}</div>
             <StatusPill status={b.status} />
             <PaySteps status={b.status} />
-            {b.status === 'confirmed' && b.format === 'online' && b.meeting_link && <p style={{ marginTop: 8 }}><a href={b.meeting_link} target="_blank">Join session &rarr;</a></p>}
+            {b.status === 'confirmed' && b.format === 'online' && <p className="meta" style={{ marginTop: 8 }}>Your tutor will send the link when the session starts. Tap Join on your home screen then.</p>}
           </div>
         ))}
         {(subs || []).map((s: any) => (
@@ -1150,7 +1150,7 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
             <div className="meta">{s.subject_choice === 'maths' ? 'Mathematics' : s.subject_choice === 'physics' ? 'Physical Sciences' : 'Maths + Physical Sciences'}{s.grade ? ` · Gr ${s.grade}` : ''} · {s.format === 'physical' ? (s.alternate ? 'In person + online' : 'Physical') : 'Online'}{s.session_type === 'one_on_one' ? ' · One-on-one' : ' · Group'}{s.area ? ` · ${s.area}` : ''} · R{s.price}{s.status === 'confirmed' && s.end_date ? ` · Active until ${s.end_date}` : ''}</div>
             <StatusPill status={s.status} />
             <PaySteps status={s.status} />
-            {s.status === 'confirmed' && s.format === 'online' && s.meeting_link && <p style={{ marginTop: 8 }}><a href={s.meeting_link} target="_blank">Join session &rarr;</a></p>}
+            {s.status === 'confirmed' && s.format === 'online' && <p className="meta" style={{ marginTop: 8 }}>Your tutor will send the link when the session starts. Tap Join on your home screen then.</p>}
           </div>
         ))}
         <h3 style={{ marginTop: 24 }}>My attendance</h3>
