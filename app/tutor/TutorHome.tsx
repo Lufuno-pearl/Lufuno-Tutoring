@@ -513,21 +513,37 @@ function TutorInner({ section, setSection, tab, bookings, subs, orders, partners
       <div>
         <Back />
         <h3>Study pack orders</h3>
-        {(orders || []).map((o: any) => (
-          <div className="panel" key={o.id}>
-            <h4>{o.pack_name}</h4>
-            <div className="meta">{o.profiles?.full_name} · {o.profiles?.email} · {o.profiles?.tier === 'highschool' ? 'High school' : 'University'} · R{o.price}{o.reference ? ` · Ref: ${o.reference}` : ''}</div>
-            {o.bundle_id && <div className="meta">Paid together with the other packs in this order (Mark paid confirms them all).</div>}
-            <StatusPill status={o.status} />
-            <ScopeFiles orderId={o.id} scopeText={o.scope_text} />
-            {o.status !== 'confirmed' && (
-              <form action={async () => { await confirmPayment('pack_orders', o.id) }} style={{ marginTop: 8 }}>
-                <button className="btn btn-gold">Mark paid</button>
-              </form>
-            )}
-            {o.status === 'confirmed' && <PackUpload orderId={o.id} studentId={o.student_id} packName={o.pack_name} />}
-          </div>
-        ))}
+        {(() => {
+          // one card per student, so a student's packs sit together and the ones needing action come first
+          const byStudent: Record<string, any[]> = {}
+          ;(orders || []).forEach((o: any) => { (byStudent[o.student_id] = byStudent[o.student_id] || []).push(o) })
+          const needs = (rows: any[]) => rows.some(r => r.status !== 'confirmed')
+          const groups = Object.values(byStudent).sort((x: any, y: any) => Number(needs(y)) - Number(needs(x)))
+          if (groups.length === 0) return <p className="meta">No pack orders yet.</p>
+          return groups.map((rows: any[]) => {
+            const f = rows[0]
+            return (
+              <div className="panel" key={f.student_id}>
+                <h4 style={{ marginBottom: 2 }}>{f.profiles?.full_name || 'Student'}</h4>
+                <div className="meta">{f.profiles?.email} · {f.profiles?.tier === 'highschool' ? 'High school' : 'University'}</div>
+                {rows.map((o: any) => (
+                  <div key={o.id} style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid var(--line)' }}>
+                    <div style={{ fontWeight: 700 }}>{o.pack_name} <span className="meta">· R{o.price}{o.reference ? ` · Ref: ${o.reference}` : ''}</span></div>
+                    {o.bundle_id && <div className="meta">Paid together with the student's other packs (Mark paid confirms them all).</div>}
+                    <StatusPill status={o.status} />
+                    <ScopeFiles orderId={o.id} scopeText={o.scope_text} />
+                    {o.status !== 'confirmed' && (
+                      <form action={async () => { await confirmPayment('pack_orders', o.id) }} style={{ marginTop: 8 }}>
+                        <button className="btn btn-gold">Mark paid</button>
+                      </form>
+                    )}
+                    {o.status === 'confirmed' && <PackUpload orderId={o.id} studentId={o.student_id} packName={o.pack_name} />}
+                  </div>
+                ))}
+              </div>
+            )
+          })
+        })()}
         <h3>Custom pack requests</h3>
         {(customPackRequests || []).length === 0 && <p className="meta">None yet.</p>}
         {(customPackRequests || []).map((c: any) => (

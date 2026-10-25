@@ -1019,6 +1019,13 @@ export default function PortalHome(props: any) {
       const tabs: Tab[] = ['home', 'tutoring', 'chat', 'learn', 'more']
       if (saved && sections.includes(saved)) setSection(saved)
       if (savedTab && tabs.includes(savedTab)) setTab(savedTab)
+      // a link such as /portal?section=packs (from a push notification) opens that screen
+      const want = new URLSearchParams(window.location.search).get('section') as Section | null
+      if (want && sections.includes(want)) {
+        setSection(want)
+        setTab(want === 'chat' ? 'chat' : want === 'packs' ? 'learn' : 'home')
+        window.history.replaceState(null, '', window.location.pathname)
+      }
     } catch (e) {}
   }, [])
   useEffect(() => {

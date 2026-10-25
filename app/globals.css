@@ -276,3 +276,37 @@ html[data-mode="dark"] [style*="rgb(255, 227, 214)"],html[data-mode="dark"] [sty
 /* date and time boxes must not run off the screen on phones */
 .field{min-width:0;}
 .field input[type="date"],.field input[type="time"]{min-width:0;max-width:100%;-webkit-appearance:none;appearance:none;height:44px;}
+
+/* Pure white and pure black backgrounds */
+html[data-bg="white"]{--paper:#FFFFFF;--bg-art:none;--card:#FFFFFF;--line:#E4E4EA;}
+html[data-mode="dark"][data-bg="black"]{--paper:#000000;--bg-art:none;--card:#121212;--line:#2B2B2B;--ink:#F2F2F2;--unread:#1E1E1E;}
+html[data-bg="black"] body{background:#000;}
+
+/* Extra themes: each sets the page, cards, lines, text and accent */
+html[data-mode="dark"][data-bg="ocean"]{--paper:#0B1A2B;--bg-art:none;--card:#122740;--line:#1E3A5C;--ink:#EAF3FF;--purple:#2F8CFF;--purple-dark:#4C9DFF;--unread:#1B3558;}
+html[data-mode="dark"][data-bg="forest"]{--paper:#0F1F18;--bg-art:none;--card:#173025;--line:#24473A;--ink:#E9F6EE;--purple:#2E9E67;--purple-dark:#3FBF7F;--unread:#1F4034;}
+html[data-mode="dark"][data-bg="steel"]{--paper:#1A1C20;--bg-art:none;--card:#24272D;--line:#363A42;--ink:#F0F1F3;--purple:#FF8A3D;--purple-dark:#FF8A3D;--unread:#30343B;}
+html[data-mode="dark"][data-bg="navy"]{--paper:#0E1330;--bg-art:none;--card:#171E47;--line:#283163;--ink:#ECEFFF;--purple:#F2C14E;--purple-dark:#F2C14E;--unread:#212A5E;}
+html[data-mode="dark"][data-bg="photo"]{--paper:#000000;--card:rgba(20,20,24,.82);--line:rgba(255,255,255,.18);--ink:#F4F4F6;--purple:#8E7BFF;--purple-dark:#A593FF;--unread:rgba(60,60,70,.85);}
+html[data-bg="sand"]{--paper:#F3EFE6;--bg-art:none;--card:#FFFFFF;--line:#E1DACB;--ink:#1F1B14;--purple:#4B8A6C;--purple-dark:#2F6B4F;--unread:#EAE4D4;}
+html[data-bg="white"]{--ink:#111111;--purple:#2B2B2B;--purple-dark:#111111;--unread:#F1F1F1;}
+html[data-mode="dark"][data-bg="black"]{--purple:#8E7BFF;--purple-dark:#A593FF;}
+/* links and buttons follow each theme's accent */
+html[data-mode="dark"][data-bg="ocean"] a,html[data-mode="dark"][data-bg="forest"] a,html[data-mode="dark"][data-bg="steel"] a,html[data-mode="dark"][data-bg="navy"] a,html[data-mode="dark"][data-bg="photo"] a,html[data-mode="dark"][data-bg="black"] a{color:var(--purple-dark);}
+html[data-bg="navy"] .btn-primary,html[data-bg="steel"] .btn-primary,html[data-bg="forest"] .btn-primary{color:#10100A;}
+html[data-bg="navy"] .pill.active,html[data-bg="steel"] .pill.active,html[data-bg="forest"] .pill.active{color:#10100A;}
+
+/* Top bar, bottom bar and buttons follow the chosen theme */
+html[data-bg="black"]{--nav:#0C0C0E;--nav-ink:#D6D3E6;--nav-on:#fff;--btn:#8E7BFF;--btn-ink:#0A0A0C;}
+html[data-bg="white"]{--nav:#F2F2F2;--nav-ink:#444;--nav-on:#111;--btn:#111111;--btn-ink:#fff;}
+html[data-bg="ocean"]{--nav:#0F2238;--nav-ink:#A9C4E4;--nav-on:#fff;--btn:#2F8CFF;--btn-ink:#fff;}
+html[data-bg="forest"]{--nav:#122A20;--nav-ink:#A9CDB8;--nav-on:#fff;--btn:#3FBF7F;--btn-ink:#06150D;}
+html[data-bg="steel"]{--nav:#202328;--nav-ink:#B6BAC3;--nav-on:#fff;--btn:#FF8A3D;--btn-ink:#1A1000;}
+html[data-bg="navy"]{--nav:#141A3E;--nav-ink:#B3BBE6;--nav-on:#fff;--btn:#F2C14E;--btn-ink:#1B1500;}
+html[data-bg="sand"]{--nav:#E6DFCF;--nav-ink:#5C5445;--nav-on:#1F1B14;--btn:#2F6B4F;--btn-ink:#fff;}
+html[data-bg="photo"]{--nav:rgba(12,12,16,.85);--nav-ink:#D6D3E6;--nav-on:#fff;--btn:#8E7BFF;--btn-ink:#0A0A0C;}
+html:is([data-bg="black"],[data-bg="white"],[data-bg="ocean"],[data-bg="forest"],[data-bg="steel"],[data-bg="navy"],[data-bg="sand"],[data-bg="photo"]) :is(nav,.tabbar,.bottom-nav){background:var(--nav);box-shadow:0 -4px 16px rgba(0,0,0,.18);}
+html:is([data-bg="black"],[data-bg="white"],[data-bg="ocean"],[data-bg="forest"],[data-bg="steel"],[data-bg="navy"],[data-bg="sand"],[data-bg="photo"]) :is(.tabbar button,.bottom-nav a){color:var(--nav-ink);}
+html:is([data-bg="black"],[data-bg="white"],[data-bg="ocean"],[data-bg="forest"],[data-bg="steel"],[data-bg="navy"],[data-bg="sand"],[data-bg="photo"]) .tabbar button.active{color:var(--nav-on);background:rgba(128,128,128,.22);box-shadow:none;}
+html:is([data-bg="black"],[data-bg="white"],[data-bg="ocean"],[data-bg="forest"],[data-bg="steel"],[data-bg="navy"],[data-bg="sand"],[data-bg="photo"]) :is(.btn-primary,.pill.active){background:var(--btn);color:var(--btn-ink);border-color:var(--btn);box-shadow:none;}
+html:is([data-bg="black"],[data-bg="white"],[data-bg="ocean"],[data-bg="forest"],[data-bg="steel"],[data-bg="navy"],[data-bg="sand"],[data-bg="photo"]) nav :is(a,span,div){color:var(--nav-on);}

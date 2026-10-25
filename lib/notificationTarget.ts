@@ -7,7 +7,7 @@ export function notificationTarget(n: { message: string; student_id?: string | n
 
   if (home === '/portal') {
     if (has('new message', 'from your tutor', 'from lufuno')) return { home, section: 'chat', tab: 'chat' }
-    if (has('study pack')) return { home, section: 'packs', tab: 'learn' }
+    if (has('pack')) return { home, section: 'packs', tab: 'learn' }
     if (has('video')) return { home, section: 'video', tab: 'learn' }
     if (has('homework')) return { home, section: 'homework', tab: 'learn' }
     if (has('referr')) return { home, section: 'referral', tab: 'more' }
@@ -18,7 +18,7 @@ export function notificationTarget(n: { message: string; student_id?: string | n
   if (home === '/tutor') {
     if (has('new message')) return { home, section: 'chat', tab: 'chat', studentId: n.student_id || undefined }
     if (has('homework')) return { home, section: 'homework', tab: 'requests' }
-    if (has('study pack')) return { home, section: 'packs', tab: 'more' }
+    if (has('pack')) return { home, section: 'packs', tab: 'more' }
     if (has('video topic')) return { home, section: 'videoreq', tab: 'more' }
     if (has('video access')) return { home, section: 'videos', tab: 'more' }
     if (has('disputed')) return { home, section: 'sessions', tab: 'more' }
