@@ -2,7 +2,7 @@
 import { createClient } from '../../lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { sendPushToRole, sendPushToUser } from '../../lib/push'
-import { hsPrice, toSessionType, UNI_PRICE } from '../../lib/pricing'
+import { hsPrice, toSessionType, UNI_PRICE, EXTRA_PRICE, EXTRA_MAX } from '../../lib/pricing'
 import { randomUUID } from 'crypto'
 import { hasTutorAccess } from '../../lib/testPrepAccess'
 import { beforeOpen, isExamLocked, FEATURES_OPEN_LABEL, rowPrices, packTotal } from '../../lib/examSpecial'
@@ -250,6 +250,8 @@ export async function createHsSub(formData: FormData) {
   const subjectChoice = grade <= 9 ? 'maths' : (formData.get('subjectChoice') as string)
   const sessionType = toSessionType(formData.get('sessionType'))
   const price = hsPrice(subjectChoice, sessionType)
+  // optional: a different subject the student also wants help with
+  const extraSubject = String(formData.get('extraSubject') || '').replace(/\s+/g, ' ').trim().slice(0, 60)
 
   const now = new Date()
   const currentMonthNum = String(now.getMonth() + 1).padStart(2, '0')
@@ -299,16 +301,43 @@ export async function createHsSub(formData: FormData) {
     price,
     reference,
     ...(alternate ? { alternate: true } : {}),
+    ...(extraSubject ? { extra_subject: extraSubject } : {}),
   })
   if (insertError) return { ok: false, message: 'Something went wrong. Please try again.' }
   await supabase.from('notifications').insert({
     student_id: user.id,
     for_role: 'staff',
-    message: `New high school subscription request (Gr ${grade}, ${subjectChoice}, ${sessionType === 'one_on_one' ? 'one-on-one' : 'group'}, ${alternate ? 'in person with some online' : format}${area ? `, ${area}` : ''})`,
+    message: `New high school subscription request (Gr ${grade}, ${subjectChoice}, ${sessionType === 'one_on_one' ? 'one-on-one' : 'group'}, ${alternate ? 'in person with some online' : format}${area ? `, ${area}` : ''})${extraSubject ? ` — also wants help with: ${extraSubject}` : ''}`,
   })
   await sendPushToRole('staff', 'New subscription request', `${subjectChoice} subscription`, '/tutor')
   revalidatePath('/portal')
   return { ok: true, duplicate: false, reference }
+}
+
+export async function buyExtraSessions(subId: string, count: number) {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, message: 'Please log in again.' }
+  const n = Math.floor(Number(count))
+  if (!n || n < 1 || n > EXTRA_MAX) return { ok: false, message: `You can add 1 to ${EXTRA_MAX} extra sessions.` }
+
+  const todayISO = new Date().toISOString().slice(0, 10)
+  const { data: sub } = await supabase.from('hs_subscriptions').select('id, subject_choice').eq('id', subId).eq('student_id', user.id).eq('status', 'confirmed').gte('end_date', todayISO).maybeSingle()
+  if (!sub) return { ok: false, message: 'You need an active plan to add extra sessions.' }
+
+  const { data: mine } = await supabase.from('session_extras').select('id, count, status').eq('sub_id', subId).eq('student_id', user.id)
+  const rows = mine || []
+  // an unpaid request is replaced rather than stacked
+  const unpaid = rows.filter((r: any) => r.status === 'pending')
+  const taken = rows.filter((r: any) => r.status !== 'pending').reduce((a: number, r: any) => a + r.count, 0)
+  if (taken + n > EXTRA_MAX) return { ok: false, message: `You can add ${EXTRA_MAX} extra sessions a month in total. You have ${EXTRA_MAX - taken} left.` }
+  if (unpaid.length > 0) await supabase.from('session_extras').delete().in('id', unpaid.map((r: any) => r.id))
+
+  const reference = await getReference(supabase, user.id)
+  const { data: row, error } = await supabase.from('session_extras').insert({ sub_id: subId, student_id: user.id, count: n, price: n * EXTRA_PRICE, reference }).select('id').single()
+  if (error || !row) return { ok: false, message: 'Something went wrong. Please try again.' }
+  revalidatePath('/portal')
+  return { ok: true, id: row.id as string, price: n * EXTRA_PRICE, reference }
 }
 
 export async function buyPack(packId: string, packName: string) {
@@ -417,7 +446,7 @@ export async function requestCustomPack(subjectName: string, details: string) {
   return { reference }
 }
 
-export async function markAwaiting(table: 'bookings' | 'hs_subscriptions' | 'pack_orders' | 'other_course_requests' | 'video_access_requests', id: string) {
+export async function markAwaiting(table: 'bookings' | 'hs_subscriptions' | 'pack_orders' | 'other_course_requests' | 'video_access_requests' | 'session_extras', id: string) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   await supabase.from(table).update({ status: 'awaiting' }).eq('id', id)
@@ -445,6 +474,9 @@ export async function markAwaiting(table: 'bookings' | 'hs_subscriptions' | 'pac
   } else if (table === 'other_course_requests') {
     const { data } = await supabase.from('other_course_requests').select('course_name').eq('id', id).single()
     label = data?.course_name || label
+  } else if (table === 'session_extras') {
+    const { data } = await supabase.from('session_extras').select('count').eq('id', id).single()
+    label = data ? `${data.count} extra session${data.count > 1 ? 's' : ''}` : 'extra sessions'
   } else if (table === 'video_access_requests') {
     const { data } = await supabase.from('video_access_requests').select('subject').eq('id', id).single()
     label = data ? `video access — ${data.subject}` : label

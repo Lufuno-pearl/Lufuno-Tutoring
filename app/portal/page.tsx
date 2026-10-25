@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { isAdminEmail } from '../../lib/admin'
 import { submitRating } from './ratingActions'
-import { createBooking, createHsSub, buyPack, buyPacks, markAwaiting, sendMessage, getChatContacts, signOut, setTier, requestVideoAccess, requestCustomPack, requestVideoTopic, submitHomework, respondToSession, reportMissedSession } from './actions'
+import { createBooking, createHsSub, buyPack, buyPacks, markAwaiting, sendMessage, getChatContacts, signOut, setTier, requestVideoAccess, requestCustomPack, requestVideoTopic, submitHomework, respondToSession, reportMissedSession, buyExtraSessions } from './actions'
 import PortalHome from './PortalHome'
 import HeaderTools from '../HeaderTools'
 import { hasTutorAccess } from '../../lib/testPrepAccess'
@@ -51,6 +51,8 @@ export default async function Portal({ searchParams }: { searchParams?: { view?:
     supabase.from('scheduled_sessions').select('*').eq('student_id', user.id).order('session_date', { ascending: true }),
   ])
 
+  // empty until extras-and-subject.sql has been run
+  const { data: extrasRows } = await supabase.from('session_extras').select('*').eq('student_id', user.id).order('created_at', { ascending: false })
   const { data: ratingDueRows } = await supabase.rpc('rating_due') // empty until tutor-ratings.sql has been run
 
   // school is read separately so the portal still loads if the school columns are not set up yet
@@ -120,6 +122,7 @@ export default async function Portal({ searchParams }: { searchParams?: { view?:
         testPreps={testPreps || []}
         marks={marks || []}
         scheduled={scheduled || []}
+        extras={extrasRows || []}
         ratingDue={(ratingDueRows as any) || []}
         avatarPath={avatarPath}
         locked={locked}
@@ -127,7 +130,7 @@ export default async function Portal({ searchParams }: { searchParams?: { view?:
         mySchool={(schoolRow as any)?.school || ''}
         myProvince={(schoolRow as any)?.province || ''}
         canTestPrep={hasTutorAccess(subs, bookings)}
-        actions={{ submitRating, createBooking, createHsSub, buyPack, buyPacks, markAwaiting, sendMessage, getChatContacts, requestVideoAccess, requestCustomPack, requestVideoTopic, submitHomework, respondToSession, reportMissedSession, userId: user.id }}
+        actions={{ submitRating, createBooking, createHsSub, buyPack, buyPacks, markAwaiting, sendMessage, getChatContacts, requestVideoAccess, requestCustomPack, requestVideoTopic, submitHomework, respondToSession, reportMissedSession, buyExtraSessions, userId: user.id }}
       />
     </div>
   )

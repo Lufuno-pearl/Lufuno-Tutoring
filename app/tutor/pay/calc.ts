@@ -1,4 +1,4 @@
-import { hsSessions, toSessionType, SessionType, UNI_SESSIONS } from '../../../lib/pricing'
+import { hsSessions, toSessionType, SessionType, UNI_SESSIONS, EXTRA_TUTOR_PAY } from '../../../lib/pricing'
 
 export type AttRow = { id: string; student_id: string; marked_by: string; session_date: string; status: string; student_response?: string | null }
 export type SubRow = {
@@ -31,6 +31,7 @@ export type Line = {
   noShow: number
   tutorMissed: number
   overLimit: number
+  extraPaid: number
   paid: number
   pay: number
   days: { date: string; status: string; counted: boolean }[]
@@ -46,7 +47,8 @@ export function rateFor(sub: SubRow) {
   return Math.round(((sub.price * TUTOR_SHARE) / includedSessions(sub.subject_choice, sub.session_type)) * 100) / 100
 }
 
-export function computePay(att: AttRow[], subs: SubRow[]) {
+// extras: confirmed extra sessions per subscription id. They are paid at EXTRA_TUTOR_PAY each, after the plan's own sessions.
+export function computePay(att: AttRow[], subs: SubRow[], extras: Record<string, number> = {}) {
   const sorted = [...att].sort((a, b) => (a.session_date < b.session_date ? -1 : a.session_date > b.session_date ? 1 : 0))
   const lines = new Map<string, Line>()
   const used = new Map<string, number>()
@@ -75,7 +77,7 @@ export function computePay(att: AttRow[], subs: SubRow[]) {
         grade: sub.grade,
         included: includedSessions(sub.subject_choice, sub.session_type),
         rate: rateFor(sub),
-        present: 0, noShow: 0, tutorMissed: 0, overLimit: 0, paid: 0, pay: 0, days: [],
+        present: 0, noShow: 0, tutorMissed: 0, overLimit: 0, extraPaid: 0, paid: 0, pay: 0, days: [],
       }
       lines.set(key, line)
     }
@@ -83,6 +85,14 @@ export function computePay(att: AttRow[], subs: SubRow[]) {
     if (r.status === 'tutor_missed') { line.tutorMissed++; line.days.push({ date: r.session_date, status: r.status, counted: false }); continue }
 
     const n = used.get(sub.id) || 0
+    const allowedExtra = extras[sub.id] || 0
+    if (n >= line.included && n < line.included + allowedExtra) {
+      used.set(sub.id, n + 1)
+      line.extraPaid++
+      line.days.push({ date: r.session_date, status: r.status, counted: true })
+      if (r.status === 'present') line.present++
+      continue
+    }
     if (n >= line.included) { line.overLimit++; line.days.push({ date: r.session_date, status: r.status, counted: false }); continue }
     used.set(sub.id, n + 1)
     line.paid++
@@ -92,7 +102,7 @@ export function computePay(att: AttRow[], subs: SubRow[]) {
   }
 
   const out = Array.from(lines.values())
-  out.forEach(l => { l.pay = Math.round(l.paid * l.rate * 100) / 100 })
+  out.forEach(l => { l.pay = Math.round((l.paid * l.rate + l.extraPaid * EXTRA_TUTOR_PAY) * 100) / 100 })
   return { lines: out, unmatched }
 }
 
@@ -121,7 +131,7 @@ export function computeUniPay(rows: AttRow[], bookings: BookingRow[]) {
       line = {
         level: 'uni', tutorId: r.marked_by, studentId: r.student_id, subId: bk.id, choice: bk.subject,
         sessionType: toSessionType(bk.session_type), grade: null, included: UNI_SESSIONS, rate: uniRate(bk),
-        present: 0, noShow: 0, tutorMissed: 0, overLimit: 0, paid: 0, pay: 0, days: [],
+        present: 0, noShow: 0, tutorMissed: 0, overLimit: 0, extraPaid: 0, paid: 0, pay: 0, days: [],
       }
       lines.set(key, line)
     }

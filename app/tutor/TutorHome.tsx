@@ -173,7 +173,7 @@ function MonthSummary({ subs, schoolByStudent }: { subs: any[]; schoolByStudent:
   )
 }
 
-function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection, tab, bookings, subs, orders, partners, threadsByStudent, attendanceRows, myAvailable, openBookings, openSubs, myClaimedBookings, myClaimedSubs, videoRequests, customPackRequests, homeworkRequests, videoTopicRequests, moduleRequests, testPreps, marksByStudent, scheduleByStudent, schoolByStudent, pendingApps, ratings, actions }: any) {
+function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection, tab, bookings, subs, orders, partners, threadsByStudent, attendanceRows, myAvailable, openBookings, openSubs, myClaimedBookings, myClaimedSubs, videoRequests, extras, customPackRequests, homeworkRequests, videoTopicRequests, moduleRequests, testPreps, marksByStudent, scheduleByStudent, schoolByStudent, pendingApps, ratings, actions }: any) {
   const router = useRouter()
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null)
   useEffect(() => {
@@ -213,7 +213,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
         <div className="tile-body"><div className="name">{label}</div></div>
       </div>
     )
-    const pendingCount = (bookings || []).filter((b: any) => b.status === 'awaiting').length + (subs || []).filter((x: any) => x.status === 'awaiting').length
+    const pendingCount = (bookings || []).filter((b: any) => b.status === 'awaiting').length + (subs || []).filter((x: any) => x.status === 'awaiting').length + (extras || []).filter((x: any) => x.status === 'awaiting').length
     const unassigned = (openBookings || []).length + (openSubs || []).length
     const lowRecent = (ratings || []).filter((r: any) => r.stars <= 2 && Date.now() - new Date(r.created_at).getTime() < 30 * 86400000).length
 
@@ -361,7 +361,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
         {(subs || []).map((s: any) => (
           <div className="panel" key={s.id}>
             <h4>{s.month}</h4>
-            <div className="meta">{s.profiles?.full_name} · {s.profiles?.email}{s.grade ? ` · Gr ${s.grade}` : ''} · {subjectLabel(s.subject_choice)} · {kindLabel(s)} · R{s.price}{s.reference ? ` · Ref: ${s.reference}` : ''}{s.status === 'confirmed' && s.end_date ? ` · Active until ${s.end_date}` : ''}</div>
+            <div className="meta">{s.profiles?.full_name} · {s.profiles?.email}{s.grade ? ` · Gr ${s.grade}` : ''} · {subjectLabel(s.subject_choice)}{s.extra_subject ? ` + ${s.extra_subject}` : ''} · {kindLabel(s)} · R{s.price}{s.reference ? ` · Ref: ${s.reference}` : ''}{s.status === 'confirmed' && s.end_date ? ` · Active until ${s.end_date}` : ''}</div>
             <StatusPill status={s.status} />
             {s.status !== 'confirmed' && (
               <form action={async () => { await confirmPayment('hs_subscriptions', s.id) }} style={{ marginTop: 8 }}>
@@ -372,6 +372,20 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
               <form action={async (formData: FormData) => { await setMeetingLink('hs_subscriptions', s.id, formData.get('url') as string) }} style={{ marginTop: 8, display: 'flex', gap: 8 }}>
                 <input name="url" defaultValue={s.meeting_link || ''} placeholder="Google Meet link" style={{ flex: 1, padding: 8, border: '1px solid var(--line)' }} />
                 <button className="btn btn-primary">Save</button>
+              </form>
+            )}
+          </div>
+        ))}
+        <h3>Extra sessions</h3>
+        {(extras || []).filter((x: any) => x.status !== 'pending').length === 0 && <p className="meta">None yet.</p>}
+        {(extras || []).filter((x: any) => x.status !== 'pending').map((x: any) => (
+          <div className="panel" key={x.id}>
+            <h4>{x.count} extra session{x.count > 1 ? 's' : ''}</h4>
+            <div className="meta">{x.profiles?.full_name} · {x.profiles?.email} · R{x.price}{x.reference ? ` · Ref: ${x.reference}` : ''}</div>
+            <StatusPill status={x.status} />
+            {x.status !== 'confirmed' && (
+              <form action={async () => { await confirmPayment('session_extras', x.id) }} style={{ marginTop: 8 }}>
+                <button className="btn btn-gold">Mark paid</button>
               </form>
             )}
           </div>

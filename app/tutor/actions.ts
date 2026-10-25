@@ -31,7 +31,7 @@ async function countReferral(supabase: any, studentId: string) {
   }
 }
 
-export async function confirmPayment(table: 'bookings' | 'hs_subscriptions' | 'pack_orders' | 'video_access_requests' | 'other_course_requests', id: string) {
+export async function confirmPayment(table: 'bookings' | 'hs_subscriptions' | 'pack_orders' | 'video_access_requests' | 'other_course_requests' | 'session_extras', id: string) {
   const supabase = createClient()
 
   const updates: any = { status: 'confirmed' }
@@ -42,7 +42,7 @@ export async function confirmPayment(table: 'bookings' | 'hs_subscriptions' | 'p
     updates.end_date = end.toISOString().slice(0, 10)
   }
 
-  const { data } = await supabase.from(table).update(updates).eq('id', id).select('student_id').single()
+  const { data }: { data: any } = await supabase.from(table).update(updates).eq('id', id).select('student_id, sub_id, count').single()
   // packs ordered together are paid once: confirm every pack in the bundle
   let packCount = 0
   if (data && table === 'pack_orders') {
@@ -57,6 +57,17 @@ export async function confirmPayment(table: 'bookings' | 'hs_subscriptions' | 'p
     let message = table === 'hs_subscriptions'
       ? 'Your subscription is confirmed — active for the next 30 days!'
       : 'Your payment has been confirmed!'
+    if (table === 'session_extras') {
+      const n = (data as any).count || 1
+      message = `Your ${n} extra session${n > 1 ? 's are' : ' is'} confirmed. Your tutor has been told.`
+      const { data: sub } = await supabase.from('hs_subscriptions').select('tutor_id').eq('id', (data as any).sub_id).maybeSingle()
+      const { data: stu } = await supabase.from('profiles').select('full_name').eq('id', data.student_id).maybeSingle()
+      if (sub?.tutor_id) {
+        const tmsg = `${stu?.full_name || 'Your student'} added ${n} extra session${n > 1 ? 's' : ''} this month. You can teach them and they are paid.`
+        await supabase.from('notifications').insert({ for_role: 'staff', staff_id: sub.tutor_id, message: tmsg })
+        await sendPushToUser(sub.tutor_id, 'Extra sessions added', tmsg, '/partner')
+      }
+    }
     if (table === 'pack_orders') message = `Payment accepted! We are getting your study pack${packCount > 1 ? 's' : ''} ready. You will have ${packCount > 1 ? 'them' : 'it'} ${DELIVERY_PROMISE}.`
     await supabase.from('notifications').insert({
       student_id: data.student_id,

@@ -42,3 +42,8 @@ export function hsPrice(choice: string, type: SessionType) {
 export function hsSessions(choice: string, type: SessionType) {
   return HS_SESSIONS[type][planOf(choice)]
 }
+
+// Extra sessions: a student whose plan sessions are used up can add up to 3 more in the month, R50 each.
+export const EXTRA_PRICE = 50
+export const EXTRA_MAX = 3
+export const EXTRA_TUTOR_PAY = 45 // 90% of R50
