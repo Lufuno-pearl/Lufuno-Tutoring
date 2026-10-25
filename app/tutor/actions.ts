@@ -1,5 +1,6 @@
 'use server'
 import { createClient } from '../../lib/supabase/server'
+import { checkMeetingLink } from '../../lib/meetingLink'
 import { revalidatePath } from 'next/cache'
 import { sendPushToUser, sendPushToRole } from '../../lib/push'
 import { UNI_PRICE, toSessionType } from '../../lib/pricing'
@@ -86,8 +87,11 @@ export async function confirmPayment(table: 'bookings' | 'hs_subscriptions' | 'p
   revalidatePath('/tutor')
 }
 
-export async function setMeetingLink(table: 'bookings' | 'hs_subscriptions', id: string, url: string) {
+export async function setMeetingLink(table: 'bookings' | 'hs_subscriptions', id: string, rawUrl: string) {
   const supabase = createClient()
+  const checked = checkMeetingLink(rawUrl)
+  if (!checked.ok) return { ok: false, message: checked.message }
+  const url = checked.url
   const { data } = await supabase.from(table).update({ meeting_link: url }).eq('id', id).select('student_id').single()
   if (data) {
     await supabase.from('notifications').insert({
@@ -98,6 +102,7 @@ export async function setMeetingLink(table: 'bookings' | 'hs_subscriptions', id:
     await sendPushToUser(data.student_id, 'Meeting link ready', 'Your session meeting link is ready.', '/portal')
   }
   revalidatePath('/tutor')
+  return { ok: true }
 }
 
 export async function markAttendance(studentId: string, status: 'present' | 'absent' | 'tutor_missed' | 'rescheduled') {

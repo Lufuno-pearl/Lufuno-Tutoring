@@ -1,5 +1,7 @@
 'use client'
 import { useState, useEffect, useLayoutEffect } from 'react'
+import RoomPanel from '../room/RoomPanel'
+import MeetingLinkForm from '../MeetingLinkForm'
 import TabBarPortal, { scrollPageToTop } from '../TabBarPortal'
 import Link from 'next/link'
 import { Home, Inbox, Users, MoreHorizontal, Clock, UserCog, BookOpen, ClipboardList, MessageCircle, ChevronRight, Star, Video, Film, Gift, Calendar, GraduationCap, Target } from 'lucide-react'
@@ -315,6 +317,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
           <div className="hero-sub">{needsAttention === 0 ? "You're all caught up." : `${needsAttention} thing${needsAttention === 1 ? '' : 's'} need your attention.`}</div>
         </div>
         <InstallButton hideWhenInstalled />
+        <RoomPanel />
         <div className="next-card">
           <div className="next-label">Today</div>
           {todaySessions.length === 0 && <div className="next-title">No sessions today</div>}
@@ -350,10 +353,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
               </form>
             )}
             {b.status === 'confirmed' && b.format === 'online' && (
-              <form action={async (formData: FormData) => { await setMeetingLink('bookings', b.id, formData.get('url') as string) }} style={{ marginTop: 8, display: 'flex', gap: 8 }}>
-                <input name="url" defaultValue={b.meeting_link || ''} placeholder="Google Meet link" style={{ flex: 1, padding: 8, border: '1px solid var(--line)' }} />
-                <button className="btn btn-primary">Save</button>
-              </form>
+              <MeetingLinkForm table="bookings" id={b.id} defaultValue={b.meeting_link || ''} save={setMeetingLink} />
             )}
           </div>
         ))}
@@ -369,10 +369,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
               </form>
             )}
             {s.status === 'confirmed' && s.format === 'online' && (
-              <form action={async (formData: FormData) => { await setMeetingLink('hs_subscriptions', s.id, formData.get('url') as string) }} style={{ marginTop: 8, display: 'flex', gap: 8 }}>
-                <input name="url" defaultValue={s.meeting_link || ''} placeholder="Google Meet link" style={{ flex: 1, padding: 8, border: '1px solid var(--line)' }} />
-                <button className="btn btn-primary">Save</button>
-              </form>
+              <MeetingLinkForm table="hs_subscriptions" id={s.id} defaultValue={s.meeting_link || ''} save={setMeetingLink} />
             )}
           </div>
         ))}
@@ -739,10 +736,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
             <div key={b.id} style={{ marginBottom: 8 }}>
               <div className="meta">{b.subject} — {b.day} {b.time} · {kindLabel(b)}</div>
               {b.format === 'online' && (
-                <form action={async (formData: FormData) => { await setMeetingLink('bookings', b.id, formData.get('url') as string) }} style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-                  <input name="url" defaultValue={b.meeting_link || ''} placeholder="Google Meet link" style={{ flex: 1, padding: 6, border: '1px solid var(--line)' }} />
-                  <button className="btn btn-primary" style={{ padding: '6px 12px' }}>Save</button>
-                </form>
+                <MeetingLinkForm table="bookings" id={b.id} defaultValue={b.meeting_link || ''} save={setMeetingLink} />
               )}
             </div>
           ))}
@@ -750,10 +744,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
             <div key={s.id} style={{ marginBottom: 8 }}>
               <div className="meta">{s.month} — {subjectLabel(s.subject_choice)}{s.grade ? ` · Gr ${s.grade}` : ''} · {kindLabel(s)}</div>
               {s.format === 'online' && (
-                <form action={async (formData: FormData) => { await setMeetingLink('hs_subscriptions', s.id, formData.get('url') as string) }} style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-                  <input name="url" defaultValue={s.meeting_link || ''} placeholder="Google Meet link" style={{ flex: 1, padding: 6, border: '1px solid var(--line)' }} />
-                  <button className="btn btn-primary" style={{ padding: '6px 12px' }}>Save</button>
-                </form>
+                <MeetingLinkForm table="hs_subscriptions" id={s.id} defaultValue={s.meeting_link || ''} save={setMeetingLink} />
               )}
             </div>
           ))}

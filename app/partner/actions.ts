@@ -1,5 +1,6 @@
 'use server'
 import { createClient } from '../../lib/supabase/server'
+import { checkMeetingLink } from '../../lib/meetingLink'
 import { revalidatePath } from 'next/cache'
 
 export async function toggleAvailable(current: boolean) {
@@ -15,8 +16,11 @@ export async function claim(_table: 'bookings' | 'hs_subscriptions', _id: string
   return
 }
 
-export async function setMeetingLink(table: 'bookings' | 'hs_subscriptions', id: string, url: string) {
+export async function setMeetingLink(table: 'bookings' | 'hs_subscriptions', id: string, rawUrl: string) {
   const supabase = createClient()
+  const checked = checkMeetingLink(rawUrl)
+  if (!checked.ok) return { ok: false, message: checked.message }
+  const url = checked.url
   const { data } = await supabase.from(table).update({ meeting_link: url }).eq('id', id).select('student_id').single()
   if (data) {
     await supabase.from('notifications').insert({
@@ -26,6 +30,7 @@ export async function setMeetingLink(table: 'bookings' | 'hs_subscriptions', id:
     })
   }
   revalidatePath('/partner')
+  return { ok: true }
 }
 
 export async function markAttendance(studentId: string, status: 'present' | 'absent' | 'tutor_missed' | 'rescheduled') {
