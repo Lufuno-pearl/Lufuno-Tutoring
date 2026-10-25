@@ -15,6 +15,7 @@ export function notificationTarget(n: { message: string; student_id?: string | n
     return { home, section: 'menu', tab: 'home' } // assigned tutor, meeting link, sessions
   }
 
+  if (home === '/tutor' && has('disputed', 'did not come')) return { home, section: 'menu', tab: 'home', path: '/tutor/disputes' }
   if (has('has been paid')) return { home, section: 'menu', tab: 'home', path: '/earnings' }
 
   if (home === '/tutor') {

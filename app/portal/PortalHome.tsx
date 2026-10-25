@@ -419,6 +419,57 @@ function SessionConfirm({ rows, respondToSession, onAnswered }: { rows: any[]; r
   )
 }
 
+function ReportMissed({ reportMissedSession }: { reportMissedSession: any }) {
+  const [open, setOpen] = useState(false)
+  const [date, setDate] = useState('')
+  const [note, setNote] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [done, setDone] = useState(false)
+  const [err, setErr] = useState('')
+  const days: { v: string; l: string }[] = []
+  for (let i = 0; i < 14; i++) {
+    const d = new Date(Date.now() + 2 * 3600000 - i * 86400000)
+    days.push({ v: d.toISOString().slice(0, 10), l: i === 0 ? 'Today' : i === 1 ? 'Yesterday' : d.toLocaleDateString('en-ZA', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }) })
+  }
+  async function send() {
+    if (!date || busy) { if (!date) setErr('Please pick the day.'); return }
+    setBusy(true); setErr('')
+    try {
+      const r = await reportMissedSession(date, note)
+      if (r?.ok) setDone(true); else setErr(r?.message || 'Could not send. Please try again.')
+    } catch (e) { setErr('Could not send. Please try again.') }
+    setBusy(false)
+  }
+  if (done) return <div className="panel" style={{ marginTop: 16 }}><p style={{ margin: 0, fontWeight: 600 }}>Thank you. We have been told and will look into it. You will hear from us.</p></div>
+  return (
+    <div className="panel" style={{ marginTop: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }} onClick={() => setOpen(o => !o)}>
+        <div style={{ fontSize: '1.4rem' }}>🚫</div>
+        <div style={{ flex: 1 }}>
+          <h4 style={{ margin: 0 }}>Tutor did not come?</h4>
+          <div className="meta" style={{ marginBottom: 0 }}>Tell us and we will look into it.</div>
+        </div>
+        <span style={{ fontSize: '1.3rem', color: '#8a7fa8' }}>{open ? '⌃' : '›'}</span>
+      </div>
+      {open && (
+        <div style={{ marginTop: 12 }}>
+          <div className="field"><label>Which day?</label>
+            <select value={date} onChange={e => setDate(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 100, border: '1px solid var(--line)' }}>
+              <option value="">Choose the day</option>
+              {days.map(d => <option key={d.v} value={d.v}>{d.l}</option>)}
+            </select>
+          </div>
+          <div className="field"><label>Anything else we should know? (optional)</label>
+            <textarea value={note} maxLength={400} onChange={e => setNote(e.target.value)} rows={2} style={{ width: '100%', padding: 10, borderRadius: 14, border: '1px solid var(--line)', fontFamily: 'inherit' }} />
+          </div>
+          {err && <p style={{ color: '#A6443A', fontSize: '0.85rem' }}>{err}</p>}
+          <button className="btn btn-primary" style={{ width: '100%', opacity: busy ? 0.6 : 1 }} disabled={busy} onClick={send}>Send report</button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visiblePacks, bookings, subs, orders, messages, attendance, videoRequests, myVideoSubjects, homeworkRequests, videoTopicRequests, moduleRequests, testPreps, canTestPrep, marks, scheduled, ratingDue, hasSchool, mySchool, myProvince, avatarPath, locked, actions }: any) {
   const router = useRouter()
   const [lockNote, setLockNote] = useState(false)
@@ -450,7 +501,7 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
       getAreas().then(a => setAreas(a)).catch(() => {})
     }
   }, [section])
-  const { createBooking, createHsSub, buyPack, markAwaiting, sendMessage, getChatContacts, requestCustomPack, requestVideoAccess, submitHomework, requestVideoTopic, respondToSession } = actions
+  const { createBooking, createHsSub, buyPack, markAwaiting, sendMessage, getChatContacts, requestCustomPack, requestVideoAccess, submitHomework, requestVideoTopic, respondToSession, reportMissedSession } = actions
 
   const todayISO = new Date().toISOString().slice(0, 10)
   const hasActiveSub = (subs || []).some((s: any) => s.status === 'confirmed' && s.end_date && s.end_date >= todayISO)
@@ -500,6 +551,7 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
             {tile('My Marks', '📈', 'linear-gradient(135deg, #2E7D4F, #1F5C38)', () => setSection('marks'), 'marks')}
             {tile('Test & Exam Prep', '🎯', 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('testprep'), 'testprep')}
           </div>
+          {!locked && <ReportMissed reportMissedSession={reportMissedSession} />}
         </div>
       )
     }

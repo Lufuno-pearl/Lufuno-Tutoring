@@ -554,15 +554,47 @@ export async function respondToSession(attendanceId: string, response: 'yes' | '
   const { error } = await supabase.rpc('respond_to_session', { att_id: attendanceId, resp: response })
   if (error) return { ok: false }
   if (response === 'no') {
-    await supabase.from('notifications').insert({
-      student_id: user.id,
-      for_role: 'staff',
-      message: 'A student disputed a session log — check Tutor pay.',
-    })
-    await sendPushToRole('staff', 'Session disputed', 'A student says a logged session did not happen as logged.', '/tutor/pay')
+    const { data: att } = await supabase.from('attendance').select('session_date, marked_by, status').eq('id', attendanceId).maybeSingle()
+    if (att?.session_date) {
+      await fileSessionReport(supabase, user.id, { sessionDate: att.session_date, tutorId: att.marked_by, attendanceId, kind: 'dispute' })
+    } else {
+      await supabase.from('notifications').insert({ student_id: user.id, for_role: 'staff', message: 'A student disputed a session log. Please check Missed sessions.' })
+      await sendPushToRole('staff', 'Session disputed', 'A student says a logged session did not happen as logged.', '/tutor/disputes')
+    }
   }
-  revalidatePath('/portal')
   return { ok: true }
+}
+
+// A student says their tutor did not come, for a day that was never logged.
+export async function reportMissedSession(sessionDate: string, note: string) {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, message: 'Please log in again.' }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(sessionDate)) return { ok: false, message: 'Please pick the day.' }
+  const { data: dup } = await supabase.from('session_reports').select('id').eq('student_id', user.id).eq('session_date', sessionDate).eq('status', 'open').limit(1)
+  if (dup && dup.length > 0) return { ok: true, duplicate: true }
+  const [{ data: subs }, { data: books }] = await Promise.all([
+    supabase.from('hs_subscriptions').select('tutor_id').eq('student_id', user.id).eq('status', 'confirmed').not('tutor_id', 'is', null).order('created_at', { ascending: false }).limit(1),
+    supabase.from('bookings').select('tutor_id').eq('student_id', user.id).eq('status', 'confirmed').not('tutor_id', 'is', null).order('created_at', { ascending: false }).limit(1),
+  ])
+  const tutorId = subs?.[0]?.tutor_id || books?.[0]?.tutor_id || null
+  const r = await fileSessionReport(supabase, user.id, { sessionDate, tutorId, attendanceId: null, kind: 'no_show', note: String(note || '').slice(0, 400) })
+  return { ok: r }
+}
+
+async function fileSessionReport(supabase: any, studentId: string, o: { sessionDate: string; tutorId: string | null; attendanceId: string | null; kind: 'no_show' | 'dispute'; note?: string }) {
+  const { error } = await supabase.from('session_reports').insert({
+    student_id: studentId, tutor_id: o.tutorId, attendance_id: o.attendanceId, session_date: o.sessionDate, kind: o.kind, note: o.note || null,
+  })
+  const ids = [studentId, o.tutorId].filter(Boolean) as string[]
+  const { data: people } = await supabase.from('profiles').select('id, full_name').in('id', ids)
+  const nm = (id: string | null) => ((people || []).find((p: any) => p.id === id)?.full_name || '').trim()
+  const stu = nm(studentId) || 'A student'
+  const tut = o.tutorId ? (nm(o.tutorId) || 'their tutor') : 'their tutor'
+  const message = `Session disputed: ${stu} says ${tut} did not come on ${o.sessionDate}.`
+  await supabase.from('notifications').insert({ student_id: studentId, for_role: 'staff', message })
+  await sendPushToRole('staff', 'Tutor did not come?', message, '/tutor/disputes')
+  return !error
 }
 
 export async function addTestPrep(formData: FormData): Promise<{ ok: boolean; message: string }> {

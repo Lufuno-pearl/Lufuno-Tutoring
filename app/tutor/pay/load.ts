@@ -5,7 +5,7 @@ import { monthBounds } from './util'
 // Pass a tutorId to get just that tutor's lines.
 export async function loadPay(supabase: any, month: string, tutorId?: string) {
   const { first, next } = monthBounds(month)
-  let attQ = supabase.from('attendance').select('id, student_id, marked_by, session_date, status').gte('session_date', first).lt('session_date', next).limit(5000)
+  let attQ = supabase.from('attendance').select('id, student_id, marked_by, session_date, status, student_response').gte('session_date', first).lt('session_date', next).limit(5000)
   if (tutorId) attQ = attQ.eq('marked_by', tutorId)
   const [{ data: att }, { data: subs }, { data: books }] = await Promise.all([
     attQ,

@@ -25,7 +25,7 @@ export default function PackUpload({ orderId, studentId, packName }: { orderId: 
     if (error) setError(error.message)
     else {
       loadFiles()
-      await notifyPackReady(studentId, packName)
+      await notifyPackReady(studentId, packName, orderId)
     }
   }
 
