@@ -1,5 +1,5 @@
 // Works out which screen a notification should open, from its message text.
-export type NotifTarget = { home: string; section: string; tab: string; studentId?: string }
+export type NotifTarget = { home: string; section: string; tab: string; studentId?: string; path?: string }
 
 export function notificationTarget(n: { message: string; student_id?: string | null }, home: '/portal' | '/tutor' | '/partner'): NotifTarget {
   const m = (n.message || '').toLowerCase()
@@ -14,6 +14,8 @@ export function notificationTarget(n: { message: string; student_id?: string | n
     if (has('tutor is available', 'request tutoring', "don't have a")) return { home, section: 'book', tab: 'tutoring' }
     return { home, section: 'menu', tab: 'home' } // assigned tutor, meeting link, sessions
   }
+
+  if (has('has been paid')) return { home, section: 'menu', tab: 'home', path: '/earnings' }
 
   if (home === '/tutor') {
     if (has('new message')) return { home, section: 'chat', tab: 'chat', studentId: n.student_id || undefined }
