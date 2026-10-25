@@ -28,6 +28,7 @@ export type Line = {
   overLimit: number
   paid: number
   pay: number
+  days: { date: string; status: string; counted: boolean }[]
 }
 
 export const TUTOR_SHARE = 0.9
@@ -67,17 +68,18 @@ export function computePay(att: AttRow[], subs: SubRow[]) {
         grade: sub.grade,
         included: includedSessions(sub.subject_choice, sub.session_type),
         rate: rateFor(sub),
-        present: 0, noShow: 0, tutorMissed: 0, overLimit: 0, paid: 0, pay: 0,
+        present: 0, noShow: 0, tutorMissed: 0, overLimit: 0, paid: 0, pay: 0, days: [],
       }
       lines.set(key, line)
     }
 
-    if (r.status === 'tutor_missed') { line.tutorMissed++; continue }
+    if (r.status === 'tutor_missed') { line.tutorMissed++; line.days.push({ date: r.session_date, status: r.status, counted: false }); continue }
 
     const n = used.get(sub.id) || 0
-    if (n >= line.included) { line.overLimit++; continue }
+    if (n >= line.included) { line.overLimit++; line.days.push({ date: r.session_date, status: r.status, counted: false }); continue }
     used.set(sub.id, n + 1)
     line.paid++
+    line.days.push({ date: r.session_date, status: r.status, counted: true })
     if (r.status === 'present') line.present++
     else line.noShow++
   }

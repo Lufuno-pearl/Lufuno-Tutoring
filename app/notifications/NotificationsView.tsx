@@ -254,7 +254,7 @@ export default function NotificationsView({ forRole, userId, home }: { forRole: 
 
       {loaded && items.length === 0 && <p className="meta">No notifications yet.</p>}
       {items.map(n => (
-        <div key={n.id} className="panel" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, cursor: 'pointer', background: n.read ? 'var(--card)' : 'var(--unread)' }} onClick={() => { markRead(n.id); applyTarget(notificationTarget(n, home)); router.push(home) }}>
+        <div key={n.id} className="panel" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, cursor: 'pointer', background: n.read ? 'var(--card)' : 'var(--unread)' }} onClick={() => { markRead(n.id); const tg = notificationTarget(n, home); applyTarget(tg); router.push(tg.path || home) }}>
           <div>
             <div style={{ fontWeight: n.read ? 400 : 600 }}>{n.message}</div>
             <div className="meta" style={{ marginTop: 4, marginBottom: 0 }}>{new Date(n.created_at).toLocaleString()}</div>
