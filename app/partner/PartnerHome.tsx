@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useLayoutEffect, ReactNode } from 'react'
+import GroupSchedule from '../GroupSchedule'
 import RoomPanel from '../room/RoomPanel'
 import TodayAttendance from '../TodayAttendance'
 import TabBarPortal, { scrollPageToTop } from '../TabBarPortal'
@@ -8,7 +9,7 @@ import InstallButton from '../InstallButton'
 import { Hero, QuoteCloud, StreakCard, TUTOR_QUOTES } from '../portal/HomeParts'
 import { Calendar, Inbox, Film, Users, Video, MapPin, ScrollText, Target, Home, Settings, CalendarClock } from 'lucide-react'
 
-type Section = 'menu' | 'availability' | 'open' | 'requests' | 'students' | 'videos' | 'areas' | 'tests'
+type Section = 'menu' | 'schedule' | 'availability' | 'open' | 'requests' | 'students' | 'videos' | 'areas' | 'tests'
 type Tab = 'home' | 'students' | 'requests' | 'manage'
 
 type TodaySession = { id: string; studentId?: string; subject: string; time: string; format: string; area?: string | null; meeting_link?: string | null; studentName: string }
@@ -44,11 +45,11 @@ function Badge({ n }: { n: number }) {
 function tabOf(section: Section): Tab | null {
   if (section === 'students') return 'students'
   if (section === 'open' || section === 'requests' || section === 'tests') return 'requests'
-  if (section === 'availability' || section === 'videos' || section === 'areas') return 'manage'
+  if (section === 'availability' || section === 'videos' || section === 'areas' || section === 'schedule') return 'manage'
   return null
 }
 
-const SECTIONS: Section[] = ['menu', 'availability', 'open', 'requests', 'students', 'videos', 'areas', 'tests']
+const SECTIONS: Section[] = ['menu', 'schedule', 'availability', 'open', 'requests', 'students', 'videos', 'areas', 'tests']
 const TABS: Tab[] = ['home', 'students', 'requests', 'manage']
 
 export default function PartnerHome({ avatarPath, streakRows, monthSessions, markedToday, markAttendance, name, today, openCount, requestCount, studentCount, testCount, tests, availability, open, requests, students, videos, areas }: Props) {
@@ -100,6 +101,7 @@ export default function PartnerHome({ avatarPath, streakRows, monthSessions, mar
   else if (section === 'open') body = <div><Back /><h3>Requests needing a tutor</h3>{open}</div>
   else if (section === 'requests') body = <div><Back /><h3>Homework & video requests</h3>{requests}</div>
   else if (section === 'tests') body = <div><Back /><h3>Upcoming tests & exams</h3><p className="meta">Topics your students told us to prepare for.</p>{tests}</div>
+  else if (section === 'schedule') body = <div><Back /><h3>Schedule</h3><GroupSchedule /></div>
   else if (section === 'availability') body = <div><Back /><h3>My availability</h3>{availability}</div>
   else if (section === 'areas') body = <div><Back /><h3>My subjects and areas</h3>{areas}</div>
   else if (section === 'videos') body = <div><Back /><h3>Manage videos</h3>{videos}</div>
@@ -118,6 +120,7 @@ export default function PartnerHome({ avatarPath, streakRows, monthSessions, mar
       <div>
         <h3 style={{ marginTop: 0 }}>Manage</h3>
         <div className="card-grid">
+          {tile('Schedule', <Calendar size={36} color="#fff" />, 'linear-gradient(135deg, #8B6FD9, #6E4FC7)', () => setSection('schedule'))}
           {tile('My Availability', <Calendar size={36} color="#fff" />, 'linear-gradient(135deg, #6E4FC7, #4B2FA0)', () => setSection('availability'))}
           {tile('Manage Videos', <Video size={36} color="#fff" />, 'linear-gradient(135deg, #1FB6A3, #17897B)', () => setSection('videos'))}
           {tile('Subjects & Areas', <MapPin size={36} color="#fff" />, 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('areas'))}
