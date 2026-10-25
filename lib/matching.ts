@@ -40,11 +40,20 @@ export function eligibility(p: TutorLike, req: { kind?: string; subject_choice?:
   return mods.some(m => moduleMatches(m, wanted)) ? 'yes' : 'no'
 }
 
-// the video-manager subjects a tutor may manage: only the ones they teach
-export function allowedVideoSubjects(p: TutorLike, uniSubjects: string[], hsSubjects: string[]) {
+// the video-manager subjects a tutor may manage: the ones they tick as teaching,
+// plus the ones their own assigned students are doing
+export function allowedVideoSubjects(
+  p: TutorLike,
+  uniSubjects: string[],
+  hsSubjects: string[],
+  assigned: { hsChoices?: string[]; uniSubjects?: string[] } = {},
+) {
   const teaches = (p.teaches || []).map(hsKey)
+  const fromStudents: string[] = []
+  ;(assigned.hsChoices || []).forEach(c => hsNeeds(c).forEach(n => fromStudents.push(n)))
+  const mods = [...(p.modules || []).map(m => m.name), ...(assigned.uniSubjects || [])]
   return {
-    hs: hsSubjects.filter(s => teaches.includes(hsKey(s))),
-    uni: uniSubjects.filter(s => (p.modules || []).some(m => moduleMatches(m.name, s))),
+    hs: hsSubjects.filter(s => teaches.includes(hsKey(s)) || fromStudents.includes(hsKey(s) as any)),
+    uni: uniSubjects.filter(s => mods.some(m => moduleMatches(m, s))),
   }
 }

@@ -5,6 +5,8 @@ import { answerModuleRequest, confirmPayment, setMeetingLink, assignTutor, markA
 import { signOut } from '../portal/actions'
 import TutorHome from './TutorHome'
 import HeaderTools from '../HeaderTools'
+import { allowedVideoSubjects } from '../../lib/matching'
+import { UNI_SUBJECTS as ALL_UNI_SUBJECTS, HS_SUBJECTS as ALL_HS_SUBJECTS } from '../../lib/videoSubjects'
 
 const ADMIN_EMAILS = ['pearllufunomoyo@gmail.com', 'jonesneliswa@gmail.com']
 
@@ -116,6 +118,20 @@ export default async function TutorDashboard() {
   // ratings are read separately so the dashboard still loads before tutor-ratings.sql has been run
   const { data: ratingRows } = await supabase.from('tutor_ratings').select('id, stars, comment, created_at, tutor_id, student_id, tutor:profiles!tutor_ratings_tutor_id_fkey(full_name), student:profiles!tutor_ratings_student_id_fkey(full_name)').order('created_at', { ascending: false })
 
+  // Owners who also tutor see only the videos for their own subjects and students. With nothing set up, they see all.
+  const [{ data: ownTeach }, { data: ownMods }] = await Promise.all([
+    supabase.from('profiles').select('teaches').eq('id', user.id).single(),
+    supabase.from('tutor_modules').select('module_name').eq('tutor_id', user.id),
+  ])
+  const ownSetUp = ((ownTeach as any)?.teaches || []).length > 0 || (ownMods || []).length > 0 || (myClaimedBookings || []).length > 0 || (myClaimedSubs || []).length > 0
+  const videoOnly = ownSetUp
+    ? allowedVideoSubjects(
+        { teaches: (ownTeach as any)?.teaches || [], modules: (ownMods || []).map((m: any) => ({ name: m.module_name })) },
+        ALL_UNI_SUBJECTS, ALL_HS_SUBJECTS,
+        { hsChoices: (myClaimedSubs || []).map((x: any) => x.subject_choice), uniSubjects: (myClaimedBookings || []).map((b: any) => b.subject) },
+      )
+    : null
+
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -123,6 +139,7 @@ export default async function TutorDashboard() {
         <HeaderTools forRole="staff" />
       </div>
       <TutorHome
+        videoOnly={videoOnly}
         bookings={bookings}
         subs={subs}
         orders={orders}
