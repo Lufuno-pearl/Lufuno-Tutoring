@@ -12,13 +12,36 @@ const BACKGROUNDS = [
   { id: 'sky', name: 'Sky blue', swatch: 'linear-gradient(135deg,#E4F1FC,#5FA3D9)' },
   { id: 'plain', name: 'Plain', swatch: '#F1ECFB' },
   { id: 'white', name: 'Pure white', swatch: '#FFFFFF' },
-  { id: 'black', name: 'Pure black', swatch: '#000000' },
+  { id: 'black', name: 'Midnight black', swatch: '#000000' },
+  { id: 'ocean', name: 'Ocean blue', swatch: 'linear-gradient(135deg,#0B1A2B,#2F8CFF)' },
+  { id: 'forest', name: 'Forest green', swatch: 'linear-gradient(135deg,#0F1F18,#3FBF7F)' },
+  { id: 'steel', name: 'Steel & orange', swatch: 'linear-gradient(135deg,#1A1C20,#FF8A3D)' },
+  { id: 'navy', name: 'Navy & gold', swatch: 'linear-gradient(135deg,#0E1330,#F2C14E)' },
+  { id: 'sand', name: 'Sand & green', swatch: 'linear-gradient(135deg,#F3EFE6,#2F6B4F)' },
 ]
 
+const DARK_ONLY = ['black', 'ocean', 'forest', 'steel', 'navy', 'photo']
+const LIGHT_ONLY = ['white', 'sand']
+
 function apply(mode: string, bg: string) {
-  document.documentElement.dataset.mode = mode
-  document.documentElement.dataset.bg = bg
+  const root = document.documentElement
+  root.dataset.mode = mode
+  root.dataset.bg = bg
+  if (bg !== 'photo') root.style.removeProperty('--bg-art')
   try { localStorage.setItem('aa-mode', mode); localStorage.setItem('aa-bg', bg) } catch (e) {}
+}
+
+// The photo stays on this phone only (never uploaded), shrunk to a small picture first.
+function showPhoto(dataUrl: string) {
+  document.documentElement.style.setProperty('--bg-art', `linear-gradient(rgba(0,0,0,.55),rgba(0,0,0,.55)),url(${dataUrl})`)
+}
+async function smallPhoto(file: File): Promise<string> {
+  const bmp = await createImageBitmap(file)
+  const k = Math.min(1, 900 / Math.max(bmp.width, bmp.height))
+  const c = document.createElement('canvas')
+  c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k)
+  c.getContext('2d')!.drawImage(bmp, 0, 0, c.width, c.height)
+  return c.toDataURL('image/jpeg', 0.7)
 }
 
 export default function AppearancePage() {
@@ -84,13 +107,37 @@ export default function AppearancePage() {
     setPath(null); setPhotoBusy(false)
   }
 
+  const [bgPhoto, setBgPhoto] = useState(false)
+  useEffect(() => { try { setBgPhoto(!!localStorage.getItem('aa-photo')) } catch (e) {} }, [])
+
   const choose = (m: string, b: string) => {
-    if (b === 'black') m = 'dark'
-    else if (b === 'white') m = 'light'
-    else if (m === 'light' && b === 'black') b = 'plain'
-    if (m === 'dark' && b === 'white') b = 'black'
-    if (m === 'light' && b === 'black') b = 'white'
+    if (DARK_ONLY.includes(b)) m = 'dark'
+    else if (LIGHT_ONLY.includes(b)) m = 'light'
+    else if (m === 'light' && DARK_ONLY.includes(bg)) b = 'plain'
+    if (b === 'photo') { try { const d = localStorage.getItem('aa-photo'); if (d) showPhoto(d) } catch (e) {} }
     setMode(m); setBg(b); apply(m, b)
+  }
+
+  // Light/Dark buttons: a dark-only look flips to its light partner and the other way round
+  const chooseMode = (m: string) => {
+    let b = bg
+    if (m === 'light' && DARK_ONLY.includes(bg)) b = 'plain'
+    if (m === 'dark' && LIGHT_ONLY.includes(bg)) b = 'black'
+    choose(m, b)
+  }
+
+  async function onBgPhoto(file: File | null) {
+    if (!file) return
+    try {
+      const d = await smallPhoto(file)
+      localStorage.setItem('aa-photo', d)
+      showPhoto(d); setBgPhoto(true); choose('dark', 'photo')
+    } catch (e) { setPhotoMsg('Could not use that picture. Please try a different one.') }
+  }
+  function removeBgPhoto() {
+    try { localStorage.removeItem('aa-photo') } catch (e) {}
+    setBgPhoto(false)
+    if (bg === 'photo') choose('light', 'lilac')
   }
 
   return (
@@ -119,7 +166,7 @@ export default function AppearancePage() {
         <h4 style={{ marginTop: 0 }}>Light or dark</h4>
         <div style={{ display: 'flex', gap: 10 }}>
           {[['light', '☀️ Light'], ['dark', '🌙 Dark']].map(([id, label]) => (
-            <button key={id} className={mode === id ? 'btn btn-primary' : 'btn'} style={mode !== id ? { background: 'none', border: '1px solid var(--line)', color: 'var(--ink)' } : {}} onClick={() => choose(id, bg)}>{label}</button>
+            <button key={id} className={mode === id ? 'btn btn-primary' : 'btn'} style={mode !== id ? { background: 'none', border: '1px solid var(--line)', color: 'var(--ink)' } : {}} onClick={() => chooseMode(id)}>{label}</button>
           ))}
         </div>
       </div>
@@ -133,6 +180,15 @@ export default function AppearancePage() {
               <div className="meta" style={{ marginTop: 6, marginBottom: 0, fontWeight: bg === b.id ? 700 : 400 }}>{b.name}</div>
             </div>
           ))}
+        </div>
+        <div style={{ marginTop: 14, borderTop: '1px solid var(--line)', paddingTop: 12 }}>
+          <h4 style={{ margin: '0 0 4px' }}>Your own photo as background</h4>
+          <div className="meta" style={{ marginBottom: 8 }}>Stays on this phone only. It is not uploaded.</div>
+          <label className="btn btn-primary" style={{ padding: '7px 16px', fontSize: '0.82rem' }}>
+            {bgPhoto ? 'Change background photo' : 'Choose a photo'}
+            <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { onBgPhoto(e.target.files?.[0] || null); e.target.value = '' }} />
+          </label>
+          {bgPhoto && <button className="btn" style={{ background: 'none', border: '1px solid var(--line)', color: 'var(--ink)', padding: '7px 14px', fontSize: '0.82rem', marginLeft: 8 }} onClick={removeBgPhoto}>Remove</button>}
         </div>
       </div>
     </div>
