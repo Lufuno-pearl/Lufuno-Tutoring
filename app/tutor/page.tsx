@@ -5,6 +5,8 @@ import { answerModuleRequest, confirmPayment, setMeetingLink, assignTutor, markA
 import { signOut } from '../portal/actions'
 import TutorHome from './TutorHome'
 import HeaderTools from '../HeaderTools'
+import { loadPay } from './pay/load'
+import { currentMonth } from './pay/util'
 import { allowedVideoSubjects } from '../../lib/matching'
 import { UNI_SUBJECTS as ALL_UNI_SUBJECTS, HS_SUBJECTS as ALL_HS_SUBJECTS } from '../../lib/videoSubjects'
 
@@ -118,6 +120,17 @@ export default async function TutorDashboard() {
   // ratings are read separately so the dashboard still loads before tutor-ratings.sql has been run
   const { data: ratingRows } = await supabase.from('tutor_ratings').select('id, stars, comment, created_at, tutor_id, student_id, tutor:profiles!tutor_ratings_tutor_id_fkey(full_name), student:profiles!tutor_ratings_student_id_fkey(full_name)').order('created_at', { ascending: false })
 
+  // missed sessions students have reported, and what is owed to tutors this month (both load even before their SQL has run)
+  const { data: reportRows } = await supabase
+    .from('session_reports')
+    .select('id, session_date, created_at, student:profiles!session_reports_student_id_fkey(full_name), tutor:profiles!session_reports_tutor_id_fkey(full_name)')
+    .eq('status', 'open').order('created_at', { ascending: false }).limit(20)
+  let owedThisMonth = 0
+  try {
+    const pay = await loadPay(supabase, currentMonth())
+    owedThisMonth = pay.lines.reduce((t, l) => t + l.pay, 0)
+  } catch (e) {}
+
   // Owners who also tutor see only the videos for their own subjects and students. With nothing set up, they see all.
   const [{ data: ownTeach }, { data: ownMods }] = await Promise.all([
     supabase.from('profiles').select('teaches').eq('id', user.id).single(),
@@ -139,6 +152,8 @@ export default async function TutorDashboard() {
         <HeaderTools forRole="staff" />
       </div>
       <TutorHome
+        openReports={reportRows || []}
+        owedThisMonth={owedThisMonth}
         videoOnly={videoOnly}
         bookings={bookings}
         subs={subs}

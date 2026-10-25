@@ -6,6 +6,8 @@ import { Home, Inbox, Users, MoreHorizontal, Clock, UserCog, BookOpen, Clipboard
 import InstallButton from '../InstallButton'
 import TutorMaterials from './TutorMaterials'
 import PacksAdmin from './PacksAdmin'
+import OwnerOverview, { AttentionItem } from './OwnerOverview'
+import { useRouter } from 'next/navigation'
 import ScopeFiles from './ScopeFiles'
 import VideoManager from './VideoManager'
 import VideoRequests from './VideoRequests'
@@ -171,7 +173,8 @@ function MonthSummary({ subs, schoolByStudent }: { subs: any[]; schoolByStudent:
   )
 }
 
-function TutorInner({ videoOnly, section, setSection, tab, bookings, subs, orders, partners, threadsByStudent, attendanceRows, myAvailable, openBookings, openSubs, myClaimedBookings, myClaimedSubs, videoRequests, customPackRequests, homeworkRequests, videoTopicRequests, moduleRequests, testPreps, marksByStudent, scheduleByStudent, schoolByStudent, pendingApps, ratings, actions }: any) {
+function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection, tab, bookings, subs, orders, partners, threadsByStudent, attendanceRows, myAvailable, openBookings, openSubs, myClaimedBookings, myClaimedSubs, videoRequests, customPackRequests, homeworkRequests, videoTopicRequests, moduleRequests, testPreps, marksByStudent, scheduleByStudent, schoolByStudent, pendingApps, ratings, actions }: any) {
+  const router = useRouter()
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null)
   useEffect(() => {
     try {
@@ -271,6 +274,40 @@ function TutorInner({ videoOnly, section, setSection, tab, bookings, subs, order
     const markedToday: Record<string, string> = {}
     ;(attendanceRows || []).filter((a: any) => a.session_date === saToday).forEach((a: any) => { markedToday[a.student_id] = a.status })
     const needsAttention = (pendingApps || 0) + pendingCount + unassigned + pendingModules + pendingVideos + openHomework + soonTests
+    const packsAwaiting = (orders || []).filter((o: any) => o.status === 'awaiting').length
+    const packsToSend = (orders || []).filter((o: any) => o.status === 'confirmed' && !o.delivered_at).length
+    const reports = openReports || []
+    const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? '' : 's'}`
+    const first = (x: any) => ((x || '').split(' ')[0] || 'A student')
+    const attentionItems: AttentionItem[] = []
+    if (reports.length > 0) {
+      const r0: any = reports[0]
+      attentionItems.push({ icon: '⚠️', title: plural(reports.length, 'missed session') + ' reported', sub: `${first(r0.student?.full_name)} says ${first(r0.tutor?.full_name || 'the tutor')} did not come`, pill: 'Urgent', tone: 'hi', onClick: () => router.push('/tutor/disputes') })
+    }
+    if (packsToSend > 0) attentionItems.push({ icon: '📚', title: plural(packsToSend, 'pack') + ' waiting for upload', sub: 'Paid. Promise: within 2 hours', pill: 'Today', tone: 'md', onClick: () => setSection('packs') })
+    if (pendingCount + packsAwaiting > 0) attentionItems.push({ icon: '💳', title: plural(pendingCount + packsAwaiting, 'payment') + ' to confirm', sub: packsAwaiting > 0 ? 'Includes study pack payments' : 'Tap to review', pill: 'Check', tone: 'ok', onClick: () => setSection('pending') })
+    if (unassigned > 0) attentionItems.push({ icon: '🙋', title: plural(unassigned, 'request') + ' need a tutor', sub: 'Tap to assign', pill: 'Assign', tone: 'bl', onClick: () => setSection('assign') })
+    if (pendingModules > 0) attentionItems.push({ icon: '🎓', title: plural(pendingModules, 'module request'), sub: 'Tap to answer', pill: 'Answer', tone: 'bl', onClick: () => setSection('modules') })
+    if (openHomework > 0) attentionItems.push({ icon: '📝', title: plural(openHomework, 'homework help request'), sub: 'Tap to open', pill: 'Open', tone: 'bl', onClick: () => setSection('homework') })
+    if (pendingVideos > 0) attentionItems.push({ icon: '🎞️', title: plural(pendingVideos, 'video request'), sub: 'Tap to see them', pill: 'Open', tone: 'bl', onClick: () => setSection('videoreq') })
+    if (soonTests > 0) attentionItems.push({ icon: '🎯', title: plural(soonTests, 'test or exam') + ' this week', sub: 'Tap to see the topics', pill: 'This week', tone: 'md', onClick: () => setSection('tests') })
+    const saNow = new Date(Date.now() + 2 * 3600000)
+    const monthKey = saNow.toISOString().slice(0, 7)
+    const presentRows = (attendanceRows || []).filter((a: any) => a.status === 'present')
+    const dow = (saNow.getUTCDay() + 6) % 7
+    const weekStart = new Date(Date.UTC(saNow.getUTCFullYear(), saNow.getUTCMonth(), saNow.getUTCDate() - dow))
+    const weekCounts = [0, 0, 0, 0, 0, 0, 0]
+    presentRows.forEach((a: any) => {
+      const d = new Date(String(a.session_date) + 'T00:00:00Z')
+      const idx = Math.round((d.getTime() - weekStart.getTime()) / 86400000)
+      if (idx >= 0 && idx < 7) weekCounts[idx]++
+    })
+    const overviewStats = {
+      attention: reports.length + packsToSend + pendingCount + packsAwaiting + unassigned + pendingModules + pendingVideos + openHomework + soonTests + (pendingApps || 0),
+      payments: pendingCount + packsAwaiting,
+      sessions: presentRows.filter((a: any) => String(a.session_date || '').slice(0, 7) === monthKey).length,
+      owed: 'R' + Math.round(owedThisMonth || 0).toLocaleString('en-ZA').replace(/\s/g, ','),
+    }
     return (
       <div>
         <div className="hero">
@@ -290,42 +327,7 @@ function TutorInner({ videoOnly, section, setSection, tab, bookings, subs, order
           ))}
         </div>
         <MonthSummary subs={subs || []} schoolByStudent={schoolByStudent || {}} />
-        {pendingCount > 0 && (
-          <div className="panel" style={{ cursor: 'pointer', borderLeft: '5px solid #F2C14E' }} onClick={() => setSection('pending')}>
-            <h4 style={{ margin: 0 }}>{pendingCount} payment{pendingCount === 1 ? '' : 's'} to confirm</h4>
-            <div className="meta" style={{ marginBottom: 0 }}>Tap to review.</div>
-          </div>
-        )}
-        {unassigned > 0 && (
-          <div className="panel" style={{ cursor: 'pointer', borderLeft: '5px solid #8B6FD9' }} onClick={() => setSection('assign')}>
-            <h4 style={{ margin: 0 }}>{unassigned} request{unassigned === 1 ? '' : 's'} need a tutor</h4>
-            <div className="meta" style={{ marginBottom: 0 }}>Tap to assign.</div>
-          </div>
-        )}
-        {pendingModules > 0 && (
-          <div className="panel" style={{ cursor: 'pointer', borderLeft: '5px solid #D96F8B' }} onClick={() => setSection('modules')}>
-            <h4 style={{ margin: 0 }}>{pendingModules} module request{pendingModules === 1 ? '' : 's'}</h4>
-            <div className="meta" style={{ marginBottom: 0 }}>Tap to answer.</div>
-          </div>
-        )}
-        {openHomework > 0 && (
-          <div className="panel" style={{ cursor: 'pointer', borderLeft: '5px solid #5FA3D9' }} onClick={() => setSection('homework')}>
-            <h4 style={{ margin: 0 }}>{openHomework} homework help request{openHomework === 1 ? '' : 's'}</h4>
-            <div className="meta" style={{ marginBottom: 0 }}>Tap to open.</div>
-          </div>
-        )}
-        {pendingVideos > 0 && (
-          <div className="panel" style={{ cursor: 'pointer', borderLeft: '5px solid #E0956F' }} onClick={() => setSection('videoreq')}>
-            <h4 style={{ margin: 0 }}>{pendingVideos} video request{pendingVideos === 1 ? '' : 's'}</h4>
-            <div className="meta" style={{ marginBottom: 0 }}>Tap to see them.</div>
-          </div>
-        )}
-        {soonTests > 0 && (
-          <div className="panel" style={{ cursor: 'pointer', borderLeft: '5px solid #A6443A' }} onClick={() => setSection('tests')}>
-            <h4 style={{ margin: 0 }}>{soonTests} test or exam this week</h4>
-            <div className="meta" style={{ marginBottom: 0 }}>Tap to see the topics.</div>
-          </div>
-        )}
+        <OwnerOverview stats={overviewStats} week={weekCounts} items={attentionItems} />
       </div>
     )
   }

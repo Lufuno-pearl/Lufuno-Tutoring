@@ -141,8 +141,9 @@ export async function assignTutor(table: 'bookings' | 'hs_subscriptions', id: st
   revalidatePath('/tutor')
 }
 
-export async function notifyPackReady(studentId: string, packName?: string) {
+export async function notifyPackReady(studentId: string, packName?: string, orderId?: string) {
   const supabase = createClient()
+  if (orderId) await supabase.from('pack_orders').update({ delivered_at: new Date().toISOString() }).eq('id', orderId)
   const { data: { user } } = await supabase.auth.getUser()
   const { data: stu } = await supabase.from('profiles').select('full_name').eq('id', studentId).single()
   const first = (stu?.full_name || '').trim().split(' ')[0] || 'there'

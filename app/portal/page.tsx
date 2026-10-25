@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { isAdminEmail } from '../../lib/admin'
 import { submitRating } from './ratingActions'
-import { createBooking, createHsSub, buyPack, buyPacks, markAwaiting, sendMessage, getChatContacts, signOut, setTier, requestVideoAccess, requestCustomPack, requestVideoTopic, submitHomework, respondToSession } from './actions'
+import { createBooking, createHsSub, buyPack, buyPacks, markAwaiting, sendMessage, getChatContacts, signOut, setTier, requestVideoAccess, requestCustomPack, requestVideoTopic, submitHomework, respondToSession, reportMissedSession } from './actions'
 import PortalHome from './PortalHome'
 import HeaderTools from '../HeaderTools'
 import { hasTutorAccess } from '../../lib/testPrepAccess'
@@ -127,7 +127,7 @@ export default async function Portal({ searchParams }: { searchParams?: { view?:
         mySchool={(schoolRow as any)?.school || ''}
         myProvince={(schoolRow as any)?.province || ''}
         canTestPrep={hasTutorAccess(subs, bookings)}
-        actions={{ submitRating, createBooking, createHsSub, buyPack, buyPacks, markAwaiting, sendMessage, getChatContacts, requestVideoAccess, requestCustomPack, requestVideoTopic, submitHomework, respondToSession, userId: user.id }}
+        actions={{ submitRating, createBooking, createHsSub, buyPack, buyPacks, markAwaiting, sendMessage, getChatContacts, requestVideoAccess, requestCustomPack, requestVideoTopic, submitHomework, respondToSession, reportMissedSession, userId: user.id }}
       />
     </div>
   )

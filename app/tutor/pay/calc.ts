@@ -1,6 +1,6 @@
 import { hsSessions, toSessionType, SessionType, UNI_SESSIONS } from '../../../lib/pricing'
 
-export type AttRow = { id: string; student_id: string; marked_by: string; session_date: string; status: string }
+export type AttRow = { id: string; student_id: string; marked_by: string; session_date: string; status: string; student_response?: string | null }
 export type SubRow = {
   id: string
   student_id: string
@@ -53,6 +53,7 @@ export function computePay(att: AttRow[], subs: SubRow[]) {
   const unmatched: AttRow[] = []
 
   for (const r of sorted) {
+    if (r.student_response === 'no') continue // disputed by the student: held back until an owner settles it
     if (r.status !== 'present' && r.status !== 'absent' && r.status !== 'tutor_missed') continue
 
     const candidates = subs.filter(
@@ -107,6 +108,7 @@ export function computeUniPay(rows: AttRow[], bookings: BookingRow[]) {
   const unmatched: AttRow[] = []
 
   for (const r of sorted) {
+    if (r.student_response === 'no') continue
     const candidates = bookings
       .filter(b => b.student_id === r.student_id && b.created_at.slice(0, 10) <= r.session_date)
       .sort((a, b) => (a.created_at < b.created_at ? 1 : -1))

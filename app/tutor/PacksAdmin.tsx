@@ -29,12 +29,13 @@ export default function PacksAdmin({ orders, confirmPayment, Back, extra }: { or
     } catch (e) {}
   }, [])
 
+  // needs action: not paid yet, or paid and the pack has not been sent
+  const needsAction = (o: any) => o.status !== 'confirmed' || !o.delivered_at
   const levelOf = (o: any): Level => (o.profiles?.tier === 'university' ? 'uni' : 'hs')
   const byStudent = (lv: Level) => {
     const map: Record<string, any[]> = {}
     ;(orders || []).filter(o => levelOf(o) === lv).forEach(o => { (map[o.student_id] = map[o.student_id] || []).push(o) })
-    const waiting = (rows: any[]) => rows.filter(r => r.status !== 'confirmed').length + 0
-    // a confirmed order with no file uploaded yet also needs action: PackUpload shows that, so here we sort by unpaid / unconfirmed first, then newest
+    const waiting = (rows: any[]) => rows.filter(needsAction).length
     return Object.values(map).sort((a: any, b: any) => {
       const w = waiting(b) - waiting(a)
       if (w !== 0) return w
@@ -43,7 +44,7 @@ export default function PacksAdmin({ orders, confirmPayment, Back, extra }: { or
   }
   const counts = (lv: Level) => {
     const g = byStudent(lv)
-    return { students: g.length, waiting: g.filter((rows: any[]) => rows.some(r => r.status !== 'confirmed')).length }
+    return { students: g.length, waiting: g.filter((rows: any[]) => rows.some(needsAction)).length }
   }
 
   // ---- one student ----
@@ -98,7 +99,7 @@ export default function PacksAdmin({ orders, confirmPayment, Back, extra }: { or
         {groups.length === 0 && <p className="meta">No pack orders yet.</p>}
         {groups.map((rows: any[], i: number) => {
           const f = rows[0]
-          const todo = rows.filter(r => r.status !== 'confirmed').length
+          const todo = rows.filter(needsAction).length
           const names = Array.from(new Set(rows.map(r => r.pack_name.replace(/ Pack$/, '')))).join(', ')
           return (
             <div key={f.student_id} className="panel" style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }} onClick={() => setStudentId(f.student_id)}>
