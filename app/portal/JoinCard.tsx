@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import QRCode from 'qrcode'
 import { createClient } from '../../lib/supabase/client'
 
-type Room = { tutor_id: string; tutor_name: string | null; opened_at: string; joined: boolean; needs_code: boolean }
+type Room = { room_id: string; tutor_id: string; tutor_name: string | null; label: string; opened_at: string; joined: boolean; in_person: boolean }
 
 const REASONS: Record<string, string> = {
   closed: 'Your tutor has closed the session.',
@@ -40,41 +40,27 @@ function QrShow() {
   )
 }
 
-// Shows when the tutor has opened today's session. Tapping Join saves attendance, then opens the tutor's meeting link.
-export default function JoinCard() {
-  const [rooms, setRooms] = useState<Room[]>([])
+const REASONS2: Record<string, string> = REASONS
+
+// One card per session the tutor has started for this student (for example Grade 11 Physical Sciences).
+function RoomCard({ room, reload }: { room: Room; reload: () => void }) {
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
   const [code, setCode] = useState('')
   const [showQr, setShowQr] = useState(false)
   const [typing, setTyping] = useState(false)
 
-  async function load() {
-    try {
-      const { data } = await createClient().rpc('my_open_rooms')
-      setRooms((data as Room[]) || [])
-    } catch { /* leave as is */ }
-  }
-  useEffect(() => {
-    load()
-    const t = setInterval(load, 20000)
-    return () => clearInterval(t)
-  }, [])
-
-  if (rooms.length === 0) return null
-  const room = rooms[0]
-
   async function join() {
     if (busy) return
     setBusy(true); setMsg('')
     // open a tab right away so the phone does not block it, then point it at the meeting
-    const tab = room.needs_code ? null : window.open('', '_blank')
+    const tab = room.in_person ? null : window.open('', '_blank')
     try {
-      const { data, error } = await createClient().rpc('join_session', { p_tutor: room.tutor_id, p_code: room.needs_code ? code.trim() : null })
+      const { data, error } = await createClient().rpc('join_session', { p_room: room.room_id, p_code: room.in_person ? code.trim() : null })
       const r: any = data
       if (error || !r?.ok) {
         tab?.close()
-        setMsg(REASONS[r?.reason] || 'Could not join. Please try again.')
+        setMsg(REASONS2[r?.reason] || 'Could not join. Please try again.')
       } else {
         if (r.link) {
           if (tab) tab.location.href = r.link
@@ -82,7 +68,7 @@ export default function JoinCard() {
         } else {
           setMsg('You are marked present ✅')
         }
-        await load()
+        reload()
       }
     } catch {
       tab?.close()
@@ -93,14 +79,15 @@ export default function JoinCard() {
 
   return (
     <div className="panel" style={{ border: '1px solid #BFE0C8' }}>
-      <div className="meta" style={{ marginBottom: 2 }}>Your session</div>
-      <h4 style={{ margin: 0 }}>{room.tutor_name ? `${room.tutor_name} is ready` : 'Your tutor is ready'}</h4>
+      <div className="meta" style={{ marginBottom: 2 }}>Your session has started</div>
+      <h4 style={{ margin: 0 }}>{room.label}</h4>
+      <div className="meta">{room.tutor_name ? `With ${room.tutor_name}` : ''}{room.in_person ? ' · In person' : ' · Online'}</div>
       {room.joined ? (
         <>
           <p className="meta" style={{ fontWeight: 600 }}>You're in ✅ Attendance recorded.</p>
-          {!room.needs_code && <button className="btn btn-gold" style={{ width: '100%', opacity: busy ? 0.6 : 1 }} disabled={busy} onClick={join}>Open the call again</button>}
+          {!room.in_person && <button className="btn btn-gold" style={{ width: '100%', opacity: busy ? 0.6 : 1 }} disabled={busy} onClick={join}>Open the call again</button>}
         </>
-      ) : room.needs_code ? (
+      ) : room.in_person ? (
         <>
           <p className="meta">This session is in person. Show your QR code to your tutor so they can scan it.</p>
           {showQr
@@ -123,4 +110,24 @@ export default function JoinCard() {
       {msg && <p className="meta" style={{ marginTop: 8, color: msg.includes('✅') ? undefined : '#b3261e' }}>{msg}</p>}
     </div>
   )
+}
+
+// Shows when the tutor has started a session for this student
+export default function JoinCard() {
+  const [rooms, setRooms] = useState<Room[]>([])
+
+  async function load() {
+    try {
+      const { data } = await createClient().rpc('my_open_rooms')
+      setRooms((data as Room[]) || [])
+    } catch { /* leave as is */ }
+  }
+  useEffect(() => {
+    load()
+    const t = setInterval(load, 20000)
+    return () => clearInterval(t)
+  }, [])
+
+  if (rooms.length === 0) return null
+  return <>{rooms.map(r => <RoomCard key={r.room_id} room={r} reload={load} />)}</>
 }
