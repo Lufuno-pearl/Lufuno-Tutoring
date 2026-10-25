@@ -7,12 +7,15 @@ export async function loadPay(supabase: any, month: string, tutorId?: string) {
   const { first, next } = monthBounds(month)
   let attQ = supabase.from('attendance').select('id, student_id, marked_by, session_date, status, student_response').gte('session_date', first).lt('session_date', next).limit(5000)
   if (tutorId) attQ = attQ.eq('marked_by', tutorId)
-  const [{ data: att }, { data: subs }, { data: books }] = await Promise.all([
+  const [{ data: att }, { data: subs }, { data: books }, { data: extraRows }] = await Promise.all([
     attQ,
     supabase.from('hs_subscriptions').select('id, student_id, tutor_id, price, subject_choice, session_type, grade, start_date, end_date').eq('status', 'confirmed').limit(5000),
     supabase.from('bookings').select('id, student_id, tutor_id, price, subject, session_type, created_at').eq('status', 'confirmed').limit(5000),
+    supabase.from('session_extras').select('sub_id, count').eq('status', 'confirmed').limit(5000), // empty until extras-and-subject.sql is run
   ])
-  const hs = computePay((att || []) as any[], (subs || []) as any[])
+  const extras: Record<string, number> = {}
+  ;(extraRows || []).forEach((e: any) => { extras[e.sub_id] = (extras[e.sub_id] || 0) + e.count })
+  const hs = computePay((att || []) as any[], (subs || []) as any[], extras)
   const uni = computeUniPay(hs.unmatched as AttRow[], (books || []) as any[])
   const lines: Line[] = [...hs.lines, ...uni.lines]
   const unmatched = uni.unmatched

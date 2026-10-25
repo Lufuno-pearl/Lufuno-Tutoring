@@ -24,7 +24,7 @@ import { StreakCard, CountdownCard, PlanCard, GetStarted, WhatYouGet, PriceStrip
 import { daysUntil, whenLabel } from '../TestList'
 import { getAreas } from './actions'
 import StudentChat from './StudentChat'
-import { hsPrice, hsSessions, UNI_PRICE, GROUP_MAX, SessionType } from '../../lib/pricing'
+import { hsPrice, hsSessions, toSessionType, EXTRA_PRICE, EXTRA_MAX, UNI_PRICE, GROUP_MAX, SessionType } from '../../lib/pricing'
 
 
 type Section = 'menu' | 'book' | 'packs' | 'chat' | 'history' | 'video' | 'guide' | 'homework' | 'referral' | 'testprep' | 'qotd' | 'marks' | 'school'
@@ -89,7 +89,64 @@ function CopyButton({ text }: { text: string }) {
   return <button type="button" className="copy-btn" onClick={copy}>{copied ? 'Copied' : 'Copy'}</button>
 }
 
-function PayBlock({ kind, id, label, price, reference, markAwaiting }: { kind: 'bookings' | 'hs_subscriptions' | 'pack_orders' | 'video_access_requests'; id: string; label: string; price: number; reference?: string | null; markAwaiting: any }) {
+// Extra sessions: when the plan's sessions are used up (or nearly), the student can add 1 to 3 more, R50 each.
+function ExtraSessions({ subs, attendance, extras, buy, markAwaiting }: { subs: any[]; attendance: any[]; extras: any[]; buy: any; markAwaiting: any }) {
+  const [n, setN] = useState(1)
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState('')
+  const [order, setOrder] = useState<{ id: string; price: number; reference: string; count: number } | null>(null)
+  const today = new Date().toISOString().slice(0, 10)
+  const sub = (subs || []).find((s: any) => s.status === 'confirmed' && s.end_date && s.end_date >= today)
+  if (!sub) return null
+  const total = hsSessions(sub.subject_choice, toSessionType(sub.session_type))
+  const from = sub.start_date || '0000-00-00'
+  const used = (attendance || []).filter((a: any) => (a.status === 'present' || a.status === 'absent') && a.session_date >= from && a.session_date <= sub.end_date).length
+  const mine = (extras || []).filter((e: any) => e.sub_id === sub.id)
+  const paidOrWaiting = mine.filter((e: any) => e.status !== 'pending').reduce((a: number, e: any) => a + e.count, 0)
+  const confirmed = mine.filter((e: any) => e.status === 'confirmed').reduce((a: number, e: any) => a + e.count, 0)
+  const waiting = mine.filter((e: any) => e.status === 'awaiting').reduce((a: number, e: any) => a + e.count, 0)
+  const left = EXTRA_MAX - paidOrWaiting
+  const pending = mine.find((e: any) => e.status === 'pending')
+  const finished = used >= total + confirmed
+  const nearlyDone = used >= total - 1
+  if (!nearlyDone && paidOrWaiting === 0) return null
+
+  async function start() {
+    setBusy(true); setMsg('')
+    const r = await buy(sub.id, n)
+    setBusy(false)
+    if (!r?.ok) { setMsg(r?.message || 'Something went wrong.'); return }
+    setOrder({ id: r.id, price: r.price, reference: r.reference, count: n })
+  }
+
+  const orderShown = order || (pending ? { id: pending.id, price: pending.price, reference: pending.reference, count: pending.count } : null)
+  return (
+    <div className="panel">
+      <div className="meta" style={{ marginBottom: 2 }}>Extra sessions</div>
+      <h4 style={{ margin: 0 }}>{finished ? 'Your sessions this month are used up' : 'Need more sessions this month?'}</h4>
+      <p className="meta">Add up to {EXTRA_MAX} extra sessions a month. R{EXTRA_PRICE} each, so {EXTRA_MAX} sessions is R{EXTRA_MAX * EXTRA_PRICE}.</p>
+      {confirmed > 0 && <p className="meta" style={{ fontWeight: 600 }}>{confirmed} extra session{confirmed > 1 ? 's' : ''} added ✅</p>}
+      {waiting > 0 && <p className="meta" style={{ fontWeight: 600 }}>{waiting} extra session{waiting > 1 ? 's' : ''} waiting for us to confirm your payment.</p>}
+      {left > 0 && !orderShown && (
+        <>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+            {Array.from({ length: left }, (_, i) => i + 1).map(k => (
+              <button key={k} type="button" className="btn" onClick={() => setN(k)} style={{ flex: 1, background: n === k ? 'var(--purple-dark)' : 'none', color: n === k ? '#fff' : 'var(--purple-dark)', border: '1px solid var(--purple-dark)' }}>
+                {k} · R{k * EXTRA_PRICE}
+              </button>
+            ))}
+          </div>
+          <button className="btn btn-primary" style={{ width: '100%', opacity: busy ? 0.6 : 1 }} disabled={busy} onClick={start}>{busy ? 'One moment...' : `Add ${Math.min(n, left)} extra session${n > 1 ? 's' : ''}`}</button>
+        </>
+      )}
+      {left <= 0 && waiting + confirmed >= EXTRA_MAX && <p className="meta">You have added the most extra sessions for this month.</p>}
+      {orderShown && <PayBlock kind="session_extras" id={orderShown.id} label={`${orderShown.count} extra session${orderShown.count > 1 ? 's' : ''}`} price={orderShown.price} reference={orderShown.reference} markAwaiting={markAwaiting} />}
+      {msg && <p className="meta" style={{ color: '#b3261e' }}>{msg}</p>}
+    </div>
+  )
+}
+
+function PayBlock({ kind, id, label, price, reference, markAwaiting }: { kind: 'bookings' | 'hs_subscriptions' | 'pack_orders' | 'video_access_requests' | 'session_extras'; id: string; label: string; price: number; reference?: string | null; markAwaiting: any }) {
   const [done, setDone] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const ref = reference || `${kind.slice(0, 4).toUpperCase()}-${id.slice(0, 8).toUpperCase()}`
@@ -470,7 +527,7 @@ function ReportMissed({ reportMissedSession }: { reportMissedSession: any }) {
   )
 }
 
-function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visiblePacks, bookings, subs, orders, messages, attendance, videoRequests, myVideoSubjects, homeworkRequests, videoTopicRequests, moduleRequests, testPreps, canTestPrep, marks, scheduled, ratingDue, hasSchool, mySchool, myProvince, avatarPath, locked, actions }: any) {
+function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visiblePacks, bookings, subs, orders, messages, attendance, videoRequests, myVideoSubjects, homeworkRequests, videoTopicRequests, moduleRequests, testPreps, canTestPrep, marks, scheduled, extras, ratingDue, hasSchool, mySchool, myProvince, avatarPath, locked, actions }: any) {
   const router = useRouter()
   const [lockNote, setLockNote] = useState(false)
   const [packView, setPackView] = useState<'menu' | 'order' | 'orders'>('menu')
@@ -501,7 +558,7 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
       getAreas().then(a => setAreas(a)).catch(() => {})
     }
   }, [section])
-  const { createBooking, createHsSub, buyPack, markAwaiting, sendMessage, getChatContacts, requestCustomPack, requestVideoAccess, submitHomework, requestVideoTopic, respondToSession, reportMissedSession } = actions
+  const { createBooking, createHsSub, buyPack, markAwaiting, sendMessage, getChatContacts, requestCustomPack, requestVideoAccess, submitHomework, requestVideoTopic, respondToSession, reportMissedSession, buyExtraSessions } = actions
 
   const todayISO = new Date().toISOString().slice(0, 10)
   const hasActiveSub = (subs || []).some((s: any) => s.status === 'confirmed' && s.end_date && s.end_date >= todayISO)
@@ -657,6 +714,7 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
         <CountdownCard tests={testPreps || []} onOpen={() => setSection('testprep')} />
         <StreakCard attendance={attendance || []} />
         <PlanCard subs={subs || []} attendance={attendance || []} />
+        <ExtraSessions subs={subs || []} attendance={attendance || []} extras={extras || []} buy={buyExtraSessions} markAwaiting={markAwaiting} />
         <ReferBanner subscribed={!!canTestPrep} onOpen={() => setSection('referral')} />
       </div>
     )
@@ -792,6 +850,11 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
                       : `${n} sessions a month.`
                   })()}
                 </p>
+              </div>
+              <div className="field">
+                <label>Another subject you need help with? (optional)</label>
+                <input name="extraSubject" maxLength={60} placeholder="e.g. Accounting, Life Sciences" />
+                <p className="meta" style={{ marginTop: 6 }}>Tell us and we will let your tutor know. Maths and Physical Sciences are what the plan covers.</p>
               </div>
               <div className="field">
                 <label>Online or physical?</label>
