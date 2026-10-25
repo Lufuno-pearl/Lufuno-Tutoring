@@ -1,5 +1,7 @@
 'use client'
 import { useState, useEffect, useLayoutEffect } from 'react'
+import RoomPanel from '../room/RoomPanel'
+import MeetingLinkForm from '../MeetingLinkForm'
 import TabBarPortal, { scrollPageToTop } from '../TabBarPortal'
 import Link from 'next/link'
 import { Home, Inbox, Users, MoreHorizontal, Clock, UserCog, BookOpen, ClipboardList, MessageCircle, ChevronRight, Star, Video, Film, Gift, Calendar, GraduationCap, Target } from 'lucide-react'
@@ -63,10 +65,6 @@ function ChatThread({ studentId, thread, actions, marks, schedule, format, alter
 
   return (
     <div>
-      <div style={{ background: '#E3F3E8', border: '1px solid #BFE0C8', borderRadius: 14, padding: '10px 12px', margin: '10px 0' }}>
-        <div className="meta" style={{ marginBottom: 6, fontWeight: 700, color: '#1F5C38' }}>Today's session</div>
-        <AttendanceButtons studentId={studentId} markAttendance={markAttendance} />
-      </div>
       <div style={{ margin: '10px 0' }}>
         {thread.msgs.length === 0 && <p className="meta">No messages yet.</p>}
         {thread.msgs.map((m: any) => (
@@ -173,7 +171,7 @@ function MonthSummary({ subs, schoolByStudent }: { subs: any[]; schoolByStudent:
   )
 }
 
-function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection, tab, bookings, subs, orders, partners, threadsByStudent, attendanceRows, myAvailable, openBookings, openSubs, myClaimedBookings, myClaimedSubs, videoRequests, customPackRequests, homeworkRequests, videoTopicRequests, moduleRequests, testPreps, marksByStudent, scheduleByStudent, schoolByStudent, pendingApps, ratings, actions }: any) {
+function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection, tab, bookings, subs, orders, partners, threadsByStudent, attendanceRows, myAvailable, openBookings, openSubs, myClaimedBookings, myClaimedSubs, videoRequests, extras, customPackRequests, homeworkRequests, videoTopicRequests, moduleRequests, testPreps, marksByStudent, scheduleByStudent, schoolByStudent, pendingApps, ratings, actions }: any) {
   const router = useRouter()
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null)
   useEffect(() => {
@@ -213,7 +211,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
         <div className="tile-body"><div className="name">{label}</div></div>
       </div>
     )
-    const pendingCount = (bookings || []).filter((b: any) => b.status === 'awaiting').length + (subs || []).filter((x: any) => x.status === 'awaiting').length
+    const pendingCount = (bookings || []).filter((b: any) => b.status === 'awaiting').length + (subs || []).filter((x: any) => x.status === 'awaiting').length + (extras || []).filter((x: any) => x.status === 'awaiting').length
     const unassigned = (openBookings || []).length + (openSubs || []).length
     const lowRecent = (ratings || []).filter((r: any) => r.stars <= 2 && Date.now() - new Date(r.created_at).getTime() < 30 * 86400000).length
 
@@ -315,6 +313,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
           <div className="hero-sub">{needsAttention === 0 ? "You're all caught up." : `${needsAttention} thing${needsAttention === 1 ? '' : 's'} need your attention.`}</div>
         </div>
         <InstallButton hideWhenInstalled />
+        <RoomPanel />
         <div className="next-card">
           <div className="next-label">Today</div>
           {todaySessions.length === 0 && <div className="next-title">No sessions today</div>}
@@ -322,7 +321,6 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
             <div key={t.id} style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--line)' }}>
               <div className="next-title" style={{ marginTop: 0, fontSize: '1.05rem' }}>{t.subject} · {t.name}</div>
               <div className="next-when">{String(t.session_time).slice(0, 5)} · {t.format === 'physical' ? 'In person' : 'Online'}</div>
-              <TodayAttendance studentId={t.studentId} initial={markedToday[t.studentId]} markAttendance={markAttendance} />
             </div>
           ))}
         </div>
@@ -350,10 +348,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
               </form>
             )}
             {b.status === 'confirmed' && b.format === 'online' && (
-              <form action={async (formData: FormData) => { await setMeetingLink('bookings', b.id, formData.get('url') as string) }} style={{ marginTop: 8, display: 'flex', gap: 8 }}>
-                <input name="url" defaultValue={b.meeting_link || ''} placeholder="Google Meet link" style={{ flex: 1, padding: 8, border: '1px solid var(--line)' }} />
-                <button className="btn btn-primary">Save</button>
-              </form>
+              <MeetingLinkForm table="bookings" id={b.id} defaultValue={b.meeting_link || ''} save={setMeetingLink} />
             )}
           </div>
         ))}
@@ -361,7 +356,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
         {(subs || []).map((s: any) => (
           <div className="panel" key={s.id}>
             <h4>{s.month}</h4>
-            <div className="meta">{s.profiles?.full_name} · {s.profiles?.email}{s.grade ? ` · Gr ${s.grade}` : ''} · {subjectLabel(s.subject_choice)} · {kindLabel(s)} · R{s.price}{s.reference ? ` · Ref: ${s.reference}` : ''}{s.status === 'confirmed' && s.end_date ? ` · Active until ${s.end_date}` : ''}</div>
+            <div className="meta">{s.profiles?.full_name} · {s.profiles?.email}{s.grade ? ` · Gr ${s.grade}` : ''} · {subjectLabel(s.subject_choice)}{s.extra_subject ? ` + ${s.extra_subject}` : ''} · {kindLabel(s)} · R{s.price}{s.reference ? ` · Ref: ${s.reference}` : ''}{s.status === 'confirmed' && s.end_date ? ` · Active until ${s.end_date}` : ''}</div>
             <StatusPill status={s.status} />
             {s.status !== 'confirmed' && (
               <form action={async () => { await confirmPayment('hs_subscriptions', s.id) }} style={{ marginTop: 8 }}>
@@ -369,9 +364,20 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
               </form>
             )}
             {s.status === 'confirmed' && s.format === 'online' && (
-              <form action={async (formData: FormData) => { await setMeetingLink('hs_subscriptions', s.id, formData.get('url') as string) }} style={{ marginTop: 8, display: 'flex', gap: 8 }}>
-                <input name="url" defaultValue={s.meeting_link || ''} placeholder="Google Meet link" style={{ flex: 1, padding: 8, border: '1px solid var(--line)' }} />
-                <button className="btn btn-primary">Save</button>
+              <MeetingLinkForm table="hs_subscriptions" id={s.id} defaultValue={s.meeting_link || ''} save={setMeetingLink} />
+            )}
+          </div>
+        ))}
+        <h3>Extra sessions</h3>
+        {(extras || []).filter((x: any) => x.status !== 'pending').length === 0 && <p className="meta">None yet.</p>}
+        {(extras || []).filter((x: any) => x.status !== 'pending').map((x: any) => (
+          <div className="panel" key={x.id}>
+            <h4>{x.count} extra session{x.count > 1 ? 's' : ''}</h4>
+            <div className="meta">{x.profiles?.full_name} · {x.profiles?.email} · R{x.price}{x.reference ? ` · Ref: ${x.reference}` : ''}</div>
+            <StatusPill status={x.status} />
+            {x.status !== 'confirmed' && (
+              <form action={async () => { await confirmPayment('session_extras', x.id) }} style={{ marginTop: 8 }}>
+                <button className="btn btn-gold">Mark paid</button>
               </form>
             )}
           </div>
@@ -725,10 +731,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
             <div key={b.id} style={{ marginBottom: 8 }}>
               <div className="meta">{b.subject} — {b.day} {b.time} · {kindLabel(b)}</div>
               {b.format === 'online' && (
-                <form action={async (formData: FormData) => { await setMeetingLink('bookings', b.id, formData.get('url') as string) }} style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-                  <input name="url" defaultValue={b.meeting_link || ''} placeholder="Google Meet link" style={{ flex: 1, padding: 6, border: '1px solid var(--line)' }} />
-                  <button className="btn btn-primary" style={{ padding: '6px 12px' }}>Save</button>
-                </form>
+                <MeetingLinkForm table="bookings" id={b.id} defaultValue={b.meeting_link || ''} save={setMeetingLink} />
               )}
             </div>
           ))}
@@ -736,10 +739,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
             <div key={s.id} style={{ marginBottom: 8 }}>
               <div className="meta">{s.month} — {subjectLabel(s.subject_choice)}{s.grade ? ` · Gr ${s.grade}` : ''} · {kindLabel(s)}</div>
               {s.format === 'online' && (
-                <form action={async (formData: FormData) => { await setMeetingLink('hs_subscriptions', s.id, formData.get('url') as string) }} style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-                  <input name="url" defaultValue={s.meeting_link || ''} placeholder="Google Meet link" style={{ flex: 1, padding: 6, border: '1px solid var(--line)' }} />
-                  <button className="btn btn-primary" style={{ padding: '6px 12px' }}>Save</button>
-                </form>
+                <MeetingLinkForm table="hs_subscriptions" id={s.id} defaultValue={s.meeting_link || ''} save={setMeetingLink} />
               )}
             </div>
           ))}

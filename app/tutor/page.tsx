@@ -45,6 +45,7 @@ export default async function TutorDashboard() {
     ;[...(bookingsAll || []), ...(subsAll || [])].forEach((x: any) => { if (x.tutor_id === otherOwner.id && x.student_id) hiddenStudents.add(x.student_id) })
     ;(moduleRequestsAll || []).forEach((m: any) => { if (m.tutor_id === otherOwner.id && m.status === 'available' && m.student_id) hiddenStudents.add(m.student_id) })
   }
+  const { data: extrasAll } = await supabase.from('session_extras').select('*, profiles:profiles!session_extras_student_id_fkey(full_name, email)').order('created_at', { ascending: false }).limit(300) // empty until extras-and-subject.sql is run
   const visible = (rows: any[] | null) => (rows || []).filter((x: any) => !x.student_id || !hiddenStudents.has(x.student_id))
   const bookings = visible(bookingsAll), subs = visible(subsAll), orders = visible(ordersAll), messagesDesc = visible(messagesDescAll)
   const attendanceRows = visible(attendanceRowsAll), homeworkRequests = visible(homeworkRequestsAll), videoRequests = visible(videoRequestsAll)
@@ -167,6 +168,7 @@ export default async function TutorDashboard() {
         myClaimedBookings={myClaimedBookings}
         myClaimedSubs={myClaimedSubs}
         videoRequests={videoRequests}
+        extras={visible(extrasAll)}
         customPackRequests={customPackRequests}
         homeworkRequests={homeworkRequests}
         videoTopicRequests={videoTopicRequests}

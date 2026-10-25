@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import MeetingLinkForm from '../MeetingLinkForm'
 import { ChevronRight } from 'lucide-react'
 import AttendanceButtons from '../AttendanceButtons'
 import TutorMaterials from '../tutor/TutorMaterials'
@@ -49,7 +50,7 @@ export default function PartnerStudents({ allSubs, scheduleByStudent, marksByStu
       const thread = threads[sid] || { name: 'Student', msgs: [] }
       const b = (bookingsByStudent[sid] || [])[0]
       const s = (subsByStudent[sid] || [])[0]
-      const sub = s ? `${subjectLabel(s.subject_choice)}${s.grade ? ` · Gr ${s.grade}` : ''}` : b ? b.subject : ''
+      const sub = s ? `${subjectLabel(s.subject_choice)}${s.extra_subject ? ` + ${s.extra_subject}` : ''}${s.grade ? ` · Gr ${s.grade}` : ''}` : b ? b.subject : ''
       const last = (thread.msgs || [])[(thread.msgs || []).length - 1]
       return (
         <div key={sid} className="panel" style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} onClick={() => { setSelectedId(sid); setText('') }}>
@@ -63,6 +64,28 @@ export default function PartnerStudents({ allSubs, scheduleByStudent, marksByStu
       )
     }
 
+    // students grouped under a heading: high school by grade (highest first) and subject, university by subject
+    const hsGroupOf = (sid: string) => {
+      const s = (subsByStudent[sid] || [])[0]
+      return { key: `${String(100 - (s?.grade || 0)).padStart(3, '0')}|${s?.subject_choice || ''}`, title: `${s?.grade ? `Grade ${s.grade}` : 'Grade not set'} · ${subjectLabel(s?.subject_choice)}` }
+    }
+    const uniGroupOf = (sid: string) => {
+      const b = (bookingsByStudent[sid] || [])[0]
+      return { key: (b?.subject || 'zzz').toLowerCase(), title: b?.subject || 'Subject not set' }
+    }
+    const grouped = (ids: string[], groupOf: (sid: string) => { key: string; title: string }) => {
+      const map = new Map<string, { title: string; ids: string[] }>()
+      ids.forEach(id => { const g = groupOf(id); const e = map.get(g.key) || { title: g.title, ids: [] }; e.ids.push(id); map.set(g.key, e) })
+      return Array.from(map.entries()).sort((a, b) => (a[0] < b[0] ? -1 : 1)).map(([, v]) => v)
+    }
+    const renderGroups = (ids: string[], groupOf: (sid: string) => { key: string; title: string }) =>
+      grouped(ids, groupOf).map(g => (
+        <div key={g.title}>
+          <div className="meta" style={{ fontWeight: 700, margin: '12px 0 6px', color: 'var(--purple-dark)' }}>{g.title} · {g.ids.length}</div>
+          {g.ids.map(renderRow)}
+        </div>
+      ))
+
     return (
       <div>
         <div className="field">
@@ -70,10 +93,10 @@ export default function PartnerStudents({ allSubs, scheduleByStudent, marksByStu
         </div>
         <h3>University</h3>
         {uniIds.length === 0 && <p className="meta">{q ? 'No matches.' : 'No students yet.'}</p>}
-        {uniIds.map(renderRow)}
+        {renderGroups(uniIds, uniGroupOf)}
         <h3 style={{ marginTop: 20 }}>High School</h3>
         {hsIds.length === 0 && <p className="meta">{q ? 'No matches.' : 'No students yet.'}</p>}
-        {hsIds.map(renderRow)}
+        {renderGroups(hsIds, hsGroupOf)}
       </div>
     )
   }
@@ -87,29 +110,19 @@ export default function PartnerStudents({ allSubs, scheduleByStudent, marksByStu
     <div>
       <div className="meta" style={{ cursor: 'pointer', marginBottom: 16, color: 'var(--purple-dark)', fontWeight: 600 }} onClick={() => setSelectedId(null)}>&larr; Back to students</div>
       <h3>{thread.name}</h3>
-      <div style={{ background: '#E3F3E8', border: '1px solid #BFE0C8', borderRadius: 14, padding: '10px 12px', margin: '10px 0' }}>
-        <div className="meta" style={{ marginBottom: 6, fontWeight: 700, color: '#1F5C38' }}>Today's session</div>
-        <AttendanceButtons studentId={sid} markAttendance={markAttendance} />
-      </div>
       {bookingsHere.map((b: any) => (
         <div key={b.id} style={{ marginBottom: 8 }}>
           <div className="meta">{b.subject} — {b.day} {b.time} · {b.format === 'physical' ? 'Physical' : 'Online'}</div>
           {b.format === 'online' && (
-            <form action={async (formData: FormData) => { await setMeetingLink('bookings', b.id, formData.get('url') as string) }} style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-              <input name="url" defaultValue={b.meeting_link || ''} placeholder="Google Meet link" style={{ flex: 1, padding: 6, border: '1px solid var(--line)' }} />
-              <button className="btn btn-primary" style={{ padding: '6px 12px' }}>Save</button>
-            </form>
+            <MeetingLinkForm table="bookings" id={b.id} defaultValue={b.meeting_link || ''} save={setMeetingLink} />
           )}
         </div>
       ))}
       {subsHere.map((s: any) => (
         <div key={s.id} style={{ marginBottom: 8 }}>
-          <div className="meta">{s.month} — {subjectLabel(s.subject_choice)}{s.grade ? ` · Gr ${s.grade}` : ''} · {s.format === 'physical' ? 'Physical' : 'Online'}</div>
+          <div className="meta">{s.month} — {subjectLabel(s.subject_choice)}{s.extra_subject ? ` + ${s.extra_subject}` : ''}{s.grade ? ` · Gr ${s.grade}` : ''} · {s.format === 'physical' ? 'Physical' : 'Online'}</div>
           {s.format === 'online' && (
-            <form action={async (formData: FormData) => { await setMeetingLink('hs_subscriptions', s.id, formData.get('url') as string) }} style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-              <input name="url" defaultValue={s.meeting_link || ''} placeholder="Google Meet link" style={{ flex: 1, padding: 6, border: '1px solid var(--line)' }} />
-              <button className="btn btn-primary" style={{ padding: '6px 12px' }}>Save</button>
-            </form>
+            <MeetingLinkForm table="hs_subscriptions" id={s.id} defaultValue={s.meeting_link || ''} save={setMeetingLink} />
           )}
         </div>
       ))}

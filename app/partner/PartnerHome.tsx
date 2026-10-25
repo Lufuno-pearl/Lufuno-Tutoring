@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useLayoutEffect, ReactNode } from 'react'
+import RoomPanel from '../room/RoomPanel'
 import TodayAttendance from '../TodayAttendance'
 import TabBarPortal, { scrollPageToTop } from '../TabBarPortal'
 import { useRouter } from 'next/navigation'
@@ -142,6 +143,7 @@ export default function PartnerHome({ avatarPath, streakRows, monthSessions, mar
           <div className="stat" style={{ background: '#D8F0E4' }}><small>Today</small><div className="ic">📅</div><div className="n">{today.length}</div></div>
         </div>
 
+        <RoomPanel />
         <div className="next-card">
           <div className="next-label"><CalendarClock size={16} /> Today</div>
           {today.length === 0 && (
@@ -158,7 +160,6 @@ export default function PartnerHome({ avatarPath, streakRows, monthSessions, mar
                 <a className="btn btn-gold" href={t.meeting_link} target="_blank" rel="noopener noreferrer" style={{ marginTop: 8 }}>Join session</a>
               )}
               {t.format !== 'physical' && !t.meeting_link && !String(t.id).startsWith('sch-') && <div className="meta" style={{ marginTop: 6, marginBottom: 0 }}>Add the meeting link under My students.</div>}
-              {t.studentId && markAttendance && <TodayAttendance studentId={t.studentId} initial={(markedToday || {})[t.studentId]} markAttendance={markAttendance} />}
             </div>
           ))}
         </div>
