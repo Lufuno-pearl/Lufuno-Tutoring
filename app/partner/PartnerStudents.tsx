@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import MeetingLinkForm from '../MeetingLinkForm'
 import { ChevronRight } from 'lucide-react'
 import AttendanceButtons from '../AttendanceButtons'
 import TutorMaterials from '../tutor/TutorMaterials'
@@ -117,10 +118,7 @@ export default function PartnerStudents({ allSubs, scheduleByStudent, marksByStu
         <div key={b.id} style={{ marginBottom: 8 }}>
           <div className="meta">{b.subject} — {b.day} {b.time} · {b.format === 'physical' ? 'Physical' : 'Online'}</div>
           {b.format === 'online' && (
-            <form action={async (formData: FormData) => { await setMeetingLink('bookings', b.id, formData.get('url') as string) }} style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-              <input name="url" defaultValue={b.meeting_link || ''} placeholder="Google Meet link" style={{ flex: 1, padding: 6, border: '1px solid var(--line)' }} />
-              <button className="btn btn-primary" style={{ padding: '6px 12px' }}>Save</button>
-            </form>
+            <MeetingLinkForm table="bookings" id={b.id} defaultValue={b.meeting_link || ''} save={setMeetingLink} />
           )}
         </div>
       ))}
@@ -128,10 +126,7 @@ export default function PartnerStudents({ allSubs, scheduleByStudent, marksByStu
         <div key={s.id} style={{ marginBottom: 8 }}>
           <div className="meta">{s.month} — {subjectLabel(s.subject_choice)}{s.extra_subject ? ` + ${s.extra_subject}` : ''}{s.grade ? ` · Gr ${s.grade}` : ''} · {s.format === 'physical' ? 'Physical' : 'Online'}</div>
           {s.format === 'online' && (
-            <form action={async (formData: FormData) => { await setMeetingLink('hs_subscriptions', s.id, formData.get('url') as string) }} style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-              <input name="url" defaultValue={s.meeting_link || ''} placeholder="Google Meet link" style={{ flex: 1, padding: 6, border: '1px solid var(--line)' }} />
-              <button className="btn btn-primary" style={{ padding: '6px 12px' }}>Save</button>
-            </form>
+            <MeetingLinkForm table="hs_subscriptions" id={s.id} defaultValue={s.meeting_link || ''} save={setMeetingLink} />
           )}
         </div>
       ))}

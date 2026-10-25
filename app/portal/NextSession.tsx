@@ -72,7 +72,7 @@ export default function NextSession({ name, bookings, subs, scheduled, onRequest
               {next.b.format === 'physical' ? <><MapPin size={14} /> In person{next.b.area ? ` · ${next.b.area}` : ''}</> : <><Video size={14} /> Online</>}
             </div>
             {next.b.format !== 'physical' && (next.b.meeting_link || classLink?.meeting_link) && (
-              <a className="btn btn-gold" href={(next.b.meeting_link || classLink?.meeting_link) as string} target="_blank" rel="noopener noreferrer" style={{ marginTop: 12 }}>Join session</a>
+              <div className="meta" style={{ marginTop: 10, marginBottom: 0 }}>When your tutor opens the session, a Join button appears at the top of your home screen.</div>
             )}
             {next.b.format === 'physical' && (
               asked ? (

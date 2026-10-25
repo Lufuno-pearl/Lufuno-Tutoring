@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useLayoutEffect } from 'react'
+import JoinCard from './JoinCard'
 import TabBarPortal, { scrollPageToTop } from '../TabBarPortal'
 import { useRouter } from 'next/navigation'
 import { CalendarPlus, BookOpen, MessageCircle, Landmark, History, Video, HelpCircle, ClipboardList, Gift, ScrollText, Target, Home, CalendarCheck, MoreHorizontal } from 'lucide-react'
@@ -704,6 +705,7 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
     return (
       <div>
         <Hero name={name || ''} avatarPath={avatarPath} />
+        <JoinCard />
         <NextSession name={name || ''} bookings={bookings || []} subs={subs || []} scheduled={scheduled || []} onRequest={() => setSection('book')} />
         <StatTrio attendance={attendance || []} marks={marks || []} tests={testPreps || []} />
         <QuoteCloud />
