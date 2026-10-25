@@ -38,7 +38,8 @@ export function shortName(full?: string | null) {
   return parts.length === 1 ? parts[0] : `${parts[0]} ${parts[parts.length - 1][0]}.`
 }
 
-export function planLabel(choice: string, grade: number | null, sessionType: string) {
+export function planLabel(choice: string, grade: number | null, sessionType: string, level: 'hs' | 'uni' = 'hs') {
+  if (level === 'uni') return `${choice}${sessionType === 'one_on_one' ? ' · 1-on-1' : ' · Group'}`
   const subj = choice === 'both' ? 'Both' : choice === 'physics' ? 'Physics' : 'Maths'
   return `${subj}${grade ? ` · Gr ${grade}` : ''}${sessionType === 'one_on_one' ? ' · 1-on-1' : ''}`
 }
