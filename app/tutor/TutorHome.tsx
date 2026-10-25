@@ -65,10 +65,6 @@ function ChatThread({ studentId, thread, actions, marks, schedule, format, alter
 
   return (
     <div>
-      <div style={{ background: '#E3F3E8', border: '1px solid #BFE0C8', borderRadius: 14, padding: '10px 12px', margin: '10px 0' }}>
-        <div className="meta" style={{ marginBottom: 6, fontWeight: 700, color: '#1F5C38' }}>Today's session</div>
-        <AttendanceButtons studentId={studentId} markAttendance={markAttendance} />
-      </div>
       <div style={{ margin: '10px 0' }}>
         {thread.msgs.length === 0 && <p className="meta">No messages yet.</p>}
         {thread.msgs.map((m: any) => (
@@ -325,7 +321,6 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
             <div key={t.id} style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--line)' }}>
               <div className="next-title" style={{ marginTop: 0, fontSize: '1.05rem' }}>{t.subject} · {t.name}</div>
               <div className="next-when">{String(t.session_time).slice(0, 5)} · {t.format === 'physical' ? 'In person' : 'Online'}</div>
-              <TodayAttendance studentId={t.studentId} initial={markedToday[t.studentId]} markAttendance={markAttendance} />
             </div>
           ))}
         </div>

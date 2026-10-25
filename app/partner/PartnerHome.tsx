@@ -160,7 +160,6 @@ export default function PartnerHome({ avatarPath, streakRows, monthSessions, mar
                 <a className="btn btn-gold" href={t.meeting_link} target="_blank" rel="noopener noreferrer" style={{ marginTop: 8 }}>Join session</a>
               )}
               {t.format !== 'physical' && !t.meeting_link && !String(t.id).startsWith('sch-') && <div className="meta" style={{ marginTop: 6, marginBottom: 0 }}>Add the meeting link under My students.</div>}
-              {t.studentId && markAttendance && <TodayAttendance studentId={t.studentId} initial={(markedToday || {})[t.studentId]} markAttendance={markAttendance} />}
             </div>
           ))}
         </div>
