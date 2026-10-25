@@ -6,7 +6,7 @@ import { CalendarPlus, BookOpen, MessageCircle, Landmark, History, Video, HelpCi
 import MaterialsSection from './MaterialsSection'
 import PackDownload from './PackDownload'
 import ExamPacks from './ExamPacks'
-import { OPEN_SECTIONS, FEATURES_OPEN_LABEL, DELIVERY_PROMISE } from '../../lib/examSpecial'
+import { OPEN_SECTIONS, FEATURES_OPEN_LABEL, DELIVERY_PROMISE, PACK_PRICE, BUNDLE_SIZE, BUNDLE_PRICE } from '../../lib/examSpecial'
 import MyVideos from './MyVideos'
 import FileBox from '../FileBox'
 import { createClient } from '../../lib/supabase/client'
@@ -422,6 +422,13 @@ function SessionConfirm({ rows, respondToSession, onAnswered }: { rows: any[]; r
 function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visiblePacks, bookings, subs, orders, messages, attendance, videoRequests, myVideoSubjects, homeworkRequests, videoTopicRequests, moduleRequests, testPreps, canTestPrep, marks, scheduled, ratingDue, hasSchool, mySchool, myProvince, avatarPath, locked, actions }: any) {
   const router = useRouter()
   const [lockNote, setLockNote] = useState(false)
+  const [packView, setPackView] = useState<'menu' | 'order' | 'orders'>('menu')
+  // a notification or link can ask to open straight on My pack orders
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem('portalPackView') === 'orders') { setPackView('orders'); sessionStorage.removeItem('portalPackView') }
+    } catch (e) {}
+  }, [])
   // before the open date, students with nothing requested yet can only use the open sections
   if (locked && !OPEN_SECTIONS.includes(section)) section = 'menu'
   const rawSetSection = setSection
@@ -825,40 +832,76 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
 }
 
   if (section === 'packs') {
-    // packs ordered together share a bundle and one payment
+    // one "request" = the packs asked for together (same bundle), newest first, each with its own date
     const groups: { key: string; rows: any[] }[] = []
     const seen: Record<string, { key: string; rows: any[] }> = {}
-    ;(orders || []).forEach((o: any) => {
+    ;[...(orders || [])].sort((x: any, y: any) => (x.created_at < y.created_at ? 1 : -1)).forEach((o: any) => {
       const key = o.bundle_id || o.id
       if (!seen[key]) { seen[key] = { key, rows: [] }; groups.push(seen[key]) }
       seen[key].rows.push(o)
     })
     const takenIds = (orders || []).filter((o: any) => ['pending', 'awaiting', 'confirmed'].includes(o.status)).map((o: any) => o.pack_id)
+    const dateOf = (iso: string) => new Date(iso).toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' })
+    const readyCount = groups.filter(g => g.rows[0].status === 'confirmed').length
+
+    if (packView === 'order') {
+      return (
+        <div>
+          <div className="meta" style={{ cursor: 'pointer', marginBottom: 16, color: 'var(--purple-dark)', fontWeight: 600 }} onClick={() => setPackView('menu')}>&larr; Study packs</div>
+          <ExamPacks tier={tier} packs={visiblePacks} takenIds={takenIds} buyPacks={actions.buyPacks} onOrdered={() => { router.refresh(); setPackView('orders') }} />
+        </div>
+      )
+    }
+
+    if (packView === 'orders') {
+      return (
+        <div>
+          <div className="meta" style={{ cursor: 'pointer', marginBottom: 16, color: 'var(--purple-dark)', fontWeight: 600 }} onClick={() => setPackView('menu')}>&larr; Study packs</div>
+          <h3 style={{ marginTop: 0 }}>My pack orders</h3>
+          {groups.length === 0 && <p className="meta">You have not asked for a pack yet.</p>}
+          {groups.map(g => {
+            const first = g.rows[0]
+            const total = g.rows.reduce((t: number, r: any) => t + (r.price || 0), 0)
+            const title = g.rows.length > 1 ? `Exam Special · ${g.rows.length} packs` : first.pack_name
+            return (
+              <div className="panel" key={g.key} style={{ marginTop: 12 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
+                  <h4 style={{ margin: 0 }}>{dateOf(first.created_at)}</h4>
+                  <StatusPill status={first.status} />
+                </div>
+                <div className="meta" style={{ marginBottom: 4 }}>{title} · R{total}</div>
+                {first.status === 'pending' && <div style={{ marginTop: 12 }}><PayBlock kind="pack_orders" id={first.id} label={title} price={total} reference={first.reference} markAwaiting={markAwaiting} /></div>}
+                {first.status === 'awaiting' && <p className="meta" style={{ marginTop: 8 }}>We are checking your payment. Once it is accepted you will get a notification, and your pack will be with you {DELIVERY_PROMISE}.</p>}
+                {first.status === 'confirmed' && g.rows.map((r: any) => (
+                  <div key={r.id} style={{ marginTop: 10, paddingTop: 8, borderTop: '1px solid var(--line)' }}>
+                    <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{r.pack_name.replace(/ Pack$/, '')}</div>
+                    <PackDownload orderId={r.id} />
+                  </div>
+                ))}
+              </div>
+            )
+          })}
+        </div>
+      )
+    }
+
     return (
       <div>
         <Back />
-        <ExamPacks tier={tier} packs={visiblePacks} takenIds={takenIds} buyPacks={actions.buyPacks} onOrdered={() => router.refresh()} />
-        {groups.length > 0 && <h4 style={{ marginTop: 22 }}>My pack orders</h4>}
-        {groups.map(g => {
-          const first = g.rows[0]
-          const total = g.rows.reduce((t: number, r: any) => t + (r.price || 0), 0)
-          const title = g.rows.length > 1 ? `Exam Special · ${g.rows.length} packs` : first.pack_name
-          return (
-            <div className="panel" key={g.key} style={{ marginTop: 12 }}>
-              <h4>{title}</h4>
-              {g.rows.length > 1 && <div className="meta">{g.rows.map((r: any) => r.pack_name.replace(/ Pack$/, '')).join(' · ')}</div>}
-              <StatusPill status={first.status} />
-              {first.status === 'pending' && <div style={{ marginTop: 12 }}><PayBlock kind="pack_orders" id={first.id} label={title} price={total} reference={first.reference} markAwaiting={markAwaiting} /></div>}
-              {first.status === 'awaiting' && <p className="meta" style={{ marginTop: 8 }}>We are checking your payment. Once it is accepted you will get a notification, and your pack will be with you {DELIVERY_PROMISE}.</p>}
-              {first.status === 'confirmed' && g.rows.map((r: any) => (
-                <div key={r.id} style={{ marginTop: 8 }}>
-                  {g.rows.length > 1 && <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{r.pack_name.replace(/ Pack$/, '')}</div>}
-                  <PackDownload orderId={r.id} />
-                </div>
-              ))}
-            </div>
-          )
-        })}
+        <h3 style={{ marginTop: 0 }}>Study packs</h3>
+        <div className="panel" style={{ background: 'var(--purple-dark)', color: '#fff', border: 0 }}>
+          <h4 style={{ margin: 0, color: '#fff' }}>Ask for a pack</h4>
+          <p style={{ margin: '4px 0 10px', fontSize: '0.85rem', opacity: 0.92 }}>R{PACK_PRICE} per pack, {BUNDLE_SIZE} for R{BUNDLE_PRICE}. Delivered {DELIVERY_PROMISE} of payment.</p>
+          <button className="btn" style={{ width: '100%', background: '#fff', color: 'var(--purple-dark)' }} onClick={() => setPackView('order')}>Choose packs</button>
+        </div>
+        <div className="panel" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12 }} onClick={() => setPackView('orders')}>
+          <div style={{ fontSize: '1.6rem' }}>📦</div>
+          <div style={{ flex: 1 }}>
+            <h4 style={{ margin: 0 }}>My pack orders</h4>
+            <div className="meta" style={{ marginBottom: 0 }}>{groups.length === 0 ? 'Nothing yet' : `${groups.length} request${groups.length === 1 ? '' : 's'}${readyCount > 0 ? ` · ${readyCount} ready to download` : ''}`}</div>
+          </div>
+          <span style={{ fontSize: '1.4rem', color: 'var(--sub, #8a7fa8)' }}>›</span>
+        </div>
       </div>
     )
   }
@@ -1022,6 +1065,7 @@ export default function PortalHome(props: any) {
       // a link such as /portal?section=packs (from a push notification) opens that screen
       const want = new URLSearchParams(window.location.search).get('section') as Section | null
       if (want && sections.includes(want)) {
+        if (want === 'packs') sessionStorage.setItem('portalPackView', 'orders')
         setSection(want)
         setTab(want === 'chat' ? 'chat' : want === 'packs' ? 'learn' : 'home')
         window.history.replaceState(null, '', window.location.pathname)

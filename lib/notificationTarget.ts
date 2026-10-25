@@ -1,5 +1,5 @@
 // Works out which screen a notification should open, from its message text.
-export type NotifTarget = { home: string; section: string; tab: string; studentId?: string; path?: string }
+export type NotifTarget = { home: string; section: string; tab: string; studentId?: string; path?: string; sub?: string; packStudent?: string }
 
 export function notificationTarget(n: { message: string; student_id?: string | null }, home: '/portal' | '/tutor' | '/partner'): NotifTarget {
   const m = (n.message || '').toLowerCase()
@@ -7,7 +7,7 @@ export function notificationTarget(n: { message: string; student_id?: string | n
 
   if (home === '/portal') {
     if (has('new message', 'from your tutor', 'from lufuno')) return { home, section: 'chat', tab: 'chat' }
-    if (has('pack')) return { home, section: 'packs', tab: 'learn' }
+    if (has('pack')) return { home, section: 'packs', tab: 'learn', sub: 'orders' }
     if (has('video')) return { home, section: 'video', tab: 'learn' }
     if (has('homework')) return { home, section: 'homework', tab: 'learn' }
     if (has('referr')) return { home, section: 'referral', tab: 'more' }
@@ -20,7 +20,7 @@ export function notificationTarget(n: { message: string; student_id?: string | n
   if (home === '/tutor') {
     if (has('new message')) return { home, section: 'chat', tab: 'chat', studentId: n.student_id || undefined }
     if (has('homework')) return { home, section: 'homework', tab: 'requests' }
-    if (has('pack')) return { home, section: 'packs', tab: 'more' }
+    if (has('pack')) return { home, section: 'packs', tab: 'more', packStudent: n.student_id || undefined }
     if (has('video topic')) return { home, section: 'videoreq', tab: 'more' }
     if (has('video access')) return { home, section: 'videos', tab: 'more' }
     if (has('disputed')) return { home, section: 'sessions', tab: 'more' }
@@ -39,6 +39,8 @@ export function applyTarget(t: NotifTarget) {
   try {
     sessionStorage.setItem(k + 'Section', t.section)
     sessionStorage.setItem(k + 'Tab', t.tab)
+    if (t.sub && k === 'portal') sessionStorage.setItem('portalPackView', t.sub)
+    if (t.packStudent && k === 'tutor') sessionStorage.setItem('tutorPackStudent', t.packStudent)
     if (t.studentId) sessionStorage.setItem('tutorOpenStudent', t.studentId)
   } catch (e) {}
 }
