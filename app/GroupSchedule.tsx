@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useMemo, useState } from 'react'
-import { getGroupData, moveGroupSessions, cancelGroupSessions, GroupStudent, GroupSession } from './schedule-group-actions'
+import { getGroupData, moveGroupSessions, cancelGroupSessions, setGroupLink, GroupStudent, GroupSession } from './schedule-group-actions'
 import { addSessions } from './schedule-actions'
 
 const chip = (on: boolean): React.CSSProperties => ({ border: '1px solid var(--purple-dark)', borderRadius: 20, padding: '6px 14px', fontSize: '.88rem', cursor: 'pointer', background: on ? 'var(--purple-dark)' : 'none', color: on ? '#fff' : 'var(--purple-dark)' })
@@ -23,6 +23,8 @@ export default function GroupSchedule() {
   const [editing, setEditing] = useState<string | null>(null)
   const [nd, setNd] = useState('')
   const [nt, setNt] = useState('')
+  const [link, setLink] = useState('')
+  const [linkMsg, setLinkMsg] = useState<{ ok: boolean; text: string } | null>(null)
 
   async function load() { try { setData(await getGroupData()) } catch { setData({ students: [], sessions: [] }) } }
   useEffect(() => { load() }, [])
@@ -52,6 +54,9 @@ export default function GroupSchedule() {
     return uni.filter(s => s.subject === subject)
   }, [level, grade, subject, hs, uni])
   const chosen = group.filter(s => !skip.has(s.id))
+  // students who do both subjects have one link only, so it is set from the Maths group; a Physical Sciences link skips them
+  const linkTargets = group.filter(s => !(level === 'hs' && subject === 'physics' && s.choice === 'both'))
+  useEffect(() => { setLink(linkTargets.find(s => s.link)?.link || ''); setLinkMsg(null) }, [level, grade, subject, data])
   useEffect(() => { setFormat(group.length > 0 && group.filter(s => s.format === 'physical').length > group.length / 2 ? 'physical' : 'online') }, [group.length, subject, grade, level])
 
   async function submit() {
@@ -117,6 +122,18 @@ export default function GroupSchedule() {
                 <input type="checkbox" checked={!skip.has(s.id)} onChange={() => setSkip(prev => { const n = new Set(prev); n.has(s.id) ? n.delete(s.id) : n.add(s.id); return n })} /> {s.name}
               </label>
             ))}
+          </div>
+        )}
+
+        {group.length > 0 && (
+          <div className="field">
+            <label>Meeting link for this group</label>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input value={link} onChange={e => setLink(e.target.value)} placeholder="Zoom, Meet or Teams link" style={{ flex: 1 }} />
+              <button type="button" className="btn btn-primary" style={{ padding: '6px 12px' }} disabled={busy || !link.trim()} onClick={async () => { setBusy(true); const r = await setGroupLink(level, linkTargets.map(s => s.id), link); setBusy(false); setLinkMsg({ ok: r.ok, text: r.message }); if (r.ok) await load() }}>Save</button>
+            </div>
+            <div className="meta" style={{ marginBottom: 0 }}>Paste it once and every student here gets it. {level === 'hs' && subject === 'physics' ? 'Students who do both subjects keep the Maths link.' : level === 'hs' ? 'Students who do both subjects use this link for both.' : ''}</div>
+            {linkMsg && <div className="meta" style={{ marginBottom: 0, color: linkMsg.ok ? '#1E6B34' : '#A6443A' }}>{linkMsg.text}</div>}
           </div>
         )}
 

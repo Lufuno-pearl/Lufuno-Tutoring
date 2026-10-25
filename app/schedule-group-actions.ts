@@ -2,8 +2,9 @@
 import { createClient } from '../lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { sendPushToUser } from '../lib/push'
+import { checkMeetingLink } from '../lib/meetingLink'
 
-export type GroupStudent = { id: string; name: string; level: 'hs' | 'uni'; grade: number | null; choice: string; subject: string; format: string }
+export type GroupStudent = { id: string; name: string; level: 'hs' | 'uni'; grade: number | null; choice: string; subject: string; format: string; link: string }
 export type GroupSession = { id: string; student_id: string; subject: string; session_date: string; session_time: string; format: string; note: string | null }
 
 function saToday() { return new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }
@@ -16,8 +17,8 @@ export async function getGroupData(): Promise<{ students: GroupStudent[]; sessio
   if (!user) return { students: [], sessions: [] }
   const today = saToday()
   const [{ data: subs }, { data: books }, { data: sess }] = await Promise.all([
-    supabase.from('hs_subscriptions').select('student_id, subject_choice, session_type, grade, format').eq('tutor_id', user.id).eq('status', 'confirmed').gte('end_date', today).order('created_at', { ascending: false }),
-    supabase.from('bookings').select('student_id, subject, session_type, format').eq('tutor_id', user.id).eq('status', 'confirmed').order('created_at', { ascending: false }),
+    supabase.from('hs_subscriptions').select('student_id, subject_choice, session_type, grade, format, meeting_link').eq('tutor_id', user.id).eq('status', 'confirmed').gte('end_date', today).order('created_at', { ascending: false }),
+    supabase.from('bookings').select('student_id, subject, session_type, format, meeting_link').eq('tutor_id', user.id).eq('status', 'confirmed').order('created_at', { ascending: false }),
     supabase.from('scheduled_sessions').select('id, student_id, subject, session_date, session_time, format, note').eq('tutor_id', user.id).gte('session_date', today).order('session_date', { ascending: true }).limit(1000),
   ])
   const ids = Array.from(new Set([...(subs || []), ...(books || [])].map((x: any) => x.student_id)))
@@ -29,12 +30,12 @@ export async function getGroupData(): Promise<{ students: GroupStudent[]; sessio
   ;(subs || []).forEach((s: any) => {
     if (s.session_type === 'one_on_one' || seen.has('hs' + s.student_id)) return
     seen.add('hs' + s.student_id)
-    students.push({ id: s.student_id, name: nameOf[s.student_id] || 'Student', level: 'hs', grade: s.grade, choice: s.subject_choice, subject: s.subject_choice, format: s.format || 'online' })
+    students.push({ id: s.student_id, name: nameOf[s.student_id] || 'Student', level: 'hs', grade: s.grade, choice: s.subject_choice, subject: s.subject_choice, format: s.format || 'online', link: s.meeting_link || '' })
   })
   ;(books || []).forEach((b: any) => {
     if (b.session_type === 'one_on_one' || seen.has('uni' + b.student_id + b.subject)) return
     seen.add('uni' + b.student_id + b.subject)
-    students.push({ id: b.student_id, name: nameOf[b.student_id] || 'Student', level: 'uni', grade: null, choice: b.subject, subject: b.subject, format: b.format || 'online' })
+    students.push({ id: b.student_id, name: nameOf[b.student_id] || 'Student', level: 'uni', grade: null, choice: b.subject, subject: b.subject, format: b.format || 'online', link: b.meeting_link || '' })
   })
   return { students, sessions: (sess || []) as GroupSession[] }
 }
@@ -76,4 +77,28 @@ export async function cancelGroupSessions(ids: string[]): Promise<{ ok: boolean;
   }
   revalidatePath('/portal'); revalidatePath('/partner'); revalidatePath('/tutor')
   return { ok: true, message: 'Cancelled. Your students have been told.' }
+}
+
+// One meeting link for a whole group: saved on every student in it, so the tutor does not paste it one by one
+export async function setGroupLink(level: 'hs' | 'uni', studentIds: string[], rawUrl: string): Promise<{ ok: boolean; message: string }> {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, message: 'Please sign in again.' }
+  const checked = checkMeetingLink(rawUrl)
+  if (!checked.ok) return { ok: false, message: checked.message }
+  if (!checked.url) return { ok: false, message: 'Paste the meeting link first.' }
+  const ids = Array.from(new Set(studentIds)).slice(0, 60)
+  if (ids.length === 0) return { ok: false, message: 'No students in this group.' }
+  const table = level === 'hs' ? 'hs_subscriptions' : 'bookings'
+  let q = supabase.from(table).update({ meeting_link: checked.url }).eq('tutor_id', user.id).eq('status', 'confirmed').in('student_id', ids)
+  if (level === 'hs') q = q.eq('session_type', 'group')
+  const { data, error } = await q.select('student_id')
+  if (error) return { ok: false, message: 'Could not save the link. Please try again.' }
+  const done = Array.from(new Set((data || []).map((r: any) => r.student_id)))
+  for (const id of done) {
+    await supabase.from('notifications').insert({ student_id: id, for_role: 'student', message: 'Your session meeting link is ready.' })
+    await sendPushToUser(id, 'Meeting link ready', 'Your session meeting link is ready.', '/portal')
+  }
+  revalidatePath('/portal'); revalidatePath('/partner'); revalidatePath('/tutor')
+  return { ok: true, message: `Link saved for ${done.length} student${done.length === 1 ? '' : 's'}. They have been told.` }
 }
