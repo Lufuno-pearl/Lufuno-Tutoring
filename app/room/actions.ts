@@ -91,3 +91,22 @@ export async function addToRoom(studentId: string) {
   const { error } = await supabase.from('attendance').insert({ student_id: studentId, marked_by: user.id, status: 'present', session_date: today, joined_at: new Date().toISOString(), source: 'tutor' })
   return { ok: !error }
 }
+
+// The tutor scanned a student's QR code (in-person sessions)
+export async function scanStudent(token: string): Promise<{ ok: boolean; name?: string; already?: boolean; message?: string }> {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, message: 'Please log in again.' }
+  const { data, error } = await supabase.rpc('scan_student', { p_token: String(token || '').slice(0, 200) })
+  const r: any = data
+  if (error || !r) return { ok: false, message: 'Could not scan. Has the join-qr SQL been run?' }
+  if (r.ok) { revalidatePath('/partner'); revalidatePath('/tutor'); return { ok: true, name: r.name, already: !!r.already } }
+  const reasons: Record<string, string> = {
+    closed: 'Start the session first.',
+    bad: 'That is not a student code.',
+    old: 'That code is old. Ask the student to open it again.',
+    notmine: `${r.name || 'That student'} is not one of your students.`,
+    login: 'Please log in again.',
+  }
+  return { ok: false, message: reasons[r.reason] || 'Could not scan that code.' }
+}

@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { getRoomState, startRoom, endRoom, addToRoom, RoomState } from './actions'
+import Scanner from './Scanner'
 
 function clock(iso: string | null) {
   if (!iso) return ''
@@ -12,6 +13,7 @@ export default function RoomPanel() {
   const [st, setSt] = useState<RoomState | null>(null)
   const [busy, setBusy] = useState(false)
   const [warn, setWarn] = useState('')
+  const [scanning, setScanning] = useState(false)
 
   async function load() { try { setSt(await getRoomState()) } catch { /* keep what we have */ } }
   useEffect(() => {
@@ -46,10 +48,10 @@ export default function RoomPanel() {
       ) : (
         <>
           <h4 style={{ margin: 0 }}>Session open · {joined} of {st.students.length} joined</h4>
-          {st.anyPhysical && st.code && (
+          {st.anyPhysical && (
             <div style={{ margin: '10px 0' }}>
-              <div className="meta">In-person students type this code:</div>
-              <div style={{ fontSize: '2rem', letterSpacing: 8, fontWeight: 800, textAlign: 'center', color: 'var(--purple-dark)' }}>{st.code}</div>
+              <button className="btn btn-gold" style={{ width: '100%' }} onClick={() => setScanning(true)}>Scan a student's QR code</button>
+              {st.code && <div className="meta" style={{ marginTop: 6, marginBottom: 0 }}>No camera? An in-person student can type this code instead: <b style={{ letterSpacing: 3 }}>{st.code}</b></div>}
             </div>
           )}
           <div style={{ margin: '8px 0' }}>
@@ -57,7 +59,7 @@ export default function RoomPanel() {
               <div key={s.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--line)' }}>
                 <span>{s.name}</span>
                 {s.joinedAt
-                  ? <span className="pill" style={{ background: '#E3F3E8', color: '#1F5C38' }}>{s.source === 'tutor' ? `Added by you ${clock(s.joinedAt)}` : `Joined ${clock(s.joinedAt)}`}</span>
+                  ? <span className="pill" style={{ background: '#E3F3E8', color: '#1F5C38' }}>{s.source === 'tutor' ? `Added by you ${clock(s.joinedAt)}` : s.source === 'scan' ? `Scanned ${clock(s.joinedAt)}` : `Joined ${clock(s.joinedAt)}`}</span>
                   : <button type="button" className="btn" style={{ padding: '4px 10px', fontSize: '.8rem' }} disabled={busy} onClick={() => add(s.id)}>Not joined · add</button>}
               </div>
             ))}
@@ -67,6 +69,7 @@ export default function RoomPanel() {
         </>
       )}
       {warn && <p className="meta" style={{ color: '#b3261e' }}>{warn}</p>}
+      {scanning && <Scanner onClose={() => { setScanning(false); load() }} onScanned={load} />}
     </div>
   )
 }
