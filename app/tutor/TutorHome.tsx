@@ -11,6 +11,7 @@ import FlatIcon from '../FlatIcon'
 import { Owl } from '../Owl'
 import { QuoteCloud, TUTOR_QUOTES } from '../portal/HomeParts'
 import PacksAdmin from './PacksAdmin'
+import SessionsLog from './SessionsLog'
 import OwnerOverview, { AttentionItem } from './OwnerOverview'
 import { useRouter } from 'next/navigation'
 import ScopeFiles from './ScopeFiles'
@@ -675,14 +676,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
       <div>
         <Back />
         <PageTitle title="Sessions log" />
-        {(attendanceRows || []).length === 0 && <p className="meta">No sessions logged yet.</p>}
-        <div className="panel">
-          {(attendanceRows || []).map((a: any) => {
-            const st = String(a.status)
-            const ok = st === 'present'
-            return <Row key={a.id} icon={ok ? <Check size={20} /> : <X size={20} />} tone={ok ? 'green' : st === 'absent' ? 'pink' : 'gold'} title={a.student?.full_name || 'Student'} sub={`${a.session_date} · logged by ${a.tutor?.full_name || 'you'}`} right={<Pill tone={ok ? 'green' : st === 'absent' ? 'pink' : 'gold'}>{st.replace('_', ' ')}</Pill>} />
-          })}
-        </div>
+        <SessionsLog rows={attendanceRows || []} />
       </div>
     )
   }
