@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
-import { ChevronRight } from 'lucide-react'
+import { ChevronRight, Users } from 'lucide-react'
+import { NavRow } from '../ui'
 import AttendanceButtons from '../AttendanceButtons'
 import TutorMaterials from '../tutor/TutorMaterials'
 import MarksView from '../MarksView'
@@ -53,14 +54,7 @@ export default function PartnerStudents({ allSubs, scheduleByStudent, marksByStu
       const sub = s ? `${subjectLabel(s.subject_choice)}${s.extra_subject ? ` + ${s.extra_subject}` : ''}${s.grade ? ` · Gr ${s.grade}` : ''}` : b ? b.subject : ''
       const last = (thread.msgs || [])[(thread.msgs || []).length - 1]
       return (
-        <div key={sid} className="panel" style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} onClick={() => { setSelectedId(sid); setText('') }}>
-          <div>
-            <h4 style={{ margin: 0 }}>{thread.name}</h4>
-            {sub && <div className="meta" style={{ marginBottom: 0 }}>{sub}</div>}
-            {last && <div className="meta" style={{ marginBottom: 0 }}>{last.sender === 'tutor' ? 'You: ' : ''}{String(last.body).slice(0, 40)}{String(last.body).length > 40 ? '...' : ''}</div>}
-          </div>
-          <ChevronRight size={18} color="var(--purple-dark)" />
-        </div>
+        <NavRow key={sid} icon={<Users size={20} />} title={thread.name} sub={<>{sub}{last ? <><br />{last.sender === 'tutor' ? 'You: ' : ''}{String(last.body).slice(0, 40)}{String(last.body).length > 40 ? '...' : ''}</> : null}</>} onClick={() => { setSelectedId(sid); setText('') }} />
       )
     }
 

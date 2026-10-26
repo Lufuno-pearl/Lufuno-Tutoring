@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { ChevronRight, Pencil, Film } from 'lucide-react'
+import { NavRow } from '../ui'
 import FileBox from '../FileBox'
 import { UploadVideo } from '../tutor/VideoRequests'
 import { claimHomework, solveHomework, claimVideo, completeVideo } from './requestActions'
@@ -114,26 +115,8 @@ export default function PartnerRequests({ userId, homework, videos }: { userId: 
 
   return (
     <div>
-      <div className="panel" style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} onClick={() => { setView('homework'); setTab('waiting'); setNotice('') }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <Pencil size={22} color="var(--purple-dark)" />
-          <div>
-            <h4 style={{ margin: 0 }}>Homework</h4>
-            <div className="meta" style={{ marginBottom: 0 }}>{hwWaiting.length} waiting · {hwMine.length} yours</div>
-          </div>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Badge n={hwWaiting.length} /><ChevronRight size={18} color="var(--purple-dark)" /></div>
-      </div>
-      <div className="panel" style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} onClick={() => { setView('video'); setTab('waiting'); setNotice('') }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <Film size={22} color="var(--purple-dark)" />
-          <div>
-            <h4 style={{ margin: 0 }}>Video requests</h4>
-            <div className="meta" style={{ marginBottom: 0 }}>{vidWaiting.length} waiting · {vidMine.length} yours</div>
-          </div>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Badge n={vidWaiting.length} /><ChevronRight size={18} color="var(--purple-dark)" /></div>
-      </div>
+      <NavRow icon={<Pencil size={20} />} title="Homework" sub={<>{hwWaiting.length} waiting · {hwMine.length} yours</>} badge={hwWaiting.length} onClick={() => { setView('homework'); setTab('waiting'); setNotice('') }} />
+      <NavRow icon={<Film size={20} />} title="Video requests" sub={<>{vidWaiting.length} waiting · {vidMine.length} yours</>} badge={vidWaiting.length} onClick={() => { setView('video'); setTab('waiting'); setNotice('') }} />
     </div>
   )
 }

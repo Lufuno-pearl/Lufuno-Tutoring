@@ -1,11 +1,11 @@
 'use client'
-import { PageTitle, Row, Pill, Tone } from '../ui'
+import { PageTitle, Row, Pill, Tone, NavRow } from '../ui'
 import { useState, useEffect, useLayoutEffect } from 'react'
 import GroupSchedule from '../GroupSchedule'
 import RoomPanel from '../room/RoomPanel'
 import TabBarPortal, { scrollPageToTop } from '../TabBarPortal'
 import Link from 'next/link'
-import { Home, Inbox, Users, MoreHorizontal, Clock, UserCog, BookOpen, ClipboardList, MessageCircle, ChevronRight, Check, X, Star, Video, Film, Gift, Calendar, GraduationCap, Target } from 'lucide-react'
+import { Home, Inbox, Users, MoreHorizontal, Clock, UserCog, BookOpen, ClipboardList, MessageCircle, ChevronRight, Check, X, Star, Video, Film, Gift, Calendar, GraduationCap, Target, Plus } from 'lucide-react'
 import InstallButton from '../InstallButton'
 import FlatIcon from '../FlatIcon'
 import { Owl } from '../Owl'
@@ -361,9 +361,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
         <PageTitle title="University bookings" />
         {(bookings || []).map((b: any) => (
           <div className="panel" key={b.id}>
-            <h4>{b.subject} — {b.day} {b.time}</h4>
-            <div className="meta">{b.profiles?.full_name} · {b.profiles?.email} · {kindLabel(b)} · R{b.price}{b.reference ? ` · Ref: ${b.reference}` : ''}</div>
-            <StatusPill status={b.status} />
+            <Row icon={<GraduationCap size={20} />} tone={b.status === 'confirmed' ? 'green' : 'gold'} title={<>{b.subject} — {b.day} {b.time}</>} sub={<>{b.profiles?.full_name} · {b.profiles?.email} · {kindLabel(b)} · R{b.price}{b.reference ? ` · Ref: ${b.reference}` : ''}</>} right={<StatusPill status={b.status} />} />
             {b.status !== 'confirmed' && (
               <form action={async () => { await confirmPayment('bookings', b.id) }} style={{ marginTop: 8 }}>
                 <button className="btn btn-gold">Mark paid</button>
@@ -374,9 +372,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
         <PageTitle title="High school subscriptions" />
         {(subs || []).map((s: any) => (
           <div className="panel" key={s.id}>
-            <h4>{s.month}</h4>
-            <div className="meta">{s.profiles?.full_name} · {s.profiles?.email}{s.grade ? ` · Gr ${s.grade}` : ''} · {subjectLabel(s.subject_choice)}{s.extra_subject ? ` + ${s.extra_subject}` : ''} · {kindLabel(s)} · R{s.price}{s.reference ? ` · Ref: ${s.reference}` : ''}{s.status === 'confirmed' && s.end_date ? ` · Active until ${s.end_date}` : ''}</div>
-            <StatusPill status={s.status} />
+            <Row icon={<Calendar size={20} />} tone={s.status === 'confirmed' ? 'green' : 'gold'} title={<>{s.month}</>} sub={<>{s.profiles?.full_name} · {s.profiles?.email}{s.grade ? ` · Gr ${s.grade}` : ''} · {subjectLabel(s.subject_choice)}{s.extra_subject ? ` + ${s.extra_subject}` : ''} · {kindLabel(s)} · R{s.price}{s.reference ? ` · Ref: ${s.reference}` : ''}{s.status === 'confirmed' && s.end_date ? ` · Active until ${s.end_date}` : ''}</>} right={<StatusPill status={s.status} />} />
             {s.status !== 'confirmed' && (
               <form action={async () => { await confirmPayment('hs_subscriptions', s.id) }} style={{ marginTop: 8 }}>
                 <button className="btn btn-gold">Mark paid</button>
@@ -388,9 +384,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
         {(extras || []).filter((x: any) => x.status !== 'pending').length === 0 && <p className="meta">None yet.</p>}
         {(extras || []).filter((x: any) => x.status !== 'pending').map((x: any) => (
           <div className="panel" key={x.id}>
-            <h4>{x.count} extra session{x.count > 1 ? 's' : ''}</h4>
-            <div className="meta">{x.profiles?.full_name} · {x.profiles?.email} · R{x.price}{x.reference ? ` · Ref: ${x.reference}` : ''}</div>
-            <StatusPill status={x.status} />
+            <Row icon={<Plus size={20} />} tone={x.status === 'confirmed' ? 'green' : 'gold'} title={<>{x.count} extra session{x.count > 1 ? 's' : ''}</>} sub={<>{x.profiles?.full_name} · {x.profiles?.email} · R{x.price}{x.reference ? ` · Ref: ${x.reference}` : ''}</>} right={<StatusPill status={x.status} />} />
             {x.status !== 'confirmed' && (
               <form action={async () => { await confirmPayment('session_extras', x.id) }} style={{ marginTop: 8 }}>
                 <button className="btn btn-gold">Mark paid</button>
@@ -402,9 +396,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
         {(videoRequests || []).length === 0 && <p className="meta">None yet.</p>}
         {(videoRequests || []).map((v: any) => (
           <div className="panel" key={v.id}>
-            <h4>{v.subject}</h4>
-            <div className="meta">{v.profiles?.full_name} · {v.profiles?.email} · R{v.price}{v.reference ? ` · Ref: ${v.reference}` : ''}</div>
-            <StatusPill status={v.status} />
+            <Row icon={<Video size={20} />} tone={v.status === 'confirmed' ? 'green' : 'gold'} title={<>{v.subject}</>} sub={<>{v.profiles?.full_name} · {v.profiles?.email} · R{v.price}{v.reference ? ` · Ref: ${v.reference}` : ''}</>} right={<StatusPill status={v.status} />} />
             {v.status !== 'confirmed' && (
               <form action={async () => { await confirmPayment('video_access_requests', v.id) }} style={{ marginTop: 8 }}>
                 <button className="btn btn-gold">Mark paid</button>
@@ -551,9 +543,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
         {(customPackRequests || []).length === 0 && <p className="meta">None yet.</p>}
         {(customPackRequests || []).map((c: any) => (
           <div className="panel" key={c.id}>
-            <h4>{c.course_name}{c.module_name && c.module_name !== c.course_name ? ` — ${c.module_name}` : ''}</h4>
-            <div className="meta">{c.profiles?.full_name} · {c.profiles?.email} · R{c.price}</div>
-            <StatusPill status={c.status} />
+            <Row icon={<GraduationCap size={20} />} tone={c.status === 'confirmed' ? 'green' : 'gold'} title={<>{c.course_name}{c.module_name && c.module_name !== c.course_name ? ` — ${c.module_name}` : ''}</>} sub={<>{c.profiles?.full_name} · {c.profiles?.email} · R{c.price}</>} right={<StatusPill status={c.status} />} />
             {c.status !== 'confirmed' && (
               <form action={async () => { await confirmPayment('other_course_requests', c.id) }} style={{ marginTop: 8 }}>
                 <button className="btn btn-gold">Mark paid</button>
@@ -720,13 +710,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
     const hsEntries = filteredEntries.filter(([, t]: any) => t.tier === 'highschool')
 
     const renderRow = ([sid, t]: any) => (
-      <div key={sid} className="panel" style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} onClick={() => setSelectedStudentId(sid)}>
-        <div>
-          <h4 style={{ margin: 0 }}>{t.name}</h4>
-          <div className="meta" style={{ marginBottom: 0 }}>{t.email}</div>
-        </div>
-        <ChevronRight size={18} color="var(--purple-dark)" />
-      </div>
+      <NavRow key={sid} icon={<Users size={20} />} title={t.name} sub={t.email} onClick={() => setSelectedStudentId(sid)} />
     )
 
     return (
@@ -773,16 +757,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
     const openCount = (openBookings || []).length + (openSubs || []).length
 
     const row = (label: string, sub: string, onClick: () => void, badge = 0) => (
-      <div className="panel" style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} onClick={onClick}>
-        <div>
-          <h4 style={{ margin: 0 }}>{label}</h4>
-          <div className="meta" style={{ marginBottom: 0 }}>{sub}</div>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {badge > 0 && <span style={{ background: '#A6443A', color: '#fff', fontSize: '0.75rem', borderRadius: 100, minWidth: 22, height: 22, padding: '0 5px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{badge}</span>}
-          <ChevronRight size={18} color="var(--purple-dark)" />
-        </div>
-      </div>
+      <NavRow key={label} icon={<ClipboardList size={20} />} title={label} sub={sub} badge={badge} onClick={onClick} />
     )
 
     if (myView === 'marks') {
@@ -811,13 +786,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
             ms.forEach((m: any) => { (bySub[m.subject] = bySub[m.subject] || []).push(Math.round((Number(m.mark) / Number(m.out_of)) * 100)) })
             const low = Object.values(bySub).some(a => a.reduce((x, y) => x + y, 0) / a.length < 50)
             return (
-              <div key={sid} className="panel" style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderLeft: low ? '5px solid #A6443A' : undefined }} onClick={() => setMarksStudentId(sid)}>
-                <div>
-                  <h4 style={{ margin: 0 }}>{t.name}</h4>
-                  <div className="meta" style={{ marginBottom: 0 }}>{ms.length === 0 ? 'No marks yet' : `${ms.length} mark${ms.length === 1 ? '' : 's'}`}{low ? ' · average below 50%' : ''}</div>
-                </div>
-                <ChevronRight size={18} color="var(--purple-dark)" />
-              </div>
+              <NavRow key={sid} icon={<Target size={20} />} warn={low} title={t.name} sub={`${ms.length === 0 ? 'No marks yet' : `${ms.length} mark${ms.length === 1 ? '' : 's'}`}${low ? ' · average below 50%' : ''}`} onClick={() => setMarksStudentId(sid)} />
             )
           })}
         </div>
