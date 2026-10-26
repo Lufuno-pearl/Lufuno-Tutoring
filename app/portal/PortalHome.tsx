@@ -19,7 +19,7 @@ import RateTutor from './RateTutor'
 import ModuleFinder from './ModuleFinder'
 import NextSession from './NextSession'
 import BookingsView from './BookingsView'
-import { PageTitle, Seg, Row } from '../ui'
+import { PageTitle, Seg, Row, Chips } from '../ui'
 import FlatIcon from '../FlatIcon'
 import Avatar from '../Avatar'
 import { ChevronRight } from 'lucide-react'
@@ -292,6 +292,8 @@ function HomeworkBox({ userId, subjectOptions, submitHomework, myRequests }: { u
   const [file, setFile] = useState<File | null>(null)
   const [fileKey, setFileKey] = useState(0)
   const [uploadFailed, setUploadFailed] = useState(false)
+  const [hwTab, setHwTab] = useState<'request' | 'solved'>('request')
+  const [solvedSubject, setSolvedSubject] = useState('All')
 
   async function handleSubmit() {
     if (!subject || sending) return
@@ -322,6 +324,28 @@ function HomeworkBox({ userId, subjectOptions, submitHomework, myRequests }: { u
   return (
     <div>
       <PageTitle title="Homework help" sub="Send it, get the solution back here" />
+      <Seg options={[{ id: 'request', label: 'Request help' }, { id: 'solved', label: `Solved (${myRequests.filter((h: any) => h.status === 'solved').length})` }]} value={hwTab} onChange={id => setHwTab(id as any)} />
+      {hwTab === 'solved' && (() => {
+        const solved = myRequests.filter((h: any) => h.status === 'solved')
+        const subs = Array.from(new Set(solved.map((h: any) => h.subject)))
+        const list = solvedSubject === 'All' ? solved : solved.filter((h: any) => h.subject === solvedSubject)
+        return (
+          <div style={{ marginTop: 12 }}>
+            {subs.length > 1 && <div style={{ marginBottom: 12 }}><Chips options={['All', ...subs]} value={[solvedSubject]} onChange={v => setSolvedSubject(v[0])} /></div>}
+            {list.length === 0 && <p className="meta">No solved homework yet. When your tutor uploads a solution, it shows here.</p>}
+            {list.map((h: any) => (
+              <div className="panel" key={h.id}>
+                <h4>{h.subject}</h4>
+                {h.description && <p className="meta">{h.description}</p>}
+                <span className="status confirmed">Solved</span>
+                <div className="meta" style={{ marginTop: 10, fontWeight: 600 }}>Solution</div>
+                <FileBox folderPath={`${userId}/${h.id}/solution`} allowUpload={false} />
+              </div>
+            ))}
+          </div>
+        )
+      })()}
+      {hwTab === 'request' && <>
       <p className="meta">Tell us what you need help with and attach your document below, then send. Lufuno (or your tutor) will upload the solution back to this same request once it's ready.</p>
       {sent && (
         <div className="panel" style={{ background: uploadFailed ? '#F3E6C7' : '#DCEEE0', textAlign: 'center' }}>
@@ -351,13 +375,14 @@ function HomeworkBox({ userId, subjectOptions, submitHomework, myRequests }: { u
       </div>
       <button className="btn btn-primary" onClick={handleSubmit} disabled={sending}>{sending ? 'Sending...' : 'Submit request'}</button>
 
-      {myRequests.length > 0 && (
+      {myRequests.filter((h: any) => h.status !== 'solved').length > 0 && (
         <div style={{ marginTop: 16 }}>
-          {myRequests.map((h: any) => (
+          <h4>Waiting for a solution</h4>
+          {myRequests.filter((h: any) => h.status !== 'solved').map((h: any) => (
             <div className="panel" key={h.id}>
               <h4>{h.subject}</h4>
               {h.description && <p className="meta">{h.description}</p>}
-              <span className={`status ${h.status === 'solved' ? 'confirmed' : 'pending'}`}>{h.status === 'solved' ? 'Solved' : 'Pending'}</span>
+              <span className="status pending">Pending</span>
               <div className="meta" style={{ marginTop: 8, fontWeight: 600 }}>Your document</div>
               <FileBox folderPath={`${userId}/${h.id}/question`} uploadLabel="Upload / replace your document" />
               {h.status === 'solved' && (
@@ -370,6 +395,37 @@ function HomeworkBox({ userId, subjectOptions, submitHomework, myRequests }: { u
           ))}
         </div>
       )}
+      </>}
+    </div>
+  )
+}
+function VideoLessons({ hasLessons, lessons, isHS, requests, requestBox }: { hasLessons: boolean; lessons: React.ReactNode; isHS: boolean; requests: any[]; requestBox: React.ReactNode }) {
+  const [tab, setTab] = useState<'watch' | 'request'>(hasLessons || !isHS ? 'watch' : 'request')
+  const [subj, setSubj] = useState('All')
+  const subjects = Array.from(new Set(requests.map((v: any) => v.subject)))
+  const list = subj === 'All' ? requests : requests.filter((v: any) => v.subject === subj)
+  return (
+    <div>
+      {isHS && <Seg options={[{ id: 'watch', label: 'Watch' }, { id: 'request', label: 'Request a video' }]} value={tab} onChange={id => setTab(id as any)} />}
+      {tab === 'watch' && (
+        <div style={{ marginTop: 12 }}>
+          {hasLessons && lessons}
+          {isHS && requests.length > 0 && (
+            <>
+              <h4 style={{ margin: '14px 0 8px' }}>Videos you asked for</h4>
+              {subjects.length > 1 && <div style={{ marginBottom: 12 }}><Chips options={['All', ...subjects]} value={[subj]} onChange={v => setSubj(v[0])} /></div>}
+              {list.map((v: any) => (
+                <div className="panel" key={v.id}>
+                  <h4>{v.subject} — {v.topic}</h4>
+                  {v.status === 'ready' && v.video_path ? <StoredVideo path={v.video_path} /> : v.status === 'ready' && v.video_url ? <p style={{ marginTop: 8 }}><a href={v.video_url} target="_blank">Watch video &rarr;</a></p> : <span className="status pending">Being recorded</span>}
+                </div>
+              ))}
+            </>
+          )}
+          {isHS && !hasLessons && requests.length === 0 && <p className="meta">No videos yet. Tap "Request a video" to ask for a topic.</p>}
+        </div>
+      )}
+      {tab === 'request' && <div style={{ marginTop: 12 }}>{requestBox}</div>}
     </div>
   )
 }
@@ -941,20 +997,14 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
     <div>
       <button className="btn" onClick={() => setSection('menu')}>← Back</button>
       <PageTitle title="Video lessons" sub="Watch, pause, repeat" />
-      {(myVideoSubjects || []).length > 0 && (
-        <section>
-          <MyVideos subjects={myVideoSubjects || []} />
-        </section>
-      )}
-      {tier === 'highschool' && (hasActiveSub ? (
-        <VideoTopicBox subjectOptions={allowedSubjects} requestVideoTopic={requestVideoTopic} myRequests={videoTopicRequests || []} />
-      ) : (
-        <div className="panel">
-          <h4>You're not subscribed</h4>
-          <p className="meta">A high school subscription unlocks unlimited video topic requests. Request tutoring in the Tutoring tab to get started.</p>
-          <button className="btn btn-primary" onClick={() => setSection('book')}>Request tutoring</button>
-        </div>
-      ))}
+      <VideoLessons hasLessons={(myVideoSubjects || []).length > 0} lessons={<MyVideos subjects={myVideoSubjects || []} />} isHS={tier === 'highschool'} requests={videoTopicRequests || []}
+        requestBox={tier === 'highschool' ? (hasActiveSub ? <VideoTopicBox subjectOptions={allowedSubjects} requestVideoTopic={requestVideoTopic} myRequests={[]} /> : (
+          <div className="panel">
+            <h4>You're not subscribed</h4>
+            <p className="meta">A high school subscription unlocks unlimited video topic requests. Request tutoring in the Tutoring tab to get started.</p>
+            <button className="btn btn-primary" onClick={() => setSection('book')}>Request tutoring</button>
+          </div>
+        )) : null} />
       {tier !== 'highschool' && (myVideoSubjects || []).length === 0 && (
         <div className="panel">
           <h4>Video lessons for your modules</h4>
