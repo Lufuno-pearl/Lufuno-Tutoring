@@ -7,10 +7,11 @@ import TabBarPortal, { scrollPageToTop } from '../TabBarPortal'
 import { useRouter } from 'next/navigation'
 import InstallButton from '../InstallButton'
 import { Hero, QuoteCloud, StreakCard, TUTOR_QUOTES } from '../portal/HomeParts'
+import { Check, Users as UsersIcon, CalendarDays, Wallet } from 'lucide-react'
 import { Calendar, Inbox, Film, Users, Video, MapPin, ScrollText, Target, Home, Settings, CalendarClock } from 'lucide-react'
 
 type Section = 'menu' | 'schedule' | 'availability' | 'open' | 'requests' | 'students' | 'videos' | 'areas' | 'tests'
-type Tab = 'home' | 'students' | 'requests' | 'manage'
+type Tab = 'home' | 'students' | 'requests' | 'room' | 'manage'
 
 type TodaySession = { id: string; studentId?: string; subject: string; time: string; format: string; area?: string | null; meeting_link?: string | null; studentName: string }
 
@@ -50,7 +51,7 @@ function tabOf(section: Section): Tab | null {
 }
 
 const SECTIONS: Section[] = ['menu', 'schedule', 'availability', 'open', 'requests', 'students', 'videos', 'areas', 'tests']
-const TABS: Tab[] = ['home', 'students', 'requests', 'manage']
+const TABS: Tab[] = ['home', 'students', 'requests', 'room', 'manage']
 
 export default function PartnerHome({ avatarPath, streakRows, monthSessions, markedToday, markAttendance, name, today, openCount, requestCount, studentCount, testCount, tests, availability, open, requests, students, videos, areas }: Props) {
   const [section, setSection] = useState<Section>('menu')
@@ -115,6 +116,14 @@ export default function PartnerHome({ avatarPath, streakRows, monthSessions, mar
         </div>
       </div>
     )
+  } else if (tab === 'room') {
+    body = (
+      <div>
+        <h3 style={{ marginTop: 0 }}>Room</h3>
+        <p className="meta">Pick a subject group, paste ONE link for the whole subject, and start. Only those students see Join.</p>
+        <RoomPanel />
+      </div>
+    )
   } else if (tab === 'manage') {
     body = (
       <div>
@@ -124,7 +133,7 @@ export default function PartnerHome({ avatarPath, streakRows, monthSessions, mar
           {tile('My Availability', <Calendar size={36} color="#fff" />, 'linear-gradient(135deg, #6E4FC7, #4B2FA0)', () => setSection('availability'))}
           {tile('Manage Videos', <Video size={36} color="#fff" />, 'linear-gradient(135deg, #1FB6A3, #17897B)', () => setSection('videos'))}
           {tile('Subjects & Areas', <MapPin size={36} color="#fff" />, 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('areas'))}
-          {tile('My Earnings', <span style={{ fontSize: 34 }}>💰</span>, 'linear-gradient(135deg, #2E7D4F, #1F5C38)', () => router.push('/earnings'))}
+          {tile('My Earnings', <Wallet size={36} color="#fff" />, 'linear-gradient(135deg, #2E7D4F, #1F5C38)', () => router.push('/earnings'))}
           {tile('Appearance', <Settings size={36} color="#fff" />, 'linear-gradient(135deg, #D96FB5, #A8478F)', () => router.push('/appearance'))}
           {tile('Tutor Agreement', <ScrollText size={36} color="#fff" />, 'linear-gradient(135deg, #7A8FB0, #566B8F)', () => router.push('/terms/tutor'))}
         </div>
@@ -137,16 +146,14 @@ export default function PartnerHome({ avatarPath, streakRows, monthSessions, mar
     body = (
       <div>
         <Hero name={name} avatarPath={avatarPath} />
-        <QuoteCloud quotes={TUTOR_QUOTES} />
         <StreakCard attendance={streakRows || []} mode="tutor" />
         <InstallButton hideWhenInstalled />
-        <div className="stats">
-          <div className="stat" style={{ background: '#E8DEFB' }}><small>My students</small><div className="ic">🎓</div><div className="n">{studentCount}</div></div>
-          <div className="stat" style={{ background: '#FDE3D6' }}><small>Sessions this month</small><div className="ic">📚</div><div className="n">{monthSessions || 0}</div></div>
-          <div className="stat" style={{ background: '#D8F0E4' }}><small>Today</small><div className="ic">📅</div><div className="n">{today.length}</div></div>
+        <div className="fstats">
+          <div className="fstat f1"><div className="fic"><UsersIcon size={22} color="#fff" /></div><div><small>My students</small><div className="n">{studentCount}</div></div></div>
+          <div className="fstat f2"><div className="fic"><Check size={22} color="#fff" /></div><div><small>Sessions this month</small><div className="n">{monthSessions || 0}</div></div></div>
+          <div className="fstat f3"><div className="fic"><CalendarDays size={22} color="#fff" /></div><div><small>Today</small><div className="n">{today.length}</div></div></div>
         </div>
 
-        <RoomPanel />
         <div className="next-card">
           <div className="next-label"><CalendarClock size={16} /> Today</div>
           {today.length === 0 && (
@@ -159,10 +166,6 @@ export default function PartnerHome({ avatarPath, streakRows, monthSessions, mar
             <div key={t.id} style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--line)' }}>
               <div className="next-title" style={{ marginTop: 0, fontSize: '1.05rem' }}>{t.subject} · {t.studentName}</div>
               <div className="next-when">{String(t.time).slice(0, 5)} · {t.format === 'physical' ? `In person${t.area ? ` (${t.area})` : ''}` : 'Online'}</div>
-              {t.format !== 'physical' && t.meeting_link && (
-                <a className="btn btn-gold" href={t.meeting_link} target="_blank" rel="noopener noreferrer" style={{ marginTop: 8 }}>Join session</a>
-              )}
-              {t.format !== 'physical' && !t.meeting_link && !String(t.id).startsWith('sch-') && <div className="meta" style={{ marginTop: 6, marginBottom: 0 }}>Add the meeting link under My students.</div>}
             </div>
           ))}
         </div>
@@ -186,6 +189,7 @@ export default function PartnerHome({ avatarPath, streakRows, monthSessions, mar
             <div className="meta" style={{ marginBottom: 0 }}>Tap to see the topics to prepare.</div>
           </div>
         )}
+        <QuoteCloud quotes={TUTOR_QUOTES} />
       </div>
     )
   }
@@ -194,6 +198,7 @@ export default function PartnerHome({ avatarPath, streakRows, monthSessions, mar
     { id: 'home', label: 'Home', icon: <Home size={20} /> },
     { id: 'students', label: 'Students', icon: <Users size={20} /> },
     { id: 'requests', label: 'Requests', icon: <Inbox size={20} /> },
+    { id: 'room', label: 'Room', icon: <Video size={20} /> },
     { id: 'manage', label: 'Manage', icon: <Settings size={20} /> },
   ]
 

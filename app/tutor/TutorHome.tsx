@@ -6,6 +6,9 @@ import TabBarPortal, { scrollPageToTop } from '../TabBarPortal'
 import Link from 'next/link'
 import { Home, Inbox, Users, MoreHorizontal, Clock, UserCog, BookOpen, ClipboardList, MessageCircle, ChevronRight, Star, Video, Film, Gift, Calendar, GraduationCap, Target } from 'lucide-react'
 import InstallButton from '../InstallButton'
+import FlatIcon from '../FlatIcon'
+import { Owl } from '../Owl'
+import { QuoteCloud, TUTOR_QUOTES } from '../portal/HomeParts'
 import TutorMaterials from './TutorMaterials'
 import PacksAdmin from './PacksAdmin'
 import OwnerOverview, { AttentionItem } from './OwnerOverview'
@@ -28,7 +31,7 @@ import ScheduleManager, { studentFormat, studentAlternate, classmatesOf, isGroup
 import HomeworkSection from './HomeworkSection'
 import TestList, { daysUntil } from '../TestList'
 
-type Tab = 'home' | 'requests' | 'students' | 'chat' | 'more'
+type Tab = 'home' | 'requests' | 'students' | 'room' | 'chat' | 'more'
 type Section = 'menu' | 'schedule' | 'pending' | 'assign' | 'packs' | 'sessions' | 'chat' | 'mytutoring' | 'homework' | 'videos' | 'videoreq' | 'referrals' | 'availability' | 'modules' | 'tests' | 'ratings'
 
 function subjectLabel(choice?: string) {
@@ -201,7 +204,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
     const tile = (label: string, emoji: string, gradient: string, onClick: () => void, badge = 0) => (
       <div className="tile" style={{ cursor: 'pointer' }} onClick={onClick}>
         <div className="tile-art" style={{ background: gradient, position: 'relative' }}>
-          <span style={{ fontSize: '3rem', lineHeight: 1, filter: 'drop-shadow(0 3px 6px rgba(0,0,0,.25))' }}>{emoji}</span>
+          <FlatIcon e={emoji} size={40} />
           {badge > 0 && (
             <span style={{ position: 'absolute', top: 10, right: 12, background: '#A6443A', color: '#fff', fontSize: '0.75rem', borderRadius: 100, minWidth: 22, height: 22, padding: '0 5px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{badge}</span>
           )}
@@ -212,6 +215,16 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
     const pendingCount = (bookings || []).filter((b: any) => b.status === 'awaiting').length + (subs || []).filter((x: any) => x.status === 'awaiting').length + (extras || []).filter((x: any) => x.status === 'awaiting').length
     const unassigned = (openBookings || []).length + (openSubs || []).length
     const lowRecent = (ratings || []).filter((r: any) => r.stars <= 2 && Date.now() - new Date(r.created_at).getTime() < 30 * 86400000).length
+
+    if (tab === 'room') {
+      return (
+        <div>
+          <h3 style={{ marginTop: 0 }}>Room</h3>
+          <p className="meta">Pick a subject group, paste ONE link for the whole subject, and start. Only those students see Join.</p>
+          <RoomPanel />
+        </div>
+      )
+    }
 
     if (tab === 'requests') {
       return (
@@ -308,11 +321,13 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
     return (
       <div>
         <div className="hero">
-          <div className="hero-hi">Owner dashboard 👑</div>
-          <div className="hero-sub">{needsAttention === 0 ? "You're all caught up." : `${needsAttention} thing${needsAttention === 1 ? '' : 's'} need your attention.`}</div>
+          <div>
+            <div className="hero-hi">Owner dashboard</div>
+            <div className="hero-sub">{needsAttention === 0 ? "You're all caught up." : `${needsAttention} thing${needsAttention === 1 ? '' : 's'} need your attention.`}</div>
+          </div>
+          <Owl size={64} />
         </div>
         <InstallButton hideWhenInstalled />
-        <RoomPanel />
         <div className="next-card">
           <div className="next-label">Today</div>
           {todaySessions.length === 0 && <div className="next-title">No sessions today</div>}
@@ -325,6 +340,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
         </div>
         <MonthSummary subs={subs || []} schoolByStudent={schoolByStudent || {}} />
         <OwnerOverview stats={overviewStats} week={weekCounts} items={attentionItems} />
+        <QuoteCloud quotes={TUTOR_QUOTES} />
       </div>
     )
   }
@@ -913,6 +929,7 @@ export default function TutorHome(props: any) {
     { id: 'home', label: 'Home', icon: <Home size={20} /> },
     { id: 'requests', label: 'Requests', icon: <Inbox size={20} /> },
     { id: 'students', label: 'Students', icon: <Users size={20} /> },
+    { id: 'room', label: 'Room', icon: <Video size={20} /> },
     { id: 'chat', label: 'Messages', icon: <MessageCircle size={20} /> },
     { id: 'more', label: 'More', icon: <MoreHorizontal size={20} /> },
   ]
