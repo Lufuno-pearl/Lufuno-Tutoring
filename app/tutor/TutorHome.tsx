@@ -1,11 +1,11 @@
 'use client'
-import { PageTitle } from '../ui'
+import { PageTitle, Row, Pill, Tone } from '../ui'
 import { useState, useEffect, useLayoutEffect } from 'react'
 import GroupSchedule from '../GroupSchedule'
 import RoomPanel from '../room/RoomPanel'
 import TabBarPortal, { scrollPageToTop } from '../TabBarPortal'
 import Link from 'next/link'
-import { Home, Inbox, Users, MoreHorizontal, Clock, UserCog, BookOpen, ClipboardList, MessageCircle, ChevronRight, Star, Video, Film, Gift, Calendar, GraduationCap, Target } from 'lucide-react'
+import { Home, Inbox, Users, MoreHorizontal, Clock, UserCog, BookOpen, ClipboardList, MessageCircle, ChevronRight, Check, X, Star, Video, Film, Gift, Calendar, GraduationCap, Target } from 'lucide-react'
 import InstallButton from '../InstallButton'
 import FlatIcon from '../FlatIcon'
 import { Owl } from '../Owl'
@@ -202,6 +202,12 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
   const { answerModuleRequest, confirmPayment, setMeetingLink, assignTutor, toggleAvailable, claim, markAttendance, sendTutorMessage, setCustomPackLink, markHomeworkSolved, setVideoTopicLink } = actions
 
   if (section === 'menu') {
+    const TONE_CYCLE: Tone[] = ['purple', 'gold', 'green', 'pink', 'purple', 'gold', 'green']
+    let mrowN = 0
+    const mrow = (label: string, emoji: string, _g: string, onClick: () => void, badge = 0) => (
+      <Row key={label} icon={<FlatIcon e={emoji} size={22} />} tone={TONE_CYCLE[mrowN++ % TONE_CYCLE.length]} title={label} onClick={onClick}
+        right={<>{badge > 0 ? <Pill tone="pink">{badge}</Pill> : null}<ChevronRight size={18} color="#8a85a8" /></>} />
+    )
     const tile = (label: string, emoji: string, gradient: string, onClick: () => void, badge = 0) => (
       <div className="tile" style={{ cursor: 'pointer' }} onClick={onClick}>
         <div className="tile-art" style={{ background: gradient, position: 'relative' }}>
@@ -231,14 +237,14 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
       return (
         <div>
           <PageTitle title="Requests" />
-          <div className="card-grid">
-            {tile('Pending Requests', '⏳', 'linear-gradient(135deg, #8B6FD9, #6E4FC7)', () => setSection('pending'), pendingCount)}
-            {tile('Assign Tutor', '🧑‍🏫', 'linear-gradient(135deg, #7C6FE0, #5B4FC0)', () => setSection('assign'), unassigned)}
-            <Link href="/tutor/applications" style={{ textDecoration: 'none', color: 'inherit' }}>{tile('Tutor Applications', '✨', 'linear-gradient(135deg, #3FA67A, #2E7D4F)', () => {}, pendingApps || 0)}</Link>
-            {tile('Tutor Ratings', '⭐', 'linear-gradient(135deg, #E8A93A, #C4841B)', () => setSection('ratings'), lowRecent)}
-            {tile('Module Requests', '🎓', 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('modules'), pendingModules)}
-            {tile('Homework Help', '📝', 'linear-gradient(135deg, #5FA3D9, #3F7FB8)', () => setSection('homework'), openHomework)}
-            {tile('Video Requests', '🎞️', 'linear-gradient(135deg, #E0956F, #C46B3E)', () => setSection('videoreq'), pendingVideos)}
+          <div className="panel">
+            {mrow('Pending Requests', '⏳', 'linear-gradient(135deg, #8B6FD9, #6E4FC7)', () => setSection('pending'), pendingCount)}
+            {mrow('Assign Tutor', '🧑‍🏫', 'linear-gradient(135deg, #7C6FE0, #5B4FC0)', () => setSection('assign'), unassigned)}
+            <Link href="/tutor/applications" style={{ textDecoration: 'none', color: 'inherit' }}>{mrow('Tutor Applications', '✨', 'linear-gradient(135deg, #3FA67A, #2E7D4F)', () => {}, pendingApps || 0)}</Link>
+            {mrow('Tutor Ratings', '⭐', 'linear-gradient(135deg, #E8A93A, #C4841B)', () => setSection('ratings'), lowRecent)}
+            {mrow('Module Requests', '🎓', 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('modules'), pendingModules)}
+            {mrow('Homework Help', '📝', 'linear-gradient(135deg, #5FA3D9, #3F7FB8)', () => setSection('homework'), openHomework)}
+            {mrow('Video Requests', '🎞️', 'linear-gradient(135deg, #E0956F, #C46B3E)', () => setSection('videoreq'), pendingVideos)}
           </div>
         </div>
       )
@@ -248,12 +254,12 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
       return (
         <div>
           <PageTitle title="Students" />
-          <div className="card-grid">
-            {tile('Sessions Log', '📋', 'linear-gradient(135deg, #9B7FE8, #7A5FD0)', () => setSection('sessions'))}
-            {tile('Upcoming Tests', '🎯', 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('tests'), soonTests)}
-            {tile('Referrals', '🎁', 'linear-gradient(135deg, #F2C14E, #D9A32E)', () => setSection('referrals'))}
-            {tile('Schedule', '📅', 'linear-gradient(135deg, #8B6FD9, #6E4FC7)', () => setSection('schedule'))}
-            {tile('My Tutoring', '⭐', 'linear-gradient(135deg, #C89B3C, #A87D24)', () => { setSection('mytutoring'); setMyStudentId(null); setMyView('menu'); setMarksStudentId(null) })}
+          <div className="panel">
+            {mrow('Sessions Log', '📋', 'linear-gradient(135deg, #9B7FE8, #7A5FD0)', () => setSection('sessions'))}
+            {mrow('Upcoming Tests', '🎯', 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('tests'), soonTests)}
+            {mrow('Referrals', '🎁', 'linear-gradient(135deg, #F2C14E, #D9A32E)', () => setSection('referrals'))}
+            {mrow('Schedule', '📅', 'linear-gradient(135deg, #8B6FD9, #6E4FC7)', () => setSection('schedule'))}
+            {mrow('My Tutoring', '⭐', 'linear-gradient(135deg, #C89B3C, #A87D24)', () => { setSection('mytutoring'); setMyStudentId(null); setMyView('menu'); setMarksStudentId(null) })}
           </div>
         </div>
       )
@@ -263,14 +269,14 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
       return (
         <div>
           <PageTitle title="More" />
-          <div className="card-grid">
-            {tile('Study Packs', '📚', 'linear-gradient(135deg, #C89B3C, #A87D24)', () => setSection('packs'))}
-            {tile('Videos', '🎬', 'linear-gradient(135deg, #1FB6A3, #17897B)', () => setSection('videos'))}
-            {tile('Tutor Availability', '📅', 'linear-gradient(135deg, #6E4FC7, #4B2FA0)', () => setSection('availability'))}
-            <Link href="/tutor/pay" style={{ textDecoration: 'none', color: 'inherit' }}>{tile('Tutor Pay', '💰', 'linear-gradient(135deg, #2E7D4F, #1F5C38)', () => {})}</Link>
-            <Link href="/earnings" style={{ textDecoration: 'none', color: 'inherit' }}>{tile('My Earnings', '🪙', 'linear-gradient(135deg, #C89B3C, #A87D24)', () => {})}</Link>
-            <Link href="/appearance" style={{ textDecoration: 'none', color: 'inherit' }}>{tile('Appearance', '🎨', 'linear-gradient(135deg, #D96FB5, #A8478F)', () => {})}</Link>
-            <Link href="/portal?view=student" style={{ textDecoration: 'none', color: 'inherit' }}>{tile('Student View', '👩‍🎓', 'linear-gradient(135deg, #7A8FB0, #566B8F)', () => {})}</Link>
+          <div className="panel">
+            {mrow('Study Packs', '📚', 'linear-gradient(135deg, #C89B3C, #A87D24)', () => setSection('packs'))}
+            {mrow('Videos', '🎬', 'linear-gradient(135deg, #1FB6A3, #17897B)', () => setSection('videos'))}
+            {mrow('Tutor Availability', '📅', 'linear-gradient(135deg, #6E4FC7, #4B2FA0)', () => setSection('availability'))}
+            <Link href="/tutor/pay" style={{ textDecoration: 'none', color: 'inherit' }}>{mrow('Tutor Pay', '💰', 'linear-gradient(135deg, #2E7D4F, #1F5C38)', () => {})}</Link>
+            <Link href="/earnings" style={{ textDecoration: 'none', color: 'inherit' }}>{mrow('My Earnings', '🪙', 'linear-gradient(135deg, #C89B3C, #A87D24)', () => {})}</Link>
+            <Link href="/appearance" style={{ textDecoration: 'none', color: 'inherit' }}>{mrow('Appearance', '🎨', 'linear-gradient(135deg, #D96FB5, #A8478F)', () => {})}</Link>
+            <Link href="/portal?view=student" style={{ textDecoration: 'none', color: 'inherit' }}>{mrow('Student View', '👩‍🎓', 'linear-gradient(135deg, #7A8FB0, #566B8F)', () => {})}</Link>
           </div>
           <form action={actions.signOut} style={{ marginTop: 16 }}><button className="btn" style={{ width: '100%', background: 'none', border: '1px solid var(--ink)' }}>Sign out</button></form>
         </div>
@@ -682,12 +688,13 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
         <Back />
         <PageTitle title="Sessions log" />
         {(attendanceRows || []).length === 0 && <p className="meta">No sessions logged yet.</p>}
-        {(attendanceRows || []).map((a: any) => (
-          <div className="panel" key={a.id}>
-            <h4>{a.student?.full_name || 'Student'}</h4>
-            <div className="meta">{a.session_date} — {String(a.status).replace("_", " ")} · logged by {a.tutor?.full_name || 'you'}</div>
-          </div>
-        ))}
+        <div className="panel">
+          {(attendanceRows || []).map((a: any) => {
+            const st = String(a.status)
+            const ok = st === 'present'
+            return <Row key={a.id} icon={ok ? <Check size={20} /> : <X size={20} />} tone={ok ? 'green' : st === 'absent' ? 'pink' : 'gold'} title={a.student?.full_name || 'Student'} sub={`${a.session_date} · logged by ${a.tutor?.full_name || 'you'}`} right={<Pill tone={ok ? 'green' : st === 'absent' ? 'pink' : 'gold'}>{st.replace('_', ' ')}</Pill>} />
+          })}
+        </div>
       </div>
     )
   }
@@ -877,10 +884,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
           {myStudentIds.map((sid: string) => {
             const thread = threadsByStudent[sid] || { name: 'Student' }
             return (
-              <div key={sid} className="panel" style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} onClick={() => setMyStudentId(sid)}>
-                <h4 style={{ margin: 0 }}>{thread.name}</h4>
-                <ChevronRight size={18} color="var(--purple-dark)" />
-              </div>
+              <div key={sid} className="panel" style={{ padding: '4px 16px' }}><Row icon={<Users size={20} />} tone="purple" title={thread.name} onClick={() => setMyStudentId(sid)} right={<ChevronRight size={18} color="#8a85a8" />} /></div>
             )
           })}
         </div>
