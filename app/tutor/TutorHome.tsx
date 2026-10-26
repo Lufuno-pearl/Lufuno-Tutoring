@@ -2,7 +2,6 @@
 import { useState, useEffect, useLayoutEffect } from 'react'
 import GroupSchedule from '../GroupSchedule'
 import RoomPanel from '../room/RoomPanel'
-import MeetingLinkForm from '../MeetingLinkForm'
 import TabBarPortal, { scrollPageToTop } from '../TabBarPortal'
 import Link from 'next/link'
 import { Home, Inbox, Users, MoreHorizontal, Clock, UserCog, BookOpen, ClipboardList, MessageCircle, ChevronRight, Star, Video, Film, Gift, Calendar, GraduationCap, Target } from 'lucide-react'
@@ -24,7 +23,7 @@ import AvailabilityOverview from './AvailabilityOverview'
 import { eligibility } from '../../lib/matching'
 import { GROUP_MAX, UNI_PRICE } from '../../lib/pricing'
 import MarksView from '../MarksView'
-import { ChatBubble, ReplyBar } from '../ChatParts'
+import { ChatBubble, ReplyBar, Composer, useHidden } from '../ChatParts'
 import ScheduleManager, { studentFormat, studentAlternate, classmatesOf, isGroupStudent } from '../ScheduleManager'
 import HomeworkSection from './HomeworkSection'
 import TestList, { daysUntil } from '../TestList'
@@ -50,6 +49,7 @@ function ChatThread({ studentId, thread, actions, marks, schedule, format, alter
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
   const [replyTo, setReplyTo] = useState<any | null>(null)
+  const { hidden, hide } = useHidden()
 
   async function handleSend() {
     if (!text.trim() || sending) return
@@ -66,17 +66,14 @@ function ChatThread({ studentId, thread, actions, marks, schedule, format, alter
 
   return (
     <div>
-      <div style={{ margin: '10px 0' }}>
+      <div className="chat-pane">
         {thread.msgs.length === 0 && <p className="meta">No messages yet.</p>}
-        {thread.msgs.map((m: any) => (
-          <ChatBubble key={m.id} m={m} all={thread.msgs} label={m.sender === 'tutor' ? 'You' : thread.name} mine={m.sender === 'tutor'} otherLabel={thread.name} onReply={setReplyTo} />
+        {thread.msgs.filter((m: any) => !hidden.includes(m.id)).map((m: any) => (
+          <ChatBubble key={m.id} m={m} all={thread.msgs} label={m.sender === 'tutor' ? 'You' : thread.name} mine={m.sender === 'tutor'} otherLabel={thread.name} onReply={setReplyTo} onHide={hide} />
         ))}
       </div>
       <ReplyBar to={replyTo} onCancel={() => setReplyTo(null)} />
-      <div style={{ display: 'flex', gap: 8 }}>
-        <input value={text} onChange={e => setText(e.target.value)} placeholder="Reply..." style={{ flex: 1, padding: 8, border: '1px solid var(--line)' }} />
-        <button className="btn btn-primary" onClick={handleSend} disabled={sending}>{sending ? 'Sending...' : 'Send'}</button>
-      </div>
+      <Composer value={text} onChange={setText} onSend={handleSend} sending={sending} placeholder="Reply…" />
       <div style={{ marginTop: 14, borderTop: '1px solid var(--line)', paddingTop: 12 }}>
         <h4 style={{ marginTop: 0 }}>Schedule</h4>
         <ScheduleManager readOnly={!!groupOnly} studentId={studentId} rows={schedule || []} defaultFormat={format || 'online'} alternateDefault={!!alternate} classmates={classmates || []} />
@@ -349,9 +346,6 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
                 <button className="btn btn-gold">Mark paid</button>
               </form>
             )}
-            {b.status === 'confirmed' && b.format === 'online' && (
-              <MeetingLinkForm table="bookings" id={b.id} defaultValue={b.meeting_link || ''} save={setMeetingLink} />
-            )}
           </div>
         ))}
         <h3>High school subscriptions</h3>
@@ -364,9 +358,6 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
               <form action={async () => { await confirmPayment('hs_subscriptions', s.id) }} style={{ marginTop: 8 }}>
                 <button className="btn btn-gold">Mark paid</button>
               </form>
-            )}
-            {s.status === 'confirmed' && s.format === 'online' && (
-              <MeetingLinkForm table="hs_subscriptions" id={s.id} defaultValue={s.meeting_link || ''} save={setMeetingLink} />
             )}
           </div>
         ))}
@@ -742,17 +733,11 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
           {bookingsHere.map((b: any) => (
             <div key={b.id} style={{ marginBottom: 8 }}>
               <div className="meta">{b.subject} — {b.day} {b.time} · {kindLabel(b)}</div>
-              {b.format === 'online' && (
-                <MeetingLinkForm table="bookings" id={b.id} defaultValue={b.meeting_link || ''} save={setMeetingLink} />
-              )}
             </div>
           ))}
           {subsHere.map((s: any) => (
             <div key={s.id} style={{ marginBottom: 8 }}>
               <div className="meta">{s.month} — {subjectLabel(s.subject_choice)}{s.grade ? ` · Gr ${s.grade}` : ''} · {kindLabel(s)}</div>
-              {s.format === 'online' && (
-                <MeetingLinkForm table="hs_subscriptions" id={s.id} defaultValue={s.meeting_link || ''} save={setMeetingLink} />
-              )}
             </div>
           ))}
           <ChatThread studentId={myStudentId} thread={thread} actions={{ markAttendance, sendTutorMessage }} marks={(marksByStudent || {})[myStudentId]} schedule={(scheduleByStudent || {})[myStudentId]} format={studentFormat(myStudentId, bookings || [], subs || [])} alternate={studentAlternate(myStudentId, bookings || [], subs || [])} classmates={classmatesOf(myStudentId, subs || [])} groupOnly={isGroupStudent(myStudentId, [...(myClaimedBookings || [])], [...(myClaimedSubs || [])])} />

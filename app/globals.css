@@ -357,3 +357,22 @@ html:is([data-bg="black"],[data-bg="white"],[data-bg="ocean"],[data-bg="forest"]
 .badge-it{text-align:center}.badge-c{width:62px;height:62px;border-radius:20px;margin:0 auto 6px;display:flex;align-items:center;justify-content:center}
 .badge-n{font-size:.76rem;font-weight:800;color:#4b2fa0}.badge-h{font-size:.64rem;color:#8a85a8;line-height:1.2}
 .badge-it.off{opacity:.38;filter:grayscale(1)}
+
+/* chat bubbles */
+.chat-pane{background:#fff;border-radius:22px;padding:14px;margin-bottom:12px;box-shadow:0 6px 18px rgba(122,95,208,.10);min-height:120px}
+.cb{margin-bottom:10px;display:flex;flex-direction:column;position:relative}.cb-me{align-items:flex-end}.cb-them{align-items:flex-start}
+.cb-bubble{max-width:82%;padding:10px 13px;border-radius:18px;font-size:.92rem;line-height:1.35;word-break:break-word;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.cb-me .cb-bubble{background:#7555DC;color:#fff;border-bottom-right-radius:4px}
+.cb-them .cb-bubble{background:#F5F2FC;color:#2a2150;border-bottom-left-radius:4px}
+.cb-quote{border-left:4px solid #F3CB59;background:rgba(255,255,255,.22);border-radius:10px;padding:5px 9px;margin-bottom:6px;font-size:.78rem}
+.cb-them .cb-quote{background:rgba(117,85,220,.1);border-left-color:#7555DC}
+.cb-time{font-size:.66rem;color:#8a85a8;margin-top:2px}
+.cb-overlay{position:fixed;inset:0;background:rgba(42,33,80,.45);z-index:200;display:flex;align-items:flex-end;justify-content:center}
+.cb-sheet{background:#fff;width:100%;max-width:480px;border-radius:24px 24px 0 0;padding:10px 10px calc(14px + env(safe-area-inset-bottom))}
+.cb-preview{padding:10px 14px;margin:0 4px 6px;background:#F5F2FC;border-radius:14px;font-size:.84rem;color:#6b6490}
+.cb-sheet button{display:flex;align-items:center;gap:12px;width:100%;padding:14px;border:0;background:none;font-family:inherit;font-weight:800;font-size:.95rem;color:#4b2fa0;border-radius:14px;cursor:pointer}
+.cb-sheet button:active{background:#F5F2FC}.cb-sheet button.danger{color:#C23A55}
+.cb-replybar{display:flex;align-items:center;gap:8px;border-left:4px solid #7555DC;background:#F5F2FC;border-radius:12px;padding:6px 10px;margin-bottom:8px;font-size:.82rem}
+.composer{display:flex;gap:8px;align-items:center;background:#fff;border-radius:22px;padding:6px 6px 6px 14px;box-shadow:0 6px 18px rgba(122,95,208,.12)}
+.composer input{flex:1;min-width:0;border:0;outline:0;background:transparent;font-family:inherit;font-size:.95rem;color:#2a2150}
+.composer button{width:42px;height:42px;border-radius:14px;border:0;background:#7555DC;display:flex;align-items:center;justify-content:center;cursor:pointer}.composer button:disabled{opacity:.45}
