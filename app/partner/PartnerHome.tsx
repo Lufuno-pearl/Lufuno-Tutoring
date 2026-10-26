@@ -1,5 +1,5 @@
 'use client'
-import { PageTitle } from '../ui'
+import { PageTitle, NavRow } from '../ui'
 import { useState, useEffect, useLayoutEffect, ReactNode } from 'react'
 import GroupSchedule from '../GroupSchedule'
 import RoomPanel from '../room/RoomPanel'
@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation'
 import InstallButton from '../InstallButton'
 import { Hero, QuoteCloud, StreakCard, TUTOR_QUOTES } from '../portal/HomeParts'
 import { Check, Users as UsersIcon, CalendarDays, Wallet } from 'lucide-react'
-import { Calendar, Inbox, Film, Users, Video, MapPin, ScrollText, Target, Home, Settings, CalendarClock } from 'lucide-react'
+import { Pencil, UserPlus, Calendar, Inbox, Film, Users, Video, MapPin, ScrollText, Target, Home, Settings, CalendarClock } from 'lucide-react'
 
 type Section = 'menu' | 'schedule' | 'availability' | 'open' | 'requests' | 'students' | 'videos' | 'areas' | 'tests'
 type Tab = 'home' | 'students' | 'requests' | 'room' | 'manage'
@@ -173,22 +173,13 @@ export default function PartnerHome({ avatarPath, streakRows, monthSessions, mar
 
         {attention === 0 && <p className="meta">You're all caught up.</p>}
         {openCount > 0 && (
-          <div className="panel" style={{ cursor: 'pointer', borderLeft: '5px solid #F2C14E' }} onClick={() => setSection('open')}>
-            <h4 style={{ margin: 0 }}>{openCount} request{openCount === 1 ? '' : 's'} need a tutor</h4>
-            <div className="meta" style={{ marginBottom: 0 }}>Tap to claim a student.</div>
-          </div>
+          <NavRow icon={<UserPlus size={20} />} tone="gold" title={<>{openCount} request{openCount === 1 ? '' : 's'} need a tutor</>} sub="Tap to claim a student." onClick={() => setSection('open')} />
         )}
         {requestCount > 0 && (
-          <div className="panel" style={{ cursor: 'pointer', borderLeft: '5px solid #E0956F' }} onClick={() => setSection('requests')}>
-            <h4 style={{ margin: 0 }}>{requestCount} homework or video request{requestCount === 1 ? '' : 's'}</h4>
-            <div className="meta" style={{ marginBottom: 0 }}>Tap to answer.</div>
-          </div>
+          <NavRow icon={<Pencil size={20} />} tone="pink" title={<>{requestCount} homework or video request{requestCount === 1 ? '' : 's'}</>} sub="Tap to answer." onClick={() => setSection('requests')} />
         )}
         {testCount > 0 && (
-          <div className="panel" style={{ cursor: 'pointer', borderLeft: '5px solid #A6443A' }} onClick={() => setSection('tests')}>
-            <h4 style={{ margin: 0 }}>{testCount} test or exam this week</h4>
-            <div className="meta" style={{ marginBottom: 0 }}>Tap to see the topics to prepare.</div>
-          </div>
+          <NavRow icon={<Target size={20} />} tone="purple" title={<>{testCount} test or exam this week</>} sub="Tap to see the topics to prepare." onClick={() => setSection('tests')} />
         )}
         <QuoteCloud quotes={TUTOR_QUOTES} />
       </div>

@@ -50,3 +50,13 @@ export function Chips({ options, value, onChange, multi }: { options: string[]; 
 export function PageTitle({ title, sub }: { title: string; sub?: string }) {
   return <div style={{ margin: '0 0 12px' }}><h3 style={{ margin: 0, fontSize: '1.5rem', letterSpacing: '-.3px' }}>{title}</h3>{sub ? <div className="meta" style={{ margin: 0 }}>{sub}</div> : null}</div>
 }
+
+// A tappable list card: icon tile, title, small text, optional count pill and chevron.
+export function NavRow({ icon, tone = 'purple', title, sub, badge = 0, warn, onClick }: { icon: ReactNode; tone?: Tone; title: ReactNode; sub?: ReactNode; badge?: number; warn?: boolean; onClick: () => void }) {
+  return (
+    <div className="panel" style={{ padding: '4px 16px', ...(warn ? { background: '#FDF1F3' } : {}) }}>
+      <Row icon={icon} tone={warn ? 'pink' : tone} title={title} sub={sub} onClick={onClick}
+        right={<>{badge > 0 ? <Pill tone="pink">{badge}</Pill> : null}<span style={{ color: '#8a85a8', fontSize: '1.3rem', lineHeight: 1 }}>›</span></>} />
+    </div>
+  )
+}
