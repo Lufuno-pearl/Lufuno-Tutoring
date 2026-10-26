@@ -322,7 +322,7 @@ function HomeworkBox({ userId, subjectOptions, submitHomework, myRequests }: { u
 
   return (
     <div>
-      <h3>Homework & assignment help</h3>
+      <PageTitle title="Homework help" sub="Send it, get the solution back here" />
       <p className="meta">Tell us what you need help with and attach your document below, then send. Lufuno (or your tutor) will upload the solution back to this same request once it's ready.</p>
       {sent && (
         <div className="panel" style={{ background: uploadFailed ? '#F3E6C7' : '#DCEEE0', textAlign: 'center' }}>
@@ -1023,7 +1023,7 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
       return (
         <div>
           <div className="meta" style={{ cursor: 'pointer', marginBottom: 16, color: 'var(--purple-dark)', fontWeight: 600 }} onClick={() => setPackView('menu')}>&larr; Study packs</div>
-          <h3 style={{ marginTop: 0 }}>My pack orders</h3>
+          <PageTitle title="My pack orders" />
           {groups.length === 0 && <p className="meta">You have not asked for a pack yet.</p>}
           {groups.map(g => {
             const first = g.rows[0]
@@ -1054,8 +1054,8 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
     return (
       <div>
         <Back />
-        <h3 style={{ marginTop: 0 }}>Study packs</h3>
-        <div className="panel" style={{ background: 'var(--purple-dark)', color: '#fff', border: 0 }}>
+        <PageTitle title="Study packs" sub="Fact sheets, formulas and practice" />
+        <div className="panel" style={{ background: 'linear-gradient(135deg,#7b5cff,#a78bfa)', color: '#fff', border: 0, borderRadius: 20 }}>
           <h4 style={{ margin: 0, color: '#fff' }}>Ask for a pack</h4>
           <p style={{ margin: '4px 0 10px', fontSize: '0.85rem', opacity: 0.92 }}>R{PACK_PRICE} per pack, {BUNDLE_SIZE} for R{BUNDLE_PRICE}. Delivered {DELIVERY_PROMISE} of payment.</p>
           <button className="btn" style={{ width: '100%', background: '#fff', color: 'var(--purple-dark)' }} onClick={() => setPackView('order')}>Choose packs</button>

@@ -1,4 +1,5 @@
 'use client'
+import { PageTitle } from '../ui'
 import { useState, useEffect } from 'react'
 import { getMyReferral, applyReferralCode } from './referralActions'
 
@@ -96,7 +97,7 @@ export default function ReferralBox({ subscribed, onRequest }: { subscribed: boo
 
   return (
     <div>
-      <h3>Refer & earn</h3>
+      <PageTitle title="Refer & earn" sub="Friends who subscribe earn you rewards" />
       <p className="meta">Share your code with friends. When a friend uses it and their first payment is confirmed, they count towards your rewards.</p>
 
       {!subscribed && (
