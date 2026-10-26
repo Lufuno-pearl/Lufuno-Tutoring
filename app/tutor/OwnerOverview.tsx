@@ -1,4 +1,5 @@
 'use client'
+import FlatIcon from '../FlatIcon'
 
 export type AttentionItem = { icon: string; title: string; sub: string; pill: string; tone: 'hi' | 'md' | 'bl' | 'ok'; onClick: () => void }
 
@@ -53,7 +54,7 @@ export default function OwnerOverview({ stats, week, items }: {
         {items.length === 0 && <p className="meta" style={{ margin: 0 }}>You're all caught up.</p>}
         {items.map((it, i) => (
           <div key={i} onClick={it.onClick} style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '9px 0', borderTop: i === 0 ? 'none' : '1px solid var(--line)', cursor: 'pointer' }}>
-            <div style={{ width: 32, height: 32, borderRadius: 10, background: ICONBG[it.tone], display: 'grid', placeItems: 'center', fontSize: '1rem', flex: 'none' }}>{it.icon}</div>
+            <div style={{ width: 32, height: 32, borderRadius: 10, background: ICONBG[it.tone], display: 'grid', placeItems: 'center', fontSize: '1rem', flex: 'none' }}><FlatIcon e={it.icon} size={18} color="#4b2fa0" /></div>
             <div style={{ minWidth: 0, flex: 1 }}>
               <div style={{ fontWeight: 700, fontSize: '0.88rem' }}>{it.title}</div>
               <div className="meta" style={{ margin: 0, overflowWrap: 'anywhere' }}>{it.sub}</div>

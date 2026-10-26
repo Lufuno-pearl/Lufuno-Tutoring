@@ -2,11 +2,13 @@
 import { useState, useEffect, useLayoutEffect } from 'react'
 import GroupSchedule from '../GroupSchedule'
 import RoomPanel from '../room/RoomPanel'
-import MeetingLinkForm from '../MeetingLinkForm'
 import TabBarPortal, { scrollPageToTop } from '../TabBarPortal'
 import Link from 'next/link'
 import { Home, Inbox, Users, MoreHorizontal, Clock, UserCog, BookOpen, ClipboardList, MessageCircle, ChevronRight, Star, Video, Film, Gift, Calendar, GraduationCap, Target } from 'lucide-react'
 import InstallButton from '../InstallButton'
+import FlatIcon from '../FlatIcon'
+import { Owl } from '../Owl'
+import { QuoteCloud, TUTOR_QUOTES } from '../portal/HomeParts'
 import TutorMaterials from './TutorMaterials'
 import PacksAdmin from './PacksAdmin'
 import OwnerOverview, { AttentionItem } from './OwnerOverview'
@@ -24,12 +26,12 @@ import AvailabilityOverview from './AvailabilityOverview'
 import { eligibility } from '../../lib/matching'
 import { GROUP_MAX, UNI_PRICE } from '../../lib/pricing'
 import MarksView from '../MarksView'
-import { ChatBubble, ReplyBar } from '../ChatParts'
+import { ChatBubble, ReplyBar, Composer, useHidden } from '../ChatParts'
 import ScheduleManager, { studentFormat, studentAlternate, classmatesOf, isGroupStudent } from '../ScheduleManager'
 import HomeworkSection from './HomeworkSection'
 import TestList, { daysUntil } from '../TestList'
 
-type Tab = 'home' | 'requests' | 'students' | 'chat' | 'more'
+type Tab = 'home' | 'requests' | 'students' | 'room' | 'chat' | 'more'
 type Section = 'menu' | 'schedule' | 'pending' | 'assign' | 'packs' | 'sessions' | 'chat' | 'mytutoring' | 'homework' | 'videos' | 'videoreq' | 'referrals' | 'availability' | 'modules' | 'tests' | 'ratings'
 
 function subjectLabel(choice?: string) {
@@ -50,6 +52,7 @@ function ChatThread({ studentId, thread, actions, marks, schedule, format, alter
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
   const [replyTo, setReplyTo] = useState<any | null>(null)
+  const { hidden, hide } = useHidden()
 
   async function handleSend() {
     if (!text.trim() || sending) return
@@ -66,17 +69,14 @@ function ChatThread({ studentId, thread, actions, marks, schedule, format, alter
 
   return (
     <div>
-      <div style={{ margin: '10px 0' }}>
+      <div className="chat-pane">
         {thread.msgs.length === 0 && <p className="meta">No messages yet.</p>}
-        {thread.msgs.map((m: any) => (
-          <ChatBubble key={m.id} m={m} all={thread.msgs} label={m.sender === 'tutor' ? 'You' : thread.name} mine={m.sender === 'tutor'} otherLabel={thread.name} onReply={setReplyTo} />
+        {thread.msgs.filter((m: any) => !hidden.includes(m.id)).map((m: any) => (
+          <ChatBubble key={m.id} m={m} all={thread.msgs} label={m.sender === 'tutor' ? 'You' : thread.name} mine={m.sender === 'tutor'} otherLabel={thread.name} onReply={setReplyTo} onHide={hide} />
         ))}
       </div>
       <ReplyBar to={replyTo} onCancel={() => setReplyTo(null)} />
-      <div style={{ display: 'flex', gap: 8 }}>
-        <input value={text} onChange={e => setText(e.target.value)} placeholder="Reply..." style={{ flex: 1, padding: 8, border: '1px solid var(--line)' }} />
-        <button className="btn btn-primary" onClick={handleSend} disabled={sending}>{sending ? 'Sending...' : 'Send'}</button>
-      </div>
+      <Composer value={text} onChange={setText} onSend={handleSend} sending={sending} placeholder="Reply…" />
       <div style={{ marginTop: 14, borderTop: '1px solid var(--line)', paddingTop: 12 }}>
         <h4 style={{ marginTop: 0 }}>Schedule</h4>
         <ScheduleManager readOnly={!!groupOnly} studentId={studentId} rows={schedule || []} defaultFormat={format || 'online'} alternateDefault={!!alternate} classmates={classmates || []} />
@@ -204,7 +204,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
     const tile = (label: string, emoji: string, gradient: string, onClick: () => void, badge = 0) => (
       <div className="tile" style={{ cursor: 'pointer' }} onClick={onClick}>
         <div className="tile-art" style={{ background: gradient, position: 'relative' }}>
-          <span style={{ fontSize: '3rem', lineHeight: 1, filter: 'drop-shadow(0 3px 6px rgba(0,0,0,.25))' }}>{emoji}</span>
+          <FlatIcon e={emoji} size={40} />
           {badge > 0 && (
             <span style={{ position: 'absolute', top: 10, right: 12, background: '#A6443A', color: '#fff', fontSize: '0.75rem', borderRadius: 100, minWidth: 22, height: 22, padding: '0 5px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{badge}</span>
           )}
@@ -215,6 +215,16 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
     const pendingCount = (bookings || []).filter((b: any) => b.status === 'awaiting').length + (subs || []).filter((x: any) => x.status === 'awaiting').length + (extras || []).filter((x: any) => x.status === 'awaiting').length
     const unassigned = (openBookings || []).length + (openSubs || []).length
     const lowRecent = (ratings || []).filter((r: any) => r.stars <= 2 && Date.now() - new Date(r.created_at).getTime() < 30 * 86400000).length
+
+    if (tab === 'room') {
+      return (
+        <div>
+          <h3 style={{ marginTop: 0 }}>Room</h3>
+          <p className="meta">Pick a subject group, paste ONE link for the whole subject, and start. Only those students see Join.</p>
+          <RoomPanel />
+        </div>
+      )
+    }
 
     if (tab === 'requests') {
       return (
@@ -311,11 +321,13 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
     return (
       <div>
         <div className="hero">
-          <div className="hero-hi">Owner dashboard 👑</div>
-          <div className="hero-sub">{needsAttention === 0 ? "You're all caught up." : `${needsAttention} thing${needsAttention === 1 ? '' : 's'} need your attention.`}</div>
+          <div>
+            <div className="hero-hi">Owner dashboard</div>
+            <div className="hero-sub">{needsAttention === 0 ? "You're all caught up." : `${needsAttention} thing${needsAttention === 1 ? '' : 's'} need your attention.`}</div>
+          </div>
+          <Owl size={64} />
         </div>
         <InstallButton hideWhenInstalled />
-        <RoomPanel />
         <div className="next-card">
           <div className="next-label">Today</div>
           {todaySessions.length === 0 && <div className="next-title">No sessions today</div>}
@@ -328,6 +340,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
         </div>
         <MonthSummary subs={subs || []} schoolByStudent={schoolByStudent || {}} />
         <OwnerOverview stats={overviewStats} week={weekCounts} items={attentionItems} />
+        <QuoteCloud quotes={TUTOR_QUOTES} />
       </div>
     )
   }
@@ -349,9 +362,6 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
                 <button className="btn btn-gold">Mark paid</button>
               </form>
             )}
-            {b.status === 'confirmed' && b.format === 'online' && (
-              <MeetingLinkForm table="bookings" id={b.id} defaultValue={b.meeting_link || ''} save={setMeetingLink} />
-            )}
           </div>
         ))}
         <h3>High school subscriptions</h3>
@@ -364,9 +374,6 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
               <form action={async () => { await confirmPayment('hs_subscriptions', s.id) }} style={{ marginTop: 8 }}>
                 <button className="btn btn-gold">Mark paid</button>
               </form>
-            )}
-            {s.status === 'confirmed' && s.format === 'online' && (
-              <MeetingLinkForm table="hs_subscriptions" id={s.id} defaultValue={s.meeting_link || ''} save={setMeetingLink} />
             )}
           </div>
         ))}
@@ -742,17 +749,11 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
           {bookingsHere.map((b: any) => (
             <div key={b.id} style={{ marginBottom: 8 }}>
               <div className="meta">{b.subject} — {b.day} {b.time} · {kindLabel(b)}</div>
-              {b.format === 'online' && (
-                <MeetingLinkForm table="bookings" id={b.id} defaultValue={b.meeting_link || ''} save={setMeetingLink} />
-              )}
             </div>
           ))}
           {subsHere.map((s: any) => (
             <div key={s.id} style={{ marginBottom: 8 }}>
               <div className="meta">{s.month} — {subjectLabel(s.subject_choice)}{s.grade ? ` · Gr ${s.grade}` : ''} · {kindLabel(s)}</div>
-              {s.format === 'online' && (
-                <MeetingLinkForm table="hs_subscriptions" id={s.id} defaultValue={s.meeting_link || ''} save={setMeetingLink} />
-              )}
             </div>
           ))}
           <ChatThread studentId={myStudentId} thread={thread} actions={{ markAttendance, sendTutorMessage }} marks={(marksByStudent || {})[myStudentId]} schedule={(scheduleByStudent || {})[myStudentId]} format={studentFormat(myStudentId, bookings || [], subs || [])} alternate={studentAlternate(myStudentId, bookings || [], subs || [])} classmates={classmatesOf(myStudentId, subs || [])} groupOnly={isGroupStudent(myStudentId, [...(myClaimedBookings || [])], [...(myClaimedSubs || [])])} />
@@ -928,7 +929,8 @@ export default function TutorHome(props: any) {
     { id: 'home', label: 'Home', icon: <Home size={20} /> },
     { id: 'requests', label: 'Requests', icon: <Inbox size={20} /> },
     { id: 'students', label: 'Students', icon: <Users size={20} /> },
-    { id: 'chat', label: 'Chat', icon: <MessageCircle size={20} /> },
+    { id: 'room', label: 'Room', icon: <Video size={20} /> },
+    { id: 'chat', label: 'Messages', icon: <MessageCircle size={20} /> },
     { id: 'more', label: 'More', icon: <MoreHorizontal size={20} /> },
   ]
   return (

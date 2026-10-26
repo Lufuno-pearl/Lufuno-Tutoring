@@ -1,6 +1,8 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { Check, Flame, MessageCircle, Gift } from 'lucide-react'
+import { Check, Flame, MessageCircle, Gift, TrendingUp, Target, CalendarDays, ChevronRight } from 'lucide-react'
+import { Owl, CapBuddy, Sparkle } from '../Owl'
+import { computeXp } from '../../lib/xp'
 import { HS_PRICE, UNI_PRICE, hsSessions, toSessionType } from '../../lib/pricing'
 import { daysUntil } from '../TestList'
 import Avatar from '../Avatar'
@@ -135,11 +137,49 @@ export function StatTrio({ attendance, marks, tests }: { attendance: any[]; mark
   const avg = pcts.length ? Math.round(pcts.reduce((a: number, b: number) => a + b, 0) / pcts.length) : null
   const next = (tests || []).filter(t => t.status === 'upcoming' && daysUntil(t.test_date) >= 0).sort((a, b) => (a.test_date < b.test_date ? -1 : 1))[0]
   const days = next ? daysUntil(next.test_date) : null
+  const streak = computeStreak(attendance || [], saToday()).streak
+  const card = (cls: string, icon: any, label: string, n: string, sub: string) => (
+    <div className={`fstat ${cls}`}>
+      <div className="fic">{icon}</div>
+      <div><small>{label}</small><div className="n">{n}</div><div className="s">{sub}</div></div>
+    </div>
+  )
   return (
-    <div className="stats">
-      <div className="stat" style={{ background: '#E7DDFA' }}><small>Sessions</small><div className="ic">📚</div><div className="n">{sessions}</div><div className="s">this month</div></div>
-      <div className="stat" style={{ background: '#FFE3D6' }}><small>Average mark</small><div className="ic">⭐</div><div className="n">{avg === null ? '–' : `${avg}%`}</div><div className="s" style={{ color: avg !== null && avg < 50 ? '#A6443A' : '#2E8B57' }}>{avg === null ? 'add your marks' : avg < 50 ? 'let’s lift it' : 'keep it up'}</div></div>
-      <div className="stat" style={{ background: '#D8F1E4' }}><small>Next test</small><div className="ic">🎯</div><div className="n">{days === null ? '–' : days}</div><div className="s">{days === null ? 'none yet' : days === 1 ? 'day to go' : 'days to go'}</div></div>
+    <div className="fstats">
+      {card('f1', <Check size={22} color="#fff" />, 'Sessions done', String(sessions), 'this month')}
+      {card('f2', <TrendingUp size={22} color="#fff" />, 'Average mark', avg === null ? '–' : `${avg}%`, avg === null ? 'add your marks' : avg < 50 ? 'let’s lift it' : 'keep it up')}
+      {card('f3', <Target size={22} color="#fff" />, 'Next test', days === null ? '–' : `${days} ${days === 1 ? 'day' : 'days'}`, days === null ? 'none yet' : next.subject)}
+      {card('f4', <Flame size={22} color="#fff" />, 'Streak', `${streak} ${streak === 1 ? 'wk' : 'wks'}`, streak > 0 ? 'keep it going' : 'start this week')}
+    </div>
+  )
+}
+
+// A small reminder for the next session. Tapping it opens the Room tab.
+export function ReminderBar({ bookings, subs, scheduled, onOpen }: { bookings: any[]; subs: any[]; scheduled: any[]; onOpen: () => void }) {
+  const [now, setNow] = useState<Date | null>(null)
+  useEffect(() => { setNow(new Date()); const t = setInterval(() => setNow(new Date()), 30000); return () => clearInterval(t) }, [])
+  if (!now) return null
+  const ends = (subs || []).filter(s => s.status === 'confirmed' && s.end_date).map(s => String(s.end_date)).sort()
+  const windowEnd = ends.length ? ends[ends.length - 1] : null
+  const items: { subject: string; at: Date }[] = []
+  ;(bookings || []).filter(b => b.status === 'confirmed' && b.day && b.time).forEach(b => items.push({ subject: b.subject, at: new Date(`${b.day}T${b.time}`) }))
+  ;(scheduled || []).filter(r => !windowEnd || r.session_date <= windowEnd).forEach(r => items.push({ subject: r.subject, at: new Date(`${r.session_date}T${String(r.session_time).slice(0, 5)}`) }))
+  const horizon = now.getTime() - 60 * 60 * 1000
+  const next = items.filter(x => !isNaN(x.at.getTime()) && x.at.getTime() > horizon).sort((a, b) => a.at.getTime() - b.at.getTime())[0]
+  if (!next) return null
+  const mins = Math.round((next.at.getTime() - now.getTime()) / 60000)
+  const time = next.at.toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit', hour12: false })
+  const startOf = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime()
+  const dayDiff = Math.round((startOf(next.at) - startOf(now)) / 86400000)
+  const title = mins <= 0 ? `${next.subject} is on now` : mins < 90 ? `${next.subject} starts in ${mins} min` : dayDiff === 0 ? `${next.subject} today at ${time}` : dayDiff === 1 ? `${next.subject} tomorrow at ${time}` : `${next.subject} on ${next.at.toLocaleDateString('en-ZA', { weekday: 'long', day: 'numeric', month: 'short' })}`
+  return (
+    <div className="remind" onClick={onOpen} role="button">
+      <CapBuddy size={46} />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div className="remind-t">{title}</div>
+        <div className="meta" style={{ margin: 0 }}>{mins < 90 ? `At ${time} · open Room to join` : 'Open Room for details'}</div>
+      </div>
+      <ChevronRight size={20} color="#7A5FD0" />
     </div>
   )
 }
@@ -321,11 +361,12 @@ export function QuoteCloud({ quotes }: { quotes?: string[] }) {
   const [quote, setQuote] = useState('')
   useEffect(() => { setQuote(todaysQuote(quotes || QUOTES)) }, [quotes])
   return (
-    <div className="cloud-card">
-      <CloudMascot />
-      <div>
-        <h3>You&apos;re doing great! 💜</h3>
-        {quote && <p>&ldquo;{quote}&rdquo;</p>}
+    <div className="bubble-card">
+      <Sparkle x={10} y={8} size={12} /><Sparkle x="64%" y={10} size={16} color="#B6A3F0" /><Sparkle x="93%" y="55%" size={10} /><Sparkle x={74} y="82%" size={10} color="#F3A4B7" />
+      <Owl size={66} />
+      <div className="bubble-text">
+        <b>You&apos;re doing great!</b>
+        {quote && <span>&ldquo;{quote}&rdquo;</span>}
       </div>
     </div>
   )
@@ -345,12 +386,33 @@ export function Hero({ name, avatarPath }: { name: string; avatarPath?: string |
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
         <a href="/appearance" aria-label="Your photo and appearance" style={{ textDecoration: 'none' }}><Avatar path={avatarPath} name={name} size={50} /></a>
         <div className="hero-text">
-          <div className="hero-hi">{first ? `${hi}, ${first}!` : `${hi}!`} 👋</div>
-          <div className="hero-sub">Let&apos;s make today amazing! 💜</div>
+          <div className="hero-hi">{first ? `${hi}, ${first}!` : `${hi}!`}</div>
+          <div className="hero-sub">Let&apos;s make today amazing!</div>
           <div className="hero-slogan">Fix the gaps. Ace the exam.</div>
         </div>
       </div>
-      <SunMascot />
+      <Owl size={64} />
+    </div>
+  )
+}
+
+export function xpFor(attendance: any[], marks: any[]) {
+  const sessions = (attendance || []).filter(a => a.status === 'present').length
+  const streak = computeStreak(attendance || [], saToday()).streak
+  return { sessions, streak, ...computeXp(sessions, (marks || []).length, streak) }
+}
+
+export function XpCard({ attendance, marks, onOpen }: { attendance: any[]; marks: any[]; onOpen: () => void }) {
+  const x = xpFor(attendance, marks)
+  return (
+    <div className="panel xpcard" onClick={onOpen} role="button" style={{ cursor: 'pointer' }}>
+      <div className="xp-ring" style={{ background: `conic-gradient(#7555DC 0 ${x.pct}%, #E4DBFB 0)` }}><i>Lv {x.level.lv}<small>{x.level.name}</small></i></div>
+      <div style={{ flex: 1 }}>
+        <b style={{ fontSize: '1rem' }}>{x.xp} XP</b>
+        <div className="meta" style={{ margin: 0 }}>{x.next ? `${x.toNext} XP to Level ${x.next.lv} · ${x.next.name}` : 'You reached the top level!'}</div>
+        <div className="meta" style={{ margin: '4px 0 0', color: '#7A5FD0', fontWeight: 700 }}>See my badges</div>
+      </div>
+      <ChevronRight size={20} color="#7A5FD0" />
     </div>
   )
 }

@@ -3,7 +3,7 @@ import { useState, useEffect, useLayoutEffect } from 'react'
 import JoinCard from './JoinCard'
 import TabBarPortal, { scrollPageToTop } from '../TabBarPortal'
 import { useRouter } from 'next/navigation'
-import { CalendarPlus, BookOpen, MessageCircle, Landmark, History, Video, HelpCircle, ClipboardList, Gift, ScrollText, Target, Home, CalendarCheck, MoreHorizontal } from 'lucide-react'
+import { CalendarPlus, BookOpen, MessageCircle, Landmark, History, Video, HelpCircle, ClipboardList, Gift, ScrollText, Target, Home, CalendarCheck, MoreHorizontal, Hand, CalendarDays, TrendingUp, Lightbulb, Library, Clapperboard, PencilLine, School, ShieldCheck, Smartphone, Palette, Lock, LogOut, GraduationCap } from 'lucide-react'
 import MaterialsSection from './MaterialsSection'
 import PackDownload from './PackDownload'
 import ExamPacks from './ExamPacks'
@@ -21,15 +21,17 @@ import ModuleFinder from './ModuleFinder'
 import NextSession from './NextSession'
 import TestPrep from './TestPrep'
 import QuestionOfDay from './QuestionOfDay'
-import { StreakCard, CountdownCard, PlanCard, GetStarted, WhatYouGet, PriceStrip, ReferBanner, HelpButton, Hero, QuoteCloud, StatTrio } from './HomeParts'
+import { StreakCard, CountdownCard, PlanCard, GetStarted, WhatYouGet, PriceStrip, ReferBanner, HelpButton, Hero, QuoteCloud, StatTrio, ReminderBar, XpCard, xpFor } from './HomeParts'
 import { daysUntil, whenLabel } from '../TestList'
 import { getAreas } from './actions'
 import StudentChat from './StudentChat'
+import { BADGES, earnedBadges } from '../../lib/xp'
+import { Check, Flame, Star, TrendingUp as TrendIcon, Award, Trophy } from 'lucide-react'
 import { hsPrice, hsSessions, toSessionType, EXTRA_PRICE, EXTRA_MAX, UNI_PRICE, GROUP_MAX, SessionType } from '../../lib/pricing'
 
 
-type Section = 'menu' | 'book' | 'packs' | 'chat' | 'history' | 'video' | 'guide' | 'homework' | 'referral' | 'testprep' | 'qotd' | 'marks' | 'school'
-type Tab = 'home' | 'tutoring' | 'chat' | 'learn' | 'more'
+type Section = 'menu' | 'badges' | 'book' | 'packs' | 'chat' | 'history' | 'video' | 'guide' | 'homework' | 'referral' | 'testprep' | 'qotd' | 'marks' | 'school'
+type Tab = 'home' | 'tutoring' | 'room' | 'chat' | 'learn' | 'more'
 
 function AreaPicker({ areas, value, onChange, notListedHelp, onChooseOnline }: { areas: string[]; value: string; onChange: (v: string) => void; notListedHelp: string; onChooseOnline?: () => void }) {
   if (areas.length === 0) return null
@@ -49,6 +51,31 @@ function AreaPicker({ areas, value, onChange, notListedHelp, onChooseOnline }: {
           {onChooseOnline && <button type="button" className="btn btn-primary" style={{ marginTop: 8 }} onClick={onChooseOnline}>Switch to Online</button>}
         </div>
       )}
+    </div>
+  )
+}
+
+// "Another subject" picker: subjects our tutors teach, plus a free text box for anything else.
+function ExtraSubjectPicker() {
+  const [subjects, setSubjects] = useState<string[]>([])
+  const [picked, setPicked] = useState<string[]>([])
+  const [other, setOther] = useState('')
+  useEffect(() => {
+    createClient().rpc('tutor_subjects').then(({ data }: any) => setSubjects(Array.isArray(data) ? data : []), () => {})
+  }, [])
+  const toggle = (x: string) => setPicked(p => p.includes(x) ? p.filter(y => y !== x) : [...p, x])
+  const value = [...picked, ...(other.trim() ? [other.trim()] : [])].join(', ').slice(0, 60)
+  return (
+    <div className="field">
+      <label>Another subject you need help with? (optional)</label>
+      {subjects.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
+          {subjects.map(x => <button type="button" key={x} onClick={() => toggle(x)} className={`chip${picked.includes(x) ? ' on' : ''}`}>{x}</button>)}
+        </div>
+      )}
+      <input value={other} onChange={e => setOther(e.target.value)} maxLength={40} placeholder={subjects.length ? 'Not listed? Type it here' : 'e.g. Accounting, Life Sciences'} />
+      <input type="hidden" name="extraSubject" value={value} />
+      <p className="meta" style={{ marginTop: 6 }}>The subjects shown are ones our tutors teach. Tell us and we will let your tutor know. Maths and Physical Sciences are what the plan covers.</p>
     </div>
   )
 }
@@ -528,7 +555,7 @@ function ReportMissed({ reportMissedSession }: { reportMissedSession: any }) {
   )
 }
 
-function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visiblePacks, bookings, subs, orders, messages, attendance, videoRequests, myVideoSubjects, homeworkRequests, videoTopicRequests, moduleRequests, testPreps, canTestPrep, marks, scheduled, extras, ratingDue, hasSchool, mySchool, myProvince, avatarPath, locked, actions }: any) {
+function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects, visiblePacks, bookings, subs, orders, messages, attendance, videoRequests, myVideoSubjects, homeworkRequests, videoTopicRequests, moduleRequests, testPreps, canTestPrep, marks, scheduled, extras, ratingDue, hasSchool, mySchool, myProvince, avatarPath, locked, actions }: any) {
   const router = useRouter()
   const [lockNote, setLockNote] = useState(false)
   const [packView, setPackView] = useState<'menu' | 'order' | 'orders'>('menu')
@@ -579,13 +606,15 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
   if (section === 'menu') {
     const waitingPay = [...(bookings || []), ...(subs || []), ...(orders || [])].filter((x: any) => x.status === 'pending').length
 
+    const FLAT: Record<string, any> = { '🙋': Hand, '🗓️': CalendarDays, '📈': TrendingUp, '🎯': Target, '💡': Lightbulb, '📚': Library, '🎬': Clapperboard, '📝': PencilLine, '🎁': Gift, '🏫': School, '❓': HelpCircle, '📜': ScrollText, '🔒': ShieldCheck, '📲': Smartphone, '🎨': Palette, '🚪': LogOut, '🏅': Award }
     const tile = (label: string, icon: any, gradient: string, onClick: () => void, sec?: Section) => {
       const isLocked = !!locked && !!sec && !OPEN_SECTIONS.includes(sec)
+      const Flat = typeof icon === 'string' ? FLAT[icon] : null
       return (
         <div className="tile" style={{ cursor: 'pointer', opacity: isLocked ? 0.55 : 1 }} onClick={onClick}>
           <div className="tile-art" style={{ background: isLocked ? 'linear-gradient(135deg, #B9B2CF, #9A92B8)' : gradient, position: 'relative' }}>
-            <span style={{ fontSize: '3rem', lineHeight: 1, filter: 'drop-shadow(0 3px 6px rgba(0,0,0,.25))' }}>{icon}</span>
-            {isLocked && <span style={{ position: 'absolute', top: 8, right: 10, fontSize: '1.2rem' }}>🔒</span>}
+            {Flat ? <Flat size={40} strokeWidth={2} /> : <span style={{ fontSize: '3rem', lineHeight: 1 }}>{icon}</span>}
+            {isLocked && <span style={{ position: 'absolute', top: 8, right: 10 }}><Lock size={18} /></span>}
           </div>
           <div className="tile-body"><div className="name">{label}</div>{isLocked && <div className="meta" style={{ margin: 0, fontSize: '0.75rem' }}>Opens {FEATURES_OPEN_LABEL}</div>}</div>
         </div>
@@ -593,10 +622,21 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
     }
     const lockBanner = locked && lockNote && (
       <div className="panel" style={{ background: '#FFF3D0', borderLeft: '5px solid #F2C14E', fontWeight: 700, marginBottom: 12 }}>
-        🔒 This opens on {FEATURES_OPEN_LABEL}. Study Packs are open now!
+        This opens on {FEATURES_OPEN_LABEL}. Study Packs are open now!
         <div><button className="btn btn-primary" style={{ marginTop: 8 }} onClick={() => setSection('packs')}>Get my study packs</button></div>
       </div>
     )
+
+    if (tab === 'room') {
+      return (
+        <div>
+          <h3 style={{ marginTop: 0 }}>Room</h3>
+          <p className="meta">Your live sessions. Your tutor starts a session once for the whole subject, then a Join button shows here.</p>
+          <JoinCard showEmpty />
+          {canTestPrep && <NextSession name={name || ''} bookings={bookings || []} subs={subs || []} scheduled={scheduled || []} onRequest={() => setSection('book')} />}
+        </div>
+      )
+    }
 
     if (tab === 'tutoring') {
       return (
@@ -620,7 +660,7 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
           <h3 style={{ marginTop: 0 }}>Learn</h3>
           {lockBanner}
           <div className="card-grid">
-            {tile(canTestPrep ? 'Question of the Day' : 'Question of the Day 🔒', '💡', 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('qotd'), 'qotd')}
+            {tile('Question of the Day', '💡', 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('qotd'), 'qotd')}
             {tile('Study Packs', '📚', 'linear-gradient(135deg, #C89B3C, #A87D24)', () => setSection('packs'), 'packs')}
             {tile('Video Lessons', '🎬', 'linear-gradient(135deg, #1FB6A3, #17897B)', () => setSection('video'), 'video')}
             {tier === 'highschool' && tile('Homework Help', '📝', 'linear-gradient(135deg, #E0956F, #C46B3E)', () => setSection('homework'), 'homework')}
@@ -635,6 +675,7 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
           <h3 style={{ marginTop: 0 }}>More</h3>
           {lockBanner}
           <div className="card-grid">
+            {tile('Badges & Level', '🏅', 'linear-gradient(135deg, #9B7FE8, #7A5FD0)', () => setSection('badges'))}
             {tile('Refer & Earn', '🎁', 'linear-gradient(135deg, #F2C14E, #D9A32E)', () => setSection('referral'), 'referral')}
             {tier === 'highschool' && tile('My School', '🏫', 'linear-gradient(135deg, #5FA3D9, #3F7FB8)', () => setSection('school'), 'school')}
             {tile('How It Works', '❓', 'linear-gradient(135deg, #B98CE0, #8B5FC7)', () => setSection('guide'), 'guide')}
@@ -642,6 +683,7 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
             {tile('Privacy', '🔒', 'linear-gradient(135deg, #6BB59A, #4A9279)', () => router.push('/privacy'))}
             {tile('Add to Phone', '📲', 'linear-gradient(135deg, #E39B6B, #C97B49)', () => router.push('/install'))}
             {tile('Appearance', '🎨', 'linear-gradient(135deg, #D96FB5, #A8478F)', () => router.push('/appearance'))}
+            <form action={actions.signOut} style={{ display: 'contents' }}><button type="submit" style={{ all: 'unset', display: 'contents' }}>{tile('Log out', '🚪', 'linear-gradient(135deg, #B9B2CF, #8F86B3)', () => {})}</button></form>
           </div>
         </div>
       )
@@ -688,7 +730,6 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
       return (
         <div>
           <Hero name={name || ''} avatarPath={avatarPath} />
-          <QuoteCloud />
           {tier === 'highschool' && !hasSchool && <SchoolCard />}
           {payWaiting}
           <RateTutor due={ratingDue || []} submit={actions.submitRating} />
@@ -697,6 +738,7 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
           <WhatYouGet tier={tier} />
           <PriceStrip tier={tier} onRequest={() => setSection('book')} />
           <ReferBanner subscribed={!!canTestPrep} onOpen={() => setSection('referral')} />
+          <QuoteCloud />
           <HelpButton />
         </div>
       )
@@ -705,10 +747,9 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
     return (
       <div>
         <Hero name={name || ''} avatarPath={avatarPath} />
-        <JoinCard />
-        <NextSession name={name || ''} bookings={bookings || []} subs={subs || []} scheduled={scheduled || []} onRequest={() => setSection('book')} />
+        <ReminderBar bookings={bookings || []} subs={subs || []} scheduled={scheduled || []} onOpen={() => { setTab('room'); setSection('menu'); scrollPageToTop() }} />
         <StatTrio attendance={attendance || []} marks={marks || []} tests={testPreps || []} />
-        <QuoteCloud />
+        <XpCard attendance={attendance || []} marks={marks || []} onOpen={() => { setTab('more'); setSection('badges'); scrollPageToTop() }} />
         {tier === 'highschool' && !hasSchool && <SchoolCard />}
         {payWaiting}
         <RateTutor due={ratingDue || []} submit={actions.submitRating} />
@@ -718,6 +759,7 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
         <PlanCard subs={subs || []} attendance={attendance || []} />
         <ExtraSessions subs={subs || []} attendance={attendance || []} extras={extras || []} buy={buyExtraSessions} markAwaiting={markAwaiting} />
         <ReferBanner subscribed={!!canTestPrep} onOpen={() => setSection('referral')} />
+        <QuoteCloud />
       </div>
     )
   }
@@ -853,11 +895,7 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
                   })()}
                 </p>
               </div>
-              <div className="field">
-                <label>Another subject you need help with? (optional)</label>
-                <input name="extraSubject" maxLength={60} placeholder="e.g. Accounting, Life Sciences" />
-                <p className="meta" style={{ marginTop: 6 }}>Tell us and we will let your tutor know. Maths and Physical Sciences are what the plan covers.</p>
-              </div>
+              <ExtraSubjectPicker />
               <div className="field">
                 <label>Online or physical?</label>
                 <select name="format" required value={hsFormat} onChange={e => setHsFormat(e.target.value)}>
@@ -1023,11 +1061,32 @@ function PortalInner({ section, setSection, tab, name, tier, uniSubjects, visibl
     )
   }
 
+  if (section === 'badges') {
+    const x = xpFor(attendance || [], marks || [])
+    const got = earnedBadges(x.sessions, x.streak, marks || [], x.level.lv)
+    const IC: Record<string, any> = { check: Check, flame: Flame, star: Star, trend: TrendIcon, award: Award, trophy: Trophy }
+    return (
+      <div>
+        <Back />
+        <h3>Badges &amp; level</h3>
+        <XpCard attendance={attendance || []} marks={marks || []} onOpen={() => {}} />
+        <div className="panel">
+          <div className="badges-grid">
+            {BADGES.map(b => { const I = IC[b.icon]; const on = got.has(b.id); return (
+              <div key={b.id} className={`badge-it${on ? '' : ' off'}`}><div className="badge-c" style={{ background: b.color }}><I size={30} color="#fff" /></div><div className="badge-n">{b.name}</div><div className="badge-h">{b.hint}</div></div>
+            ) })}
+          </div>
+        </div>
+        <p className="meta">XP: 30 for every session you attend, 10 for every mark you add and 20 for every week of your streak.</p>
+      </div>
+    )
+  }
+
   if (section === 'chat') {
     return (
       <div>
         <Back />
-        <h3>Chat</h3>
+        <h3>Messages</h3>
         <StudentChat messages={messages || []} sendMessage={sendMessage} getChatContacts={getChatContacts} />
         {actions.userId && <MaterialsSection userId={actions.userId} />}
       </div>
@@ -1175,8 +1234,8 @@ export default function PortalHome(props: any) {
     try {
       const saved = sessionStorage.getItem('portalSection') as Section | null
       const savedTab = sessionStorage.getItem('portalTab') as Tab | null
-      const sections: Section[] = ['menu', 'book', 'packs', 'chat', 'history', 'video', 'guide', 'homework', 'referral', 'testprep', 'qotd', 'marks', 'school']
-      const tabs: Tab[] = ['home', 'tutoring', 'chat', 'learn', 'more']
+      const sections: Section[] = ['menu', 'badges', 'book', 'packs', 'chat', 'history', 'video', 'guide', 'homework', 'referral', 'testprep', 'qotd', 'marks', 'school']
+      const tabs: Tab[] = ['home', 'tutoring', 'room', 'chat', 'learn', 'more']
       if (saved && sections.includes(saved)) setSection(saved)
       if (savedTab && tabs.includes(savedTab)) setTab(savedTab)
       // a link such as /portal?section=packs (from a push notification) opens that screen
@@ -1205,14 +1264,15 @@ export default function PortalHome(props: any) {
   const items: { id: Tab; label: string; icon: any }[] = [
     { id: 'home', label: 'Home', icon: <Home size={20} /> },
     { id: 'tutoring', label: 'Tutoring', icon: <CalendarCheck size={20} /> },
-    { id: 'chat', label: 'Chat', icon: <MessageCircle size={20} /> },
+    { id: 'room', label: 'Room', icon: <Video size={20} /> },
     { id: 'learn', label: 'Learn', icon: <BookOpen size={20} /> },
+    { id: 'chat', label: 'Messages', icon: <MessageCircle size={20} /> },
     { id: 'more', label: 'More', icon: <MoreHorizontal size={20} /> },
   ]
 
   return (
     <div>
-      <PortalInner {...props} section={section} setSection={setSection} tab={tab} />
+      <PortalInner {...props} section={section} setSection={setSection} tab={tab} setTab={setTab} />
       <TabBarPortal>
         {items.map(i => (
           <button key={i.id} className={current === i.id ? 'active' : ''} onClick={() => go(i.id)}>

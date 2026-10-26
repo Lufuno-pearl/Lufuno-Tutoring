@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { ChatBubble, ReplyBar } from '../ChatParts'
+import { ChatBubble, ReplyBar, Composer, useHidden } from '../ChatParts'
 
 type Contact = { id: string; name: string; kind: string }
 
@@ -11,11 +11,12 @@ export default function StudentChat({ messages, sendMessage, getChatContacts }: 
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
   const [replyTo, setReplyTo] = useState<any | null>(null)
+  const { hidden, hide } = useHidden()
 
   useEffect(() => { getChatContacts().then(c => setContacts(c)).catch(() => setContacts([])) }, [])
 
   if (contacts === null) return <p className="meta">Loading…</p>
-  if (contacts.length === 0) return <p className="meta">Chat is not ready yet. Please try again in a moment.</p>
+  if (contacts.length === 0) return <p className="meta">Messages are not ready yet. Please try again in a moment.</p>
 
   const msgsFor = (id: string) => (messages || []).filter((m: any) => m.staff_id === id)
   const sub = (c: Contact) => c.kind === 'tutor' ? 'Your tutor: lessons and homework' : 'Questions and help with the app'
@@ -25,7 +26,7 @@ export default function StudentChat({ messages, sendMessage, getChatContacts }: 
     const tutors = contacts.filter(c => c.kind === 'tutor')
     return (
       <div>
-        <p className="meta">Who would you like to message? Pick one person so you always get one clear answer.</p>
+        <p className="meta">Who would you like to message? Pick one person so you always get one clear answer. Press and hold a message to reply or delete it.</p>
         {[...owners, ...tutors].map(c => {
           const last = msgsFor(c.id).slice(-1)[0]
           return (
@@ -40,7 +41,7 @@ export default function StudentChat({ messages, sendMessage, getChatContacts }: 
   }
 
   const who = contacts.find(c => c.id === withId)!
-  const list = msgsFor(withId)
+  const list = msgsFor(withId).filter((m: any) => !hidden.includes(m.id))
 
   async function handleSend() {
     if (!text.trim() || sending) return
@@ -58,17 +59,16 @@ export default function StudentChat({ messages, sendMessage, getChatContacts }: 
 
   return (
     <div>
-      <div className="meta" style={{ cursor: 'pointer', marginBottom: 12, color: 'var(--purple-dark)', fontWeight: 600 }} onClick={() => { setWithId(null); setReplyTo(null) }}>&larr; All chats</div>
-      <h3 style={{ marginTop: 0 }}>Message {who.name}</h3>
-      <div className="panel">
+      <div className="meta" style={{ cursor: 'pointer', marginBottom: 12, color: 'var(--purple-dark)', fontWeight: 600 }} onClick={() => { setWithId(null); setReplyTo(null) }}>&larr; All messages</div>
+      <h3 style={{ marginTop: 0 }}>{who.name}</h3>
+      <div className="chat-pane">
         {list.length === 0 && <p className="meta">No messages yet. Say hello.</p>}
         {list.map((m: any) => (
-          <ChatBubble key={m.id} m={m} all={list} label={m.sender === 'student' ? 'You' : who.name} mine={m.sender === 'student'} otherLabel={who.name} onReply={setReplyTo} />
+          <ChatBubble key={m.id} m={m} all={list} label={m.sender === 'student' ? 'You' : who.name} mine={m.sender === 'student'} otherLabel={who.name} onReply={setReplyTo} onHide={hide} />
         ))}
       </div>
       <ReplyBar to={replyTo} onCancel={() => setReplyTo(null)} />
-      <div className="field"><input value={text} onChange={e => setText(e.target.value)} placeholder="Type a message..." /></div>
-      <button className="btn btn-primary" onClick={handleSend} disabled={sending}>{sending ? 'Sending...' : 'Send'}</button>
+      <Composer value={text} onChange={setText} onSend={handleSend} sending={sending} />
     </div>
   )
 }

@@ -1,11 +1,10 @@
 'use client'
 import { useState } from 'react'
-import MeetingLinkForm from '../MeetingLinkForm'
 import { ChevronRight } from 'lucide-react'
 import AttendanceButtons from '../AttendanceButtons'
 import TutorMaterials from '../tutor/TutorMaterials'
 import MarksView from '../MarksView'
-import { ChatBubble, ReplyBar } from '../ChatParts'
+import { ChatBubble, ReplyBar, Composer, useHidden } from '../ChatParts'
 import ScheduleManager, { studentFormat, studentAlternate, classmatesOf, isGroupStudent } from '../ScheduleManager'
 
 function subjectLabel(choice?: string) {
@@ -18,7 +17,8 @@ export default function PartnerStudents({ allSubs, scheduleByStudent, marksByStu
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
   const [replyTo, setReplyTo] = useState<any | null>(null)
-  const { setMeetingLink, sendPartnerMessage, markAttendance } = actions
+  const { sendPartnerMessage, markAttendance } = actions
+  const { hidden, hide } = useHidden()
 
   async function handleSend(sid: string) {
     if (!text.trim() || sending) return
@@ -113,30 +113,21 @@ export default function PartnerStudents({ allSubs, scheduleByStudent, marksByStu
       {bookingsHere.map((b: any) => (
         <div key={b.id} style={{ marginBottom: 8 }}>
           <div className="meta">{b.subject} — {b.day} {b.time} · {b.format === 'physical' ? 'Physical' : 'Online'}</div>
-          {b.format === 'online' && (
-            <MeetingLinkForm table="bookings" id={b.id} defaultValue={b.meeting_link || ''} save={setMeetingLink} />
-          )}
         </div>
       ))}
       {subsHere.map((s: any) => (
         <div key={s.id} style={{ marginBottom: 8 }}>
           <div className="meta">{s.month} — {subjectLabel(s.subject_choice)}{s.extra_subject ? ` + ${s.extra_subject}` : ''}{s.grade ? ` · Gr ${s.grade}` : ''} · {s.format === 'physical' ? 'Physical' : 'Online'}</div>
-          {s.format === 'online' && (
-            <MeetingLinkForm table="hs_subscriptions" id={s.id} defaultValue={s.meeting_link || ''} save={setMeetingLink} />
-          )}
         </div>
       ))}
-      <div style={{ margin: '10px 0' }}>
+      <div className="chat-pane">
         {(thread.msgs || []).length === 0 && <p className="meta">No messages yet.</p>}
-        {(thread.msgs || []).map((m: any) => (
-          <ChatBubble key={m.id} m={m} all={thread.msgs} label={m.sender === 'tutor' ? 'You' : thread.name} mine={m.sender === 'tutor'} otherLabel={thread.name} onReply={setReplyTo} />
+        {(thread.msgs || []).filter((m: any) => !hidden.includes(m.id)).map((m: any) => (
+          <ChatBubble key={m.id} m={m} all={thread.msgs} label={m.sender === 'tutor' ? 'You' : thread.name} mine={m.sender === 'tutor'} otherLabel={thread.name} onReply={setReplyTo} onHide={hide} />
         ))}
       </div>
       <ReplyBar to={replyTo} onCancel={() => setReplyTo(null)} />
-      <div style={{ display: 'flex', gap: 8 }}>
-        <input value={text} onChange={e => setText(e.target.value)} placeholder="Reply..." style={{ flex: 1, padding: 8, border: '1px solid var(--line)' }} />
-        <button className="btn btn-primary" onClick={() => handleSend(sid)} disabled={sending}>{sending ? 'Sending...' : 'Send'}</button>
-      </div>
+      <Composer value={text} onChange={setText} onSend={() => handleSend(sid)} sending={sending} placeholder="Reply…" />
       <div style={{ marginTop: 14, borderTop: '1px solid var(--line)', paddingTop: 12 }}>
         <h4 style={{ marginTop: 0 }}>Schedule</h4>
         <ScheduleManager readOnly={isGroupStudent(sid, bookingsHere, subsHere)} studentId={sid} rows={(scheduleByStudent || {})[sid] || []} defaultFormat={studentFormat(sid, bookingsHere, subsHere)} alternateDefault={studentAlternate(sid, bookingsHere, subsHere)} classmates={classmatesOf(sid, allSubs || [])} />
