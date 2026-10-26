@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
-import { CornerUpLeft, Copy, Trash2, X, Send } from 'lucide-react'
+import { CornerUpLeft, Copy, Trash2, X, Send, Paperclip, FileText } from 'lucide-react'
+import { createClient } from '../lib/supabase/client'
 import { chatTime, canDeleteNow, DELETE_WINDOW_MIN } from '../lib/chatTime'
 import { deleteMessage } from './message-actions'
 
@@ -52,7 +53,7 @@ export function ChatBubble({ m, all, label, mine, otherLabel, onReply, onHide }:
             {quoted ? <><strong>{quoted.sender === m.sender ? (mine ? 'You' : label) : (mine ? otherLabel : 'You')}</strong><div>{snippet(quoted.body)}</div></> : <em>Original message was deleted</em>}
           </div>
         )}
-        {m.body}
+        {String(m.body || '').startsWith('[file] ') ? <FileBubble name={String(m.body).slice(7)} owner={m.student_id} /> : m.body}
       </div>
       <div className="cb-time">{mine ? 'You' : label} · {chatTime(m.created_at)}</div>
       {note && <div className="cb-time" style={{ color: '#A6443A' }}>{note}</div>}
@@ -84,11 +85,49 @@ export function ReplyBar({ to, onCancel }: { to: any | null; onCancel: () => voi
 }
 
 // Funi-style type box with a round send button
-export function Composer({ value, onChange, onSend, sending, placeholder = 'Message…' }: { value: string; onChange: (v: string) => void; onSend: () => void; sending: boolean; placeholder?: string }) {
+// A shared file inside a chat bubble. Files live in the student's materials folder, so both sides can open them.
+function FileBubble({ name, owner }: { name: string; owner: string }) {
+  const [err, setErr] = useState('')
+  async function open() {
+    setErr('')
+    const { data, error } = await createClient().storage.from('materials').download(`${owner}/${name}`)
+    if (error || !data) { setErr('Could not open that file.'); return }
+    const url = URL.createObjectURL(data)
+    const a = document.createElement('a'); a.href = url; a.download = name; a.click()
+    setTimeout(() => URL.revokeObjectURL(url), 2000)
+  }
   return (
+    <div onClick={open} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+      <FileText size={22} /><div style={{ minWidth: 0, wordBreak: 'break-all' }}><b>{name}</b><div style={{ fontSize: '.72rem', opacity: .8 }}>Tap to open</div>{err && <div style={{ fontSize: '.72rem' }}>{err}</div>}</div>
+    </div>
+  )
+}
+
+export function Composer({ value, onChange, onSend, sending, placeholder = 'Message…', attach }: { value: string; onChange: (v: string) => void; onSend: () => void; sending: boolean; placeholder?: string; attach?: { folder: string; onFile: (name: string) => void | Promise<void> } }) {
+  const [up, setUp] = useState(false)
+  const [msg, setMsg] = useState('')
+  async function pick(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0]; e.target.value = ''
+    if (!f || !attach) return
+    if (f.size > 20 * 1024 * 1024) { setMsg('That file is bigger than 20 MB.'); return }
+    setUp(true); setMsg('')
+    const { error } = await createClient().storage.from('materials').upload(`${attach.folder}/${f.name}`, f, { upsert: true })
+    if (error) setMsg(error.message); else await attach.onFile(f.name)
+    setUp(false)
+  }
+  return (
+    <>
+    {msg && <div className="meta" style={{ color: '#A6443A' }}>{msg}</div>}
     <div className="composer">
+      {attach && (
+        <label aria-label="Attach a file" style={{ width: 36, height: 36, borderRadius: 12, background: '#F1ECFB', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flex: 'none', opacity: up ? .5 : 1 }}>
+          <Paperclip size={18} color="#7555DC" />
+          <input type="file" onChange={pick} disabled={up} style={{ display: 'none' }} />
+        </label>
+      )}
       <input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} onKeyDown={e => { if (e.key === 'Enter') onSend() }} />
       <button onClick={onSend} disabled={sending || !value.trim()} aria-label="Send"><Send size={20} color="#fff" /></button>
     </div>
+    </>
   )
 }

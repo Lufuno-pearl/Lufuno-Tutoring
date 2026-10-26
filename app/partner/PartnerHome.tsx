@@ -57,6 +57,7 @@ const TABS: Tab[] = ['home', 'students', 'requests', 'room', 'manage']
 export default function PartnerHome({ avatarPath, streakRows, monthSessions, markedToday, markAttendance, name, today, openCount, requestCount, studentCount, testCount, tests, availability, open, requests, students, videos, areas }: Props) {
   const [section, setSection] = useState<Section>('menu')
   const [tab, setTab] = useState<Tab>('home')
+  const [ready, setReady] = useState(false)
   const router = useRouter()
 
   useLayoutEffect(() => {
@@ -66,6 +67,7 @@ export default function PartnerHome({ avatarPath, streakRows, monthSessions, mar
       if (saved && SECTIONS.includes(saved)) setSection(saved)
       if (savedTab && TABS.includes(savedTab)) setTab(savedTab)
     } catch (e) {}
+    setReady(true)
   }, [])
   useEffect(() => {
     try { sessionStorage.setItem('partnerSection', section) } catch (e) {}
@@ -195,7 +197,7 @@ export default function PartnerHome({ avatarPath, streakRows, monthSessions, mar
   ]
 
   return (
-    <div>
+    <div style={{ visibility: ready ? 'visible' : 'hidden' }}>
       {body}
       <TabBarPortal>
         {items.map(i => (

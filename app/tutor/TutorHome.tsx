@@ -1,5 +1,5 @@
 'use client'
-import { PageTitle, Row, Pill, Tone, NavRow } from '../ui'
+import { PageTitle, Row, Pill, Tone, NavRow, LevelBrowser } from '../ui'
 import { useState, useEffect, useLayoutEffect } from 'react'
 import GroupSchedule from '../GroupSchedule'
 import RoomPanel from '../room/RoomPanel'
@@ -10,7 +10,6 @@ import InstallButton from '../InstallButton'
 import FlatIcon from '../FlatIcon'
 import { Owl } from '../Owl'
 import { QuoteCloud, TUTOR_QUOTES } from '../portal/HomeParts'
-import TutorMaterials from './TutorMaterials'
 import PacksAdmin from './PacksAdmin'
 import OwnerOverview, { AttentionItem } from './OwnerOverview'
 import { useRouter } from 'next/navigation'
@@ -55,10 +54,10 @@ function ChatThread({ studentId, thread, actions, marks, schedule, format, alter
   const [replyTo, setReplyTo] = useState<any | null>(null)
   const { hidden, hide } = useHidden()
 
-  async function handleSend() {
-    if (!text.trim() || sending) return
-    const body = text
-    setText('')
+  async function handleSend(override?: string) {
+    const body = override ?? text
+    if (!body.trim() || sending) return
+    if (override === undefined) setText('')
     setSending(true)
     const fd = new FormData()
     fd.set('body', body)
@@ -77,12 +76,11 @@ function ChatThread({ studentId, thread, actions, marks, schedule, format, alter
         ))}
       </div>
       <ReplyBar to={replyTo} onCancel={() => setReplyTo(null)} />
-      <Composer value={text} onChange={setText} onSend={handleSend} sending={sending} placeholder="Reply…" />
+      <Composer value={text} onChange={setText} onSend={() => handleSend()} sending={sending} placeholder="Reply…" attach={{ folder: studentId, onFile: n => handleSend(`[file] ${n}`) }} />
       <div style={{ marginTop: 14, borderTop: '1px solid var(--line)', paddingTop: 12 }}>
         <h4 style={{ marginTop: 0 }}>Schedule</h4>
         <ScheduleManager readOnly={!!groupOnly} studentId={studentId} rows={schedule || []} defaultFormat={format || 'online'} alternateDefault={!!alternate} classmates={classmates || []} />
       </div>
-      <TutorMaterials studentId={studentId} studentName={thread.name} />
       <div style={{ marginTop: 14, borderTop: '1px solid var(--line)', paddingTop: 12 }}>
         <h4 style={{ marginTop: 0 }}>Marks</h4>
         <MarksView marks={marks || []} subjects={[]} mode="tutor" studentId={studentId} />
@@ -237,14 +235,14 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
       return (
         <div>
           <PageTitle title="Requests" />
-          <div className="panel">
-            {mrow('Pending Requests', '⏳', 'linear-gradient(135deg, #8B6FD9, #6E4FC7)', () => setSection('pending'), pendingCount)}
-            {mrow('Assign Tutor', '🧑‍🏫', 'linear-gradient(135deg, #7C6FE0, #5B4FC0)', () => setSection('assign'), unassigned)}
-            <Link href="/tutor/applications" style={{ textDecoration: 'none', color: 'inherit' }}>{mrow('Tutor Applications', '✨', 'linear-gradient(135deg, #3FA67A, #2E7D4F)', () => {}, pendingApps || 0)}</Link>
-            {mrow('Tutor Ratings', '⭐', 'linear-gradient(135deg, #E8A93A, #C4841B)', () => setSection('ratings'), lowRecent)}
-            {mrow('Module Requests', '🎓', 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('modules'), pendingModules)}
-            {mrow('Homework Help', '📝', 'linear-gradient(135deg, #5FA3D9, #3F7FB8)', () => setSection('homework'), openHomework)}
-            {mrow('Video Requests', '🎞️', 'linear-gradient(135deg, #E0956F, #C46B3E)', () => setSection('videoreq'), pendingVideos)}
+          <div className="card-grid g3">
+            {tile('Pending Requests', '⏳', 'linear-gradient(135deg, #8B6FD9, #6E4FC7)', () => setSection('pending'), pendingCount)}
+            {tile('Assign Tutor', '🧑‍🏫', 'linear-gradient(135deg, #7C6FE0, #5B4FC0)', () => setSection('assign'), unassigned)}
+            <Link href="/tutor/applications" style={{ textDecoration: 'none', color: 'inherit' }}>{tile('Tutor Applications', '✨', 'linear-gradient(135deg, #3FA67A, #2E7D4F)', () => {}, pendingApps || 0)}</Link>
+            {tile('Tutor Ratings', '⭐', 'linear-gradient(135deg, #E8A93A, #C4841B)', () => setSection('ratings'), lowRecent)}
+            {tile('Module Requests', '🎓', 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('modules'), pendingModules)}
+            {tile('Homework Help', '📝', 'linear-gradient(135deg, #5FA3D9, #3F7FB8)', () => setSection('homework'), openHomework)}
+            {tile('Video Requests', '🎞️', 'linear-gradient(135deg, #E0956F, #C46B3E)', () => setSection('videoreq'), pendingVideos)}
           </div>
         </div>
       )
@@ -254,12 +252,12 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
       return (
         <div>
           <PageTitle title="Students" />
-          <div className="panel">
-            {mrow('Sessions Log', '📋', 'linear-gradient(135deg, #9B7FE8, #7A5FD0)', () => setSection('sessions'))}
-            {mrow('Upcoming Tests', '🎯', 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('tests'), soonTests)}
-            {mrow('Referrals', '🎁', 'linear-gradient(135deg, #F2C14E, #D9A32E)', () => setSection('referrals'))}
-            {mrow('Schedule', '📅', 'linear-gradient(135deg, #8B6FD9, #6E4FC7)', () => setSection('schedule'))}
-            {mrow('My Tutoring', '⭐', 'linear-gradient(135deg, #C89B3C, #A87D24)', () => { setSection('mytutoring'); setMyStudentId(null); setMyView('menu'); setMarksStudentId(null) })}
+          <div className="card-grid g3">
+            {tile('Sessions Log', '📋', 'linear-gradient(135deg, #9B7FE8, #7A5FD0)', () => setSection('sessions'))}
+            {tile('Upcoming Tests', '🎯', 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('tests'), soonTests)}
+            {tile('Referrals', '🎁', 'linear-gradient(135deg, #F2C14E, #D9A32E)', () => setSection('referrals'))}
+            {tile('Schedule', '📅', 'linear-gradient(135deg, #8B6FD9, #6E4FC7)', () => setSection('schedule'))}
+            {tile('My Tutoring', '⭐', 'linear-gradient(135deg, #C89B3C, #A87D24)', () => { setSection('mytutoring'); setMyStudentId(null); setMyView('menu'); setMarksStudentId(null) })}
           </div>
         </div>
       )
@@ -364,7 +362,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
             <Row icon={<GraduationCap size={20} />} tone={b.status === 'confirmed' ? 'green' : 'gold'} title={<>{b.subject} — {b.day} {b.time}</>} sub={<>{b.profiles?.full_name} · {b.profiles?.email} · {kindLabel(b)} · R{b.price}{b.reference ? ` · Ref: ${b.reference}` : ''}</>} right={<StatusPill status={b.status} />} />
             {b.status !== 'confirmed' && (
               <form action={async () => { await confirmPayment('bookings', b.id) }} style={{ marginTop: 8 }}>
-                <button className="btn btn-gold">Mark paid</button>
+                <button className="btn" style={{ background: "#E0F4E8", color: "#1F5C38" }}>Approve payment</button>
               </form>
             )}
           </div>
@@ -375,7 +373,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
             <Row icon={<Calendar size={20} />} tone={s.status === 'confirmed' ? 'green' : 'gold'} title={<>{s.month}</>} sub={<>{s.profiles?.full_name} · {s.profiles?.email}{s.grade ? ` · Gr ${s.grade}` : ''} · {subjectLabel(s.subject_choice)}{s.extra_subject ? ` + ${s.extra_subject}` : ''} · {kindLabel(s)} · R{s.price}{s.reference ? ` · Ref: ${s.reference}` : ''}{s.status === 'confirmed' && s.end_date ? ` · Active until ${s.end_date}` : ''}</>} right={<StatusPill status={s.status} />} />
             {s.status !== 'confirmed' && (
               <form action={async () => { await confirmPayment('hs_subscriptions', s.id) }} style={{ marginTop: 8 }}>
-                <button className="btn btn-gold">Mark paid</button>
+                <button className="btn" style={{ background: "#E0F4E8", color: "#1F5C38" }}>Approve payment</button>
               </form>
             )}
           </div>
@@ -387,7 +385,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
             <Row icon={<Plus size={20} />} tone={x.status === 'confirmed' ? 'green' : 'gold'} title={<>{x.count} extra session{x.count > 1 ? 's' : ''}</>} sub={<>{x.profiles?.full_name} · {x.profiles?.email} · R{x.price}{x.reference ? ` · Ref: ${x.reference}` : ''}</>} right={<StatusPill status={x.status} />} />
             {x.status !== 'confirmed' && (
               <form action={async () => { await confirmPayment('session_extras', x.id) }} style={{ marginTop: 8 }}>
-                <button className="btn btn-gold">Mark paid</button>
+                <button className="btn" style={{ background: "#E0F4E8", color: "#1F5C38" }}>Approve payment</button>
               </form>
             )}
           </div>
@@ -399,7 +397,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
             <Row icon={<Video size={20} />} tone={v.status === 'confirmed' ? 'green' : 'gold'} title={<>{v.subject}</>} sub={<>{v.profiles?.full_name} · {v.profiles?.email} · R{v.price}{v.reference ? ` · Ref: ${v.reference}` : ''}</>} right={<StatusPill status={v.status} />} />
             {v.status !== 'confirmed' && (
               <form action={async () => { await confirmPayment('video_access_requests', v.id) }} style={{ marginTop: 8 }}>
-                <button className="btn btn-gold">Mark paid</button>
+                <button className="btn" style={{ background: "#E0F4E8", color: "#1F5C38" }}>Approve payment</button>
               </form>
             )}
           </div>
@@ -546,7 +544,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
             <Row icon={<GraduationCap size={20} />} tone={c.status === 'confirmed' ? 'green' : 'gold'} title={<>{c.course_name}{c.module_name && c.module_name !== c.course_name ? ` — ${c.module_name}` : ''}</>} sub={<>{c.profiles?.full_name} · {c.profiles?.email} · R{c.price}</>} right={<StatusPill status={c.status} />} />
             {c.status !== 'confirmed' && (
               <form action={async () => { await confirmPayment('other_course_requests', c.id) }} style={{ marginTop: 8 }}>
-                <button className="btn btn-gold">Mark paid</button>
+                <button className="btn" style={{ background: "#E0F4E8", color: "#1F5C38" }}>Approve payment</button>
               </form>
             )}
             {c.status === 'confirmed' && (
@@ -703,28 +701,13 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
     }
 
     const entries = Object.entries(threadsByStudent)
-    const filteredEntries = chatSearch.trim()
-      ? entries.filter(([, t]: any) => t.name.toLowerCase().includes(chatSearch.trim().toLowerCase()))
-      : entries
-    const uniEntries = filteredEntries.filter(([, t]: any) => t.tier !== 'highschool')
-    const hsEntries = filteredEntries.filter(([, t]: any) => t.tier === 'highschool')
-
-    const renderRow = ([sid, t]: any) => (
-      <NavRow key={sid} icon={<Users size={20} />} title={t.name} sub={t.email} onClick={() => setSelectedStudentId(sid)} />
-    )
-
     return (
       <div>
         {null}
         <div className="field">
           <input value={chatSearch} onChange={e => setChatSearch(e.target.value)} placeholder="Search by student name..." />
         </div>
-        <PageTitle title="University" />
-        {uniEntries.length === 0 && <p className="meta">{chatSearch.trim() ? 'No matches.' : 'No students yet.'}</p>}
-        {uniEntries.map(renderRow)}
-        <PageTitle title="High School" />
-        {hsEntries.length === 0 && <p className="meta">{chatSearch.trim() ? 'No matches.' : 'No students yet.'}</p>}
-        {hsEntries.map(renderRow)}
+        <LevelBrowser items={entries.map(([sid, t]: any) => ({ id: sid, name: t.name, sub: t.email, level: t.tier === 'highschool' ? 'hs' : 'uni', grade: t.grade, subject: t.subject }))} search={chatSearch} onPick={setSelectedStudentId} />
       </div>
     )
   }
@@ -850,12 +833,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
           <Back onClick={() => setMyView('menu')} />
           <PageTitle title="Your students" />
           {myStudentIds.length === 0 && <p className="meta">You haven't claimed any students yet.</p>}
-          {myStudentIds.map((sid: string) => {
-            const thread = threadsByStudent[sid] || { name: 'Student' }
-            return (
-              <div key={sid} className="panel" style={{ padding: '4px 16px' }}><Row icon={<Users size={20} />} tone="purple" title={thread.name} onClick={() => setMyStudentId(sid)} right={<ChevronRight size={18} color="#8a85a8" />} /></div>
-            )
-          })}
+          <LevelBrowser onPick={setMyStudentId} items={myStudentIds.map((sid: string) => { const t: any = threadsByStudent[sid] || { name: 'Student' }; return { id: sid, name: t.name, sub: t.email, level: t.tier === 'highschool' ? 'hs' as const : 'uni' as const, grade: t.grade, subject: t.subject } })} />
         </div>
       )
     }
@@ -879,6 +857,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
 export default function TutorHome(props: any) {
   const [section, setSection] = useState<Section>('menu')
   const [tab, setTab] = useState<Tab>('home')
+  const [ready, setReady] = useState(false)
   useLayoutEffect(() => {
     try {
       const saved = sessionStorage.getItem('tutorSection') as Section | null
@@ -886,6 +865,7 @@ export default function TutorHome(props: any) {
       if (saved) setSection(saved)
       if (savedTab) setTab(savedTab)
     } catch (e) {}
+    setReady(true)
   }, [])
   useEffect(() => {
     try { sessionStorage.setItem('tutorSection', section) } catch (e) {}
@@ -908,7 +888,7 @@ export default function TutorHome(props: any) {
     { id: 'more', label: 'More', icon: <MoreHorizontal size={20} /> },
   ]
   return (
-    <div>
+    <div style={{ visibility: ready ? 'visible' : 'hidden' }}>
       <TutorInner {...props} section={section} setSection={setSection} tab={tab} />
       <TabBarPortal>
         {items.map(i => (

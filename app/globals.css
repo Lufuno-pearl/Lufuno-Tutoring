@@ -409,3 +409,20 @@ html:is([data-bg="black"],[data-bg="white"],[data-bg="ocean"],[data-bg="forest"]
 .status.confirmed{background:#E0F4E8;color:#1F5C38;}
 .status.awaiting{background:#FFF0CF;color:#9A6B00;}
 .status.pending{background:#EDE5FD;color:#5B3FC4;}
+
+/* Funi pastel menu tiles (same on every role) */
+.card-grid{gap:12px;}
+.tile{--bg:#EDE5FD;--ic:#B39DF2;--fg:#3b2a85;background:var(--bg)!important;border:0!important;border-radius:22px!important;box-shadow:none!important;min-height:112px;justify-content:space-between;}
+.card-grid>.tile:nth-child(4n+2),.card-grid>a:nth-child(4n+2) .tile{--bg:#E0F4E8;--ic:#6CC596;--fg:#1F5C38;}
+.card-grid>.tile:nth-child(4n+3),.card-grid>a:nth-child(4n+3) .tile{--bg:#FFF0CF;--ic:#F2C14E;--fg:#7a5600;}
+.card-grid>.tile:nth-child(4n+4),.card-grid>a:nth-child(4n+4) .tile{--bg:#FCE5EA;--ic:#F28FA6;--fg:#8c2a43;}
+.tile-art{background:transparent!important;height:auto!important;justify-content:flex-start!important;padding:14px 14px 0;}
+.tile-art svg{filter:none!important;width:44px!important;height:44px!important;padding:10px;border-radius:14px;background:var(--ic);color:#fff;}
+.tile-body{padding:10px 14px 14px!important;}
+.tile-body .name{color:var(--fg);font-weight:800;font-size:.9rem;}
+.tile-body .sub{color:var(--fg);}
+.card-grid.g3{grid-template-columns:1fr 1fr 1fr;gap:10px;}
+.card-grid.g3 .tile{min-height:104px;}
+.card-grid.g3 .tile-body .name{font-size:.78rem;}
+.skel{background:linear-gradient(90deg,#f1ecfb,#faf8ff,#f1ecfb);background-size:200% 100%;animation:skel 1.2s infinite;border-radius:12px;}
+@keyframes skel{0%{background-position:200% 0}100%{background-position:-200% 0}}

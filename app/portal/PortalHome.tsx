@@ -4,7 +4,6 @@ import JoinCard from './JoinCard'
 import TabBarPortal, { scrollPageToTop } from '../TabBarPortal'
 import { useRouter } from 'next/navigation'
 import { CalendarPlus, BookOpen, MessageCircle, Landmark, History, Video, HelpCircle, ClipboardList, Gift, ScrollText, Target, Home, CalendarCheck, MoreHorizontal, Hand, CalendarDays, TrendingUp, Lightbulb, Library, Clapperboard, PencilLine, School, ShieldCheck, Smartphone, Palette, Lock, LogOut, GraduationCap } from 'lucide-react'
-import MaterialsSection from './MaterialsSection'
 import PackDownload from './PackDownload'
 import ExamPacks from './ExamPacks'
 import { OPEN_SECTIONS, FEATURES_OPEN_LABEL, DELIVERY_PROMISE, PACK_PRICE, BUNDLE_SIZE, BUNDLE_PRICE } from '../../lib/examSpecial'
@@ -766,7 +765,7 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
         <Hero name={name || ''} avatarPath={avatarPath} />
         <ReminderBar bookings={bookings || []} subs={subs || []} scheduled={scheduled || []} onOpen={() => { setTab('room'); setSection('menu'); scrollPageToTop() }} />
         <StatTrio attendance={attendance || []} marks={marks || []} tests={testPreps || []} />
-        <XpCard attendance={attendance || []} marks={marks || []} onOpen={() => { setTab('more'); setSection('badges'); scrollPageToTop() }} />
+        <XpCard attendance={attendance || []} marks={marks || []} onOpen={() => { setSection('badges'); scrollPageToTop() }} />
         {tier === 'highschool' && !hasSchool && <SchoolCard />}
         {payWaiting}
         <RateTutor due={ratingDue || []} submit={actions.submitRating} />
@@ -1098,8 +1097,7 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
       <div>
         <Back />
         <PageTitle title="Messages" sub="Your tutors and support" />
-        <StudentChat messages={messages || []} sendMessage={sendMessage} getChatContacts={getChatContacts} />
-        {actions.userId && <MaterialsSection userId={actions.userId} />}
+        <StudentChat messages={messages || []} sendMessage={sendMessage} getChatContacts={getChatContacts} myId={actions.userId} />
       </div>
     )
   }
@@ -1215,6 +1213,7 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
 export default function PortalHome(props: any) {
   const [section, setSection] = useState<Section>('menu')
   const [tab, setTab] = useState<Tab>('home')
+  const [ready, setReady] = useState(false)
 
   useLayoutEffect(() => {
     try {
@@ -1233,6 +1232,7 @@ export default function PortalHome(props: any) {
         window.history.replaceState(null, '', window.location.pathname)
       }
     } catch (e) {}
+    setReady(true)
   }, [])
   useEffect(() => {
     try { sessionStorage.setItem('portalSection', section) } catch (e) {}
@@ -1257,7 +1257,7 @@ export default function PortalHome(props: any) {
   ]
 
   return (
-    <div>
+    <div style={{ visibility: ready ? 'visible' : 'hidden' }}>
       <PortalInner {...props} section={section} setSection={setSection} tab={tab} setTab={setTab} />
       <TabBarPortal>
         {items.map(i => (
