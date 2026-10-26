@@ -5,7 +5,7 @@ import { ChatBubble, ReplyBar, Composer, useHidden } from '../ChatParts'
 type Contact = { id: string; name: string; kind: string }
 
 // The student's chats. Questions go to Lufuno or Neliswa. Once a tutor is assigned, the student can message the tutor too.
-export default function StudentChat({ messages, sendMessage, getChatContacts }: { messages: any[]; sendMessage: any; getChatContacts: () => Promise<Contact[]> }) {
+export default function StudentChat({ messages, sendMessage, getChatContacts, myId }: { messages: any[]; sendMessage: any; getChatContacts: () => Promise<Contact[]>; myId: string }) {
   const [contacts, setContacts] = useState<Contact[] | null>(null)
   const [withId, setWithId] = useState<string | null>(null)
   const [text, setText] = useState('')
@@ -43,10 +43,10 @@ export default function StudentChat({ messages, sendMessage, getChatContacts }: 
   const who = contacts.find(c => c.id === withId)!
   const list = msgsFor(withId).filter((m: any) => !hidden.includes(m.id))
 
-  async function handleSend() {
-    if (!text.trim() || sending) return
-    const body = text
-    setText('')
+  async function handleSend(override?: string) {
+    const body = override ?? text
+    if (!body.trim() || sending) return
+    if (override === undefined) setText('')
     setSending(true)
     const fd = new FormData()
     fd.set('body', body)
@@ -68,7 +68,7 @@ export default function StudentChat({ messages, sendMessage, getChatContacts }: 
         ))}
       </div>
       <ReplyBar to={replyTo} onCancel={() => setReplyTo(null)} />
-      <Composer value={text} onChange={setText} onSend={handleSend} sending={sending} />
+      <Composer value={text} onChange={setText} onSend={() => handleSend()} sending={sending} attach={{ folder: myId, onFile: n => handleSend(`[file] ${n}`) }} />
     </div>
   )
 }

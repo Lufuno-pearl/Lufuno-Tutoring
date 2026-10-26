@@ -99,7 +99,7 @@ export default async function TutorDashboard() {
   const openBookings = (bookings || []).filter((b: any) => !b.tutor_id)
   const openSubs = (subs || []).filter((s: any) => !s.tutor_id)
 
-  const threadsByStudent: Record<string, { name: string; email: string; tier: string; msgs: any[] }> = {}
+  const threadsByStudent: Record<string, { name: string; email: string; tier: string; msgs: any[]; grade?: number | null; subject?: string }> = {}
   ;(bookings || []).forEach((b: any) => {
     const sid = b.student_id
     if (!threadsByStudent[sid]) threadsByStudent[sid] = { name: b.profiles?.full_name || 'Student', email: b.profiles?.email || '', tier: b.profiles?.tier || 'university', msgs: [] }
@@ -117,6 +117,9 @@ export default async function TutorDashboard() {
     if (!threadsByStudent[sid]) threadsByStudent[sid] = { name: m.profiles?.full_name || 'Student', email: m.profiles?.email || '', tier: m.profiles?.tier || 'university', msgs: [] }
     threadsByStudent[sid].msgs.push(m)
   })
+
+  ;(subs || []).forEach((s: any) => { const t = threadsByStudent[s.student_id]; if (t && t.grade == null) { t.grade = s.grade || null; t.subject = s.subject_choice } })
+  ;(bookings || []).forEach((b: any) => { const t = threadsByStudent[b.student_id]; if (t && !t.subject) t.subject = b.subject })
 
   // ratings are read separately so the dashboard still loads before tutor-ratings.sql has been run
   const { data: ratingRows } = await supabase.from('tutor_ratings').select('id, stars, comment, created_at, tutor_id, student_id, tutor:profiles!tutor_ratings_tutor_id_fkey(full_name), student:profiles!tutor_ratings_student_id_fkey(full_name)').order('created_at', { ascending: false })

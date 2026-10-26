@@ -1,9 +1,9 @@
 'use client'
 import { useState } from 'react'
 import { ChevronRight, Users } from 'lucide-react'
+import { LevelBrowser } from '../ui'
 import { NavRow } from '../ui'
 import AttendanceButtons from '../AttendanceButtons'
-import TutorMaterials from '../tutor/TutorMaterials'
 import MarksView from '../MarksView'
 import { ChatBubble, ReplyBar, Composer, useHidden } from '../ChatParts'
 import ScheduleManager, { studentFormat, studentAlternate, classmatesOf, isGroupStudent } from '../ScheduleManager'
@@ -21,10 +21,10 @@ export default function PartnerStudents({ allSubs, scheduleByStudent, marksByStu
   const { sendPartnerMessage, markAttendance } = actions
   const { hidden, hide } = useHidden()
 
-  async function handleSend(sid: string) {
-    if (!text.trim() || sending) return
-    const body = text
-    setText('')
+  async function handleSend(sid: string, override?: string) {
+    const body = override ?? text
+    if (!body.trim() || sending) return
+    if (override === undefined) setText('')
     setSending(true)
     try {
       const fd = new FormData()
@@ -33,7 +33,7 @@ export default function PartnerStudents({ allSubs, scheduleByStudent, marksByStu
       await sendPartnerMessage(sid, fd)
       setReplyTo(null)
     } catch (e) {
-      setText(body)
+      if (override === undefined) setText(body)
       alert('Could not send. Please try again.')
     }
     setSending(false)
@@ -44,9 +44,6 @@ export default function PartnerStudents({ allSubs, scheduleByStudent, marksByStu
   if (!selectedId) {
     const q = search.trim().toLowerCase()
     const matches = (sid: string) => !q || (threads[sid]?.name || 'Student').toLowerCase().includes(q)
-    const uniIds = myStudentIds.filter((sid: string) => (subsByStudent[sid] || []).length === 0 && matches(sid))
-    const hsIds = myStudentIds.filter((sid: string) => (subsByStudent[sid] || []).length > 0 && matches(sid))
-
     const renderRow = (sid: string) => {
       const thread = threads[sid] || { name: 'Student', msgs: [] }
       const b = (bookingsByStudent[sid] || [])[0]
@@ -58,39 +55,16 @@ export default function PartnerStudents({ allSubs, scheduleByStudent, marksByStu
       )
     }
 
-    // students grouped under a heading: high school by grade (highest first) and subject, university by subject
-    const hsGroupOf = (sid: string) => {
-      const s = (subsByStudent[sid] || [])[0]
-      return { key: `${String(100 - (s?.grade || 0)).padStart(3, '0')}|${s?.subject_choice || ''}`, title: `${s?.grade ? `Grade ${s.grade}` : 'Grade not set'} · ${subjectLabel(s?.subject_choice)}` }
-    }
-    const uniGroupOf = (sid: string) => {
-      const b = (bookingsByStudent[sid] || [])[0]
-      return { key: (b?.subject || 'zzz').toLowerCase(), title: b?.subject || 'Subject not set' }
-    }
-    const grouped = (ids: string[], groupOf: (sid: string) => { key: string; title: string }) => {
-      const map = new Map<string, { title: string; ids: string[] }>()
-      ids.forEach(id => { const g = groupOf(id); const e = map.get(g.key) || { title: g.title, ids: [] }; e.ids.push(id); map.set(g.key, e) })
-      return Array.from(map.entries()).sort((a, b) => (a[0] < b[0] ? -1 : 1)).map(([, v]) => v)
-    }
-    const renderGroups = (ids: string[], groupOf: (sid: string) => { key: string; title: string }) =>
-      grouped(ids, groupOf).map(g => (
-        <div key={g.title}>
-          <div className="meta" style={{ fontWeight: 700, margin: '12px 0 6px', color: 'var(--purple-dark)' }}>{g.title} · {g.ids.length}</div>
-          {g.ids.map(renderRow)}
-        </div>
-      ))
-
     return (
       <div>
         <div className="field">
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by student name..." />
         </div>
-        <h3>University</h3>
-        {uniIds.length === 0 && <p className="meta">{q ? 'No matches.' : 'No students yet.'}</p>}
-        {renderGroups(uniIds, uniGroupOf)}
-        <h3 style={{ marginTop: 20 }}>High School</h3>
-        {hsIds.length === 0 && <p className="meta">{q ? 'No matches.' : 'No students yet.'}</p>}
-        {renderGroups(hsIds, hsGroupOf)}
+        <LevelBrowser search={search} onPick={sid => { setSelectedId(sid); setText('') }} items={myStudentIds.filter((sid: string) => matches(sid)).map((sid: string) => {
+          const hsRow = (subsByStudent[sid] || [])[0]
+          const b = (bookingsByStudent[sid] || [])[0]
+          return { id: sid, name: (threads[sid]?.name || 'Student'), level: hsRow ? 'hs' as const : 'uni' as const, grade: hsRow?.grade || null, subject: hsRow ? hsRow.subject_choice : b?.subject, sub: hsRow ? `${subjectLabel(hsRow.subject_choice)}${hsRow.extra_subject ? ` + ${hsRow.extra_subject}` : ''}` : b?.subject }
+        })} />
       </div>
     )
   }
@@ -121,12 +95,11 @@ export default function PartnerStudents({ allSubs, scheduleByStudent, marksByStu
         ))}
       </div>
       <ReplyBar to={replyTo} onCancel={() => setReplyTo(null)} />
-      <Composer value={text} onChange={setText} onSend={() => handleSend(sid)} sending={sending} placeholder="Reply…" />
+      <Composer value={text} onChange={setText} onSend={() => handleSend(sid)} sending={sending} placeholder="Reply…" attach={{ folder: sid, onFile: n => handleSend(sid, `[file] ${n}`) }} />
       <div style={{ marginTop: 14, borderTop: '1px solid var(--line)', paddingTop: 12 }}>
         <h4 style={{ marginTop: 0 }}>Schedule</h4>
         <ScheduleManager readOnly={isGroupStudent(sid, bookingsHere, subsHere)} studentId={sid} rows={(scheduleByStudent || {})[sid] || []} defaultFormat={studentFormat(sid, bookingsHere, subsHere)} alternateDefault={studentAlternate(sid, bookingsHere, subsHere)} classmates={classmatesOf(sid, allSubs || [])} />
       </div>
-      <TutorMaterials studentId={sid} studentName={thread.name} />
       <div style={{ marginTop: 14, borderTop: '1px solid var(--line)', paddingTop: 12 }}>
         <h4 style={{ marginTop: 0 }}>Marks</h4>
         <MarksView marks={(marksByStudent || {})[sid] || []} subjects={[]} mode="tutor" studentId={sid} />

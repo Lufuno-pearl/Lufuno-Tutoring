@@ -159,7 +159,8 @@ export default function JoinCard({ showEmpty = false }: { showEmpty?: boolean })
 
   if (done) return <SessionComplete done={done} onClose={() => setDone(null)} />
   if (rooms.length === 0) {
-    if (!showEmpty || !loaded) return null
+    if (!showEmpty) return null
+    if (!loaded) return <div className="panel"><div className="skel" style={{ height: 18, width: '50%', marginBottom: 10 }} /><div className="skel" style={{ height: 14, width: '85%' }} /></div>
     return <div className="panel"><h4 style={{ margin: 0 }}>No live session right now</h4><div className="meta" style={{ marginBottom: 0 }}>When your tutor starts a session, a Join button shows here. You do not need to refresh.</div></div>
   }
   return <>{rooms.map(r => <RoomCard key={r.room_id} room={r} reload={load} />)}</>
