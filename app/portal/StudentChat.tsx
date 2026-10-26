@@ -15,7 +15,7 @@ export default function StudentChat({ messages, sendMessage, getChatContacts }: 
   useEffect(() => { getChatContacts().then(c => setContacts(c)).catch(() => setContacts([])) }, [])
 
   if (contacts === null) return <p className="meta">Loading…</p>
-  if (contacts.length === 0) return <p className="meta">Chat is not ready yet. Please try again in a moment.</p>
+  if (contacts.length === 0) return <p className="meta">Messages are not ready yet. Please try again in a moment.</p>
 
   const msgsFor = (id: string) => (messages || []).filter((m: any) => m.staff_id === id)
   const sub = (c: Contact) => c.kind === 'tutor' ? 'Your tutor: lessons and homework' : 'Questions and help with the app'
@@ -58,7 +58,7 @@ export default function StudentChat({ messages, sendMessage, getChatContacts }: 
 
   return (
     <div>
-      <div className="meta" style={{ cursor: 'pointer', marginBottom: 12, color: 'var(--purple-dark)', fontWeight: 600 }} onClick={() => { setWithId(null); setReplyTo(null) }}>&larr; All chats</div>
+      <div className="meta" style={{ cursor: 'pointer', marginBottom: 12, color: 'var(--purple-dark)', fontWeight: 600 }} onClick={() => { setWithId(null); setReplyTo(null) }}>&larr; All messages</div>
       <h3 style={{ marginTop: 0 }}>Message {who.name}</h3>
       <div className="panel">
         {list.length === 0 && <p className="meta">No messages yet. Say hello.</p>}

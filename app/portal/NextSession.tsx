@@ -28,8 +28,6 @@ export default function NextSession({ name, bookings, subs, scheduled, onRequest
   const [asked, setAsked] = useState(false)
   useEffect(() => { setNow(new Date()) }, [])
 
-  const firstName = (name || '').trim().split(' ')[0]
-
   const horizon = now ? now.getTime() - 2 * 60 * 60 * 1000 : 0
   const fromBookings = now
     ? (bookings || [])
@@ -56,11 +54,6 @@ export default function NextSession({ name, bookings, subs, scheduled, onRequest
 
   return (
     <div>
-      <div className="hero">
-        <div className="hero-hi">Hi{firstName ? `, ${firstName}` : ''} 👋</div>
-        <div className="hero-slogan">Fix the gaps. Ace the exam.</div>
-      </div>
-
       <div className="next-card">
         <div className="next-label"><CalendarClock size={16} /> Your next session</div>
         {!now && <div className="next-skeleton" />}
@@ -73,7 +66,7 @@ export default function NextSession({ name, bookings, subs, scheduled, onRequest
             </div>
             {next.b.format === 'physical' && (
               asked ? (
-                <div className="meta" style={{ marginTop: 10, marginBottom: 0 }}>Request sent. Your tutor will reply in Chat.</div>
+                <div className="meta" style={{ marginTop: 10, marginBottom: 0 }}>Request sent. Your tutor will reply in Messages.</div>
               ) : (
                 <button onClick={async () => {
                   setAsked(true)
@@ -83,8 +76,8 @@ export default function NextSession({ name, bookings, subs, scheduled, onRequest
                 }} style={{ background: 'none', border: 'none', color: 'var(--purple-dark)', fontWeight: 600, padding: 0, marginTop: 10, cursor: 'pointer', fontSize: '0.85rem' }}>Can't make it in person? Ask for online</button>
               )
             )}
-            {next.b.format !== 'physical' && <div className="meta" style={{ marginTop: 10, marginBottom: 0 }}>Your tutor will send the link when the session starts. A Join button then appears at the top of your home screen.</div>}
-            {next.b.note && <div className="meta" style={{ marginTop: 8, marginBottom: 0 }}>📝 {next.b.note}</div>}
+            {next.b.format !== 'physical' && <div className="meta" style={{ marginTop: 10, marginBottom: 0 }}>Your tutor will send the link when the session starts. A Join button then appears here in Room.</div>}
+            {next.b.note && <div className="meta" style={{ marginTop: 8, marginBottom: 0 }}>{next.b.note}</div>}
             {rest.length > 0 && (
               <div style={{ marginTop: 14, borderTop: '1px solid var(--line)', paddingTop: 10 }}>
                 <div style={{ fontSize: '0.78rem', opacity: 0.8, marginBottom: 4 }}>Coming up</div>
@@ -100,7 +93,7 @@ export default function NextSession({ name, bookings, subs, scheduled, onRequest
           <>
             <div className="next-title">Your online class</div>
             <div className="next-when">Your tutor will send the link for your next session.</div>
-            <div className="meta" style={{ marginTop: 10, marginBottom: 0 }}>When they start it, a Join button appears at the top of your home screen.</div>
+            <div className="meta" style={{ marginTop: 10, marginBottom: 0 }}>When they start it, a Join button appears here in Room.</div>
           </>
         )}
         {now && !next && !classLink && (() => {

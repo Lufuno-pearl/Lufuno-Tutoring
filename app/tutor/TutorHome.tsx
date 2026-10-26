@@ -928,7 +928,7 @@ export default function TutorHome(props: any) {
     { id: 'home', label: 'Home', icon: <Home size={20} /> },
     { id: 'requests', label: 'Requests', icon: <Inbox size={20} /> },
     { id: 'students', label: 'Students', icon: <Users size={20} /> },
-    { id: 'chat', label: 'Chat', icon: <MessageCircle size={20} /> },
+    { id: 'chat', label: 'Messages', icon: <MessageCircle size={20} /> },
     { id: 'more', label: 'More', icon: <MoreHorizontal size={20} /> },
   ]
   return (

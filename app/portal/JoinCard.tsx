@@ -66,7 +66,7 @@ function RoomCard({ room, reload }: { room: Room; reload: () => void }) {
           if (tab) tab.location.href = r.link
           else window.location.href = r.link
         } else {
-          setMsg('You are marked present ✅')
+          setMsg('You are marked present')
         }
         reload()
       }
@@ -84,7 +84,7 @@ function RoomCard({ room, reload }: { room: Room; reload: () => void }) {
       <div className="meta">{room.tutor_name ? `With ${room.tutor_name}` : ''}{room.in_person ? ' · In person' : ' · Online'}</div>
       {room.joined ? (
         <>
-          <p className="meta" style={{ fontWeight: 600 }}>You're in ✅ Attendance recorded.</p>
+          <p className="meta" style={{ fontWeight: 600 }}>You're in. Attendance recorded.</p>
           {!room.in_person && <button className="btn btn-gold" style={{ width: '100%', opacity: busy ? 0.6 : 1 }} disabled={busy} onClick={join}>Open the call again</button>}
         </>
       ) : room.in_person ? (
@@ -107,20 +107,22 @@ function RoomCard({ room, reload }: { room: Room; reload: () => void }) {
           <button className="btn btn-gold" style={{ width: '100%', opacity: busy ? 0.6 : 1 }} disabled={busy} onClick={join}>{busy ? 'One moment...' : 'Join session'}</button>
         </>
       )}
-      {msg && <p className="meta" style={{ marginTop: 8, color: msg.includes('✅') ? undefined : '#b3261e' }}>{msg}</p>}
+      {msg && <p className="meta" style={{ marginTop: 8, color: msg.includes('marked present') ? undefined : '#b3261e' }}>{msg}</p>}
     </div>
   )
 }
 
 // Shows when the tutor has started a session for this student
-export default function JoinCard() {
+export default function JoinCard({ showEmpty = false }: { showEmpty?: boolean }) {
   const [rooms, setRooms] = useState<Room[]>([])
+  const [loaded, setLoaded] = useState(false)
 
   async function load() {
     try {
       const { data } = await createClient().rpc('my_open_rooms')
       setRooms((data as Room[]) || [])
     } catch { /* leave as is */ }
+    setLoaded(true)
   }
   useEffect(() => {
     load()
@@ -128,6 +130,9 @@ export default function JoinCard() {
     return () => clearInterval(t)
   }, [])
 
-  if (rooms.length === 0) return null
+  if (rooms.length === 0) {
+    if (!showEmpty || !loaded) return null
+    return <div className="panel"><h4 style={{ margin: 0 }}>No live session right now</h4><div className="meta" style={{ marginBottom: 0 }}>When your tutor starts a session, a Join button shows here. You do not need to refresh.</div></div>
+  }
   return <>{rooms.map(r => <RoomCard key={r.room_id} room={r} reload={load} />)}</>
 }

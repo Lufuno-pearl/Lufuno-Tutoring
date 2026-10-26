@@ -310,3 +310,29 @@ html:is([data-bg="black"],[data-bg="white"],[data-bg="ocean"],[data-bg="forest"]
 html:is([data-bg="black"],[data-bg="white"],[data-bg="ocean"],[data-bg="forest"],[data-bg="steel"],[data-bg="navy"],[data-bg="sand"],[data-bg="photo"]) .tabbar button.active{color:var(--nav-on);background:rgba(128,128,128,.22);box-shadow:none;}
 html:is([data-bg="black"],[data-bg="white"],[data-bg="ocean"],[data-bg="forest"],[data-bg="steel"],[data-bg="navy"],[data-bg="sand"],[data-bg="photo"]) :is(.btn-primary,.pill.active){background:var(--btn);color:var(--btn-ink);border-color:var(--btn);box-shadow:none;}
 html:is([data-bg="black"],[data-bg="white"],[data-bg="ocean"],[data-bg="forest"],[data-bg="steel"],[data-bg="navy"],[data-bg="sand"],[data-bg="photo"]) nav :is(a,span,div){color:var(--nav-on);}
+
+/* ===== Funi style layer ===== */
+.fstats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+.fstat{display:flex;gap:10px;align-items:flex-start;border-radius:22px;padding:13px 12px;box-shadow:0 6px 16px rgba(122,95,208,.10);}
+.fstat .fic{width:42px;height:42px;border-radius:14px;display:flex;align-items:center;justify-content:center;flex:none;}
+.fstat small{display:block;font-size:.7rem;font-weight:800;}
+.fstat .n{font-size:1.4rem;font-weight:900;line-height:1.15;}
+.fstat .s{font-size:.66rem;font-weight:700;line-height:1.2;opacity:.85;}
+.fstat.f1{background:#EDE5FD;color:#2a2150}.fstat.f1 .fic{background:#B6A3F0}
+.fstat.f2{background:#FCE5EA;color:#7a1f35}.fstat.f2 .fic{background:#F3A4B7}
+.fstat.f3{background:#E0F4E8;color:#1F5C38}.fstat.f3 .fic{background:#8ED2AE}
+.fstat.f4{background:#FFF0CF;color:#6b4a00}.fstat.f4 .fic{background:#F3CB59}
+.remind{display:flex;align-items:center;gap:12px;background:#fff;border-radius:22px;padding:12px 14px;margin-bottom:14px;border-left:5px solid #7555DC;box-shadow:0 6px 16px rgba(122,95,208,.10);cursor:pointer;}
+.remind-t{font-weight:800;font-size:.95rem;color:#2E2350;}
+.bubble-card{position:relative;display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,#F3EDFF,#FFF4DA);border-radius:26px;padding:14px 16px;margin:6px 0 16px;box-shadow:0 6px 18px rgba(122,95,208,.12);}
+.bubble-text{background:#fff;border-radius:18px 18px 18px 4px;padding:11px 13px;font-size:.84rem;line-height:1.35;color:#3A2B66;flex:1;}
+.bubble-text b{display:block;color:#4B2FA0;margin-bottom:2px;}
+.bubble-text span{font-style:italic;}
+.sparkle{animation:twinkle 2.6s ease-in-out infinite;}
+@keyframes twinkle{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.8)}}
+@media (prefers-reduced-motion:reduce){.sparkle{animation:none}}
+/* bottom bar, six items, light like Funi */
+.tabbar{background:#fff !important;border-radius:22px 22px 0 0;box-shadow:0 -4px 18px rgba(122,95,208,.14) !important;padding:6px 2px calc(8px + env(safe-area-inset-bottom)) !important;}
+.tabbar button{font-size:.6rem !important;padding:6px 0 !important;color:#6b6490 !important;opacity:1 !important;border-radius:14px;min-width:0;}
+.tabbar button.active{color:#5B3FC4 !important;background:#EDE5FD !important;box-shadow:none !important;}
+.tabbar button svg{width:21px;height:21px;}
