@@ -2,6 +2,9 @@
 import { useState } from 'react'
 import { addTestPrep, setTestPrepDone, deleteTestPrep } from './actions'
 import { daysUntil, whenLabel, splitTopics } from '../TestList'
+import { Plus } from 'lucide-react'
+import { Row, Pill } from '../ui'
+import { Target } from 'lucide-react'
 
 type Row = { id: string; subject: string; kind: string; test_date: string; topics: string; notes?: string | null; status: string }
 
@@ -10,6 +13,7 @@ export default function TestPrep({ rows, subjects }: { rows: Row[]; subjects: st
   const [message, setMessage] = useState('')
   const [ok, setOk] = useState(false)
   const [formKey, setFormKey] = useState(0)
+  const [adding, setAdding] = useState(false)
   const today = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString().slice(0, 10)
 
   const upcoming = rows
@@ -29,10 +33,38 @@ export default function TestPrep({ rows, subjects }: { rows: Row[]; subjects: st
 
   return (
     <div>
-      <p className="meta">Tell your tutor when your test or exam is and which topics it covers, so your sessions focus on what you need.</p>
-
-      <div className="panel">
-        <h4 style={{ marginTop: 0 }}>Add a test or exam</h4>
+      {upcoming.length === 0 && <div className="panel"><p className="meta" style={{ margin: 0 }}>Nothing added yet. Tell your tutor when your test or exam is and what it covers, so your sessions focus on what you need.</p></div>}
+      {upcoming.map(r => {
+        const n = daysUntil(r.test_date)
+        const target = new Date(`${r.test_date}T00:00:00`).getTime()
+        const ms = Math.max(0, target - Date.now())
+        const hrs = Math.floor((ms % 86400000) / 3600000)
+        const mins = Math.floor((ms % 3600000) / 60000)
+        const box = (v: number, l: string) => <div style={{ background: '#FCE5EA' }}><b style={{ color: '#7a1f35' }}>{v}</b><small style={{ color: '#7a1f35' }}>{l}</small></div>
+        return (
+          <div className="panel" key={r.id}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h4 style={{ margin: 0 }}>{r.subject} {r.kind === 'exam' ? 'exam' : 'test'}</h4>
+              <Pill tone={n <= 3 ? 'pink' : 'purple'}>{whenLabel(r.test_date)}</Pill>
+            </div>
+            <div className="meta" style={{ margin: '2px 0 0' }}>{r.test_date}</div>
+            <div className="fcount">{box(n, n === 1 ? 'day' : 'days')}{box(hrs, 'hours')}{box(mins, 'min')}</div>
+            <div className="fsec" style={{ margin: '4px 0 6px' }}>TOPICS</div>
+            <ul style={{ margin: '0 0 10px', paddingLeft: 18 }}>
+              {splitTopics(r.topics).map((t, i) => <li key={i}>{t}</li>)}
+            </ul>
+            {r.notes && <p className="meta">Note: {r.notes}</p>}
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button className="btn" style={{ background: '#E0F4E8', color: '#1F5C38', flex: 1 }} onClick={async () => { await setTestPrepDone(r.id) }}>Mark as done</button>
+              <button className="btn" style={{ background: '#FCE5EA', color: '#7a1f35', flex: 1 }} onClick={async () => { await deleteTestPrep(r.id) }}>Delete</button>
+            </div>
+          </div>
+        )
+      })}
+      <button type="button" className="fbtn-add" onClick={() => setAdding(a => !a)}><Plus size={18} /> {adding ? 'Close' : 'Add my test scope'}</button>
+      {adding && (
+        <div className="panel">
+          <h4 style={{ marginTop: 0 }}>Add a test or exam</h4>
         <form key={formKey} action={submit}>
           <div className="field">
             <label>Subject</label>
@@ -55,23 +87,8 @@ export default function TestPrep({ rows, subjects }: { rows: Row[]; subjects: st
           {message && <p style={{ color: ok ? '#1E6B34' : '#A6443A', fontSize: '0.88rem' }}>{message}</p>}
           <button className="btn btn-primary" disabled={busy}>{busy ? 'Saving...' : 'Save and tell my tutor'}</button>
         </form>
-      </div>
-
-      <h4>Coming up</h4>
-      {upcoming.length === 0 && <p className="meta">Nothing added yet.</p>}
-      {upcoming.map(r => (
-        <div className="panel" key={r.id}>
-          <h4>{r.subject} {r.kind === 'exam' ? 'exam' : 'test'}</h4>
-          <div className="meta">{r.test_date} · <strong>{whenLabel(r.test_date)}</strong></div>
-          <ul style={{ margin: '4px 0 8px', paddingLeft: 18 }}>
-            {splitTopics(r.topics).map((t, i) => <li key={i}>{t}</li>)}
-          </ul>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button className="btn" style={{ background: 'none', border: '1px solid var(--ink)' }} onClick={async () => { await setTestPrepDone(r.id) }}>Mark as done</button>
-            <button className="btn" style={{ background: 'none', border: '1px solid #A6443A', color: '#A6443A' }} onClick={async () => { await deleteTestPrep(r.id) }}>Delete</button>
-          </div>
         </div>
-      ))}
+      )}
     </div>
   )
 }

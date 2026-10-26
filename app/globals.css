@@ -376,3 +376,23 @@ html:is([data-bg="black"],[data-bg="white"],[data-bg="ocean"],[data-bg="forest"]
 .composer{display:flex;gap:8px;align-items:center;background:#fff;border-radius:22px;padding:6px 6px 6px 14px;box-shadow:0 6px 18px rgba(122,95,208,.12)}
 .composer input{flex:1;min-width:0;border:0;outline:0;background:transparent;font-family:inherit;font-size:.95rem;color:#2a2150}
 .composer button{width:42px;height:42px;border-radius:14px;border:0;background:#7555DC;display:flex;align-items:center;justify-content:center;cursor:pointer}.composer button:disabled{opacity:.45}
+
+/* Funi building blocks */
+.fpill{display:inline-block;border-radius:20px;padding:4px 11px;font-size:.72rem;font-weight:800;white-space:nowrap}
+.frow{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #f0ecfa}.frow:last-child{border-bottom:0}
+.ftile{width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;flex:none}
+.frow-t{font-weight:800;font-size:.92rem;color:#2a2150}.frow-s{font-size:.76rem;color:#6b6490;margin-top:1px}
+.fseg{display:flex;background:#EDE5FD;border-radius:16px;padding:4px;margin-bottom:14px}
+.fseg span{flex:1;text-align:center;padding:10px;border-radius:12px;font-weight:800;font-size:.88rem;color:#6b6490;cursor:pointer}
+.fseg span.on{background:#fff;color:#4b2fa0;box-shadow:0 2px 6px rgba(91,63,192,.18)}
+.fsec{font-size:.7rem;font-weight:900;letter-spacing:1.5px;color:#8a85a8;margin:14px 4px 8px}
+.fbtn-add{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:0;border-radius:16px;padding:14px;font-weight:900;font-size:.95rem;background:linear-gradient(135deg,#FFE29A,#F5BE4F);color:#4A3410;font-family:inherit;cursor:pointer;margin-bottom:12px}
+.fcount{display:flex;gap:8px;margin:10px 0}.fcount div{flex:1;border-radius:14px;padding:10px 4px;text-align:center}.fcount b{display:block;font-size:1.5rem;line-height:1.1}.fcount small{font-size:.62rem;font-weight:700}
+.fbars{display:flex;align-items:flex-end;gap:8px;height:110px;margin-top:10px}.fbars i{flex:1;border-radius:8px 8px 4px 4px;min-height:6px}
+.flab{display:flex;gap:8px;font-size:.62rem;color:#8a85a8;text-align:center;margin-top:4px}.flab span{flex:1}
+.fcelebrate{position:relative;text-align:center;border:2px dashed #C9B8F5;border-radius:22px;padding:14px;margin-bottom:14px;background:#FBF9FF}
+
+.vcard{background:#fff;border-radius:20px;overflow:hidden;margin-bottom:12px;box-shadow:0 6px 18px rgba(122,95,208,.10)}
+.vthumb{height:110px;display:flex;align-items:center;justify-content:center}
+.vplay{width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.88);display:flex;align-items:center;justify-content:center}
+.vbody{padding:10px 14px}
