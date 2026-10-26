@@ -23,7 +23,7 @@ export default async function TutorDashboard() {
     supabase.from('hs_subscriptions').select('*, profiles:profiles!hs_subscriptions_student_id_fkey(full_name, email, tier)').order('created_at', { ascending: false }),
     supabase.from('pack_orders').select('*, profiles(full_name, email, tier)').order('created_at', { ascending: false }),
     supabase.from('messages').select('*, profiles:profiles!messages_student_id_fkey(full_name, email, tier)').order('created_at', { ascending: false }).limit(500),
-    supabase.from('attendance').select('*, student:profiles!attendance_student_id_fkey(full_name), tutor:profiles!attendance_marked_by_fkey(full_name)').order('created_at', { ascending: false }).limit(300),
+    supabase.from('attendance').select('*, student:profiles!attendance_student_id_fkey(full_name), tutor:profiles!attendance_marked_by_fkey(full_name)').order('created_at', { ascending: false }).limit(3000),
     supabase.from('profiles').select('id, full_name, available, takes_one_on_one').eq('role', 'partner'),
     supabase.from('profiles').select('available').eq('id', user.id).single(),
     supabase.from('video_access_requests').select('*, profiles(full_name, email)').order('created_at', { ascending: false }),
