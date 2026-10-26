@@ -1,10 +1,10 @@
 'use client'
 import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react'
 import { createClient } from '../../lib/supabase/client'
 import { isAdminEmail } from '../../lib/admin'
-import { Girl, Cloud, Plant, Flower } from './Welcome'
+import { OwlDesk } from './Welcome'
 
 export default function LoginForm() {
   const [mode, setMode] = useState<'signup' | 'signin'>('signin')
@@ -69,28 +69,32 @@ export default function LoginForm() {
   const signup = mode === 'signup'
   return (
     <div className="wl">
-      <div className="wl-cloud wl-c1"><Cloud /></div>
-      <div className="wl-cloud wl-c2"><Cloud /></div>
-      <div className="wl-plant"><Plant /></div>
-      <div className="wl-flower"><Flower /></div>
       <h2 className="wl-title">{signup ? 'Welcome to Aid & Ace!' : 'Welcome back!'}</h2>
       <p className="wl-sub">{signup ? "Let's get you set up. It takes a minute." : 'We missed you. Ready to fix the gaps?'}</p>
-      <div className="wl-girl"><Girl wink /></div>
+      <div className="wl-girl"><OwlDesk /></div>
       <section className="wl-card">
         {success && <p className="wl-note wl-ok">{success}</p>}
-        {signup && (tier === 'university' || tier === 'highschool') && <p className="wl-note">🔒 You are signing up as a {tier === 'university' ? 'university student' : 'high school student'}. You pick once and it can't be changed later, so check it's right.</p>}
-        {signup && <p className="wl-note">Hi there! 👋 Create your account and we will help you fix the gaps and ace the exam.</p>}
-        {signup && (
-          <div className="wl-field"><i>🙂</i><input value={name} onChange={e => setName(e.target.value)} placeholder="Full name" aria-label="Full name" /></div>
+        {signup && (tier === 'university' || tier === 'highschool') && (
+          <div className="wl-note">
+            <div style={{ marginBottom: 8 }}>You chose <b>{tier === 'university' ? 'University' : 'High School'}</b>. Is that right? You pick once and it can't be changed later.</div>
+            <div className="wl-seg">
+              <span className={tier === 'highschool' ? 'on' : ''} onClick={() => router.replace('/login?tier=highschool')}>High School</span>
+              <span className={tier === 'university' ? 'on' : ''} onClick={() => router.replace('/login?tier=university')}>University</span>
+            </div>
+          </div>
         )}
-        <div className="wl-field"><i>✉</i><input value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" aria-label="Email" autoCapitalize="none" /></div>
+        {signup && <p className="wl-note">Hi there! Create your account and we will help you fix the gaps and ace the exam.</p>}
+        {signup && (
+          <div className="wl-field"><i><User size={20} /></i><input value={name} onChange={e => setName(e.target.value)} placeholder="Full name" aria-label="Full name" /></div>
+        )}
+        <div className="wl-field"><i><Mail size={20} /></i><input value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" aria-label="Email" autoCapitalize="none" /></div>
         <div className="wl-field">
-          <i>🔒</i>
+          <i><Lock size={20} /></i>
           <input type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} placeholder={signup ? 'Password (6+ characters)' : 'Password'} aria-label="Password" />
           <span className="wl-eye" onClick={() => setShowPassword(!showPassword)}>{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</span>
         </div>
         {signup && (
-          <div className="wl-field"><i>🔒</i><input type={showPassword ? 'text' : 'password'} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Type your password again" aria-label="Confirm password" /></div>
+          <div className="wl-field"><i><Lock size={20} /></i><input type={showPassword ? 'text' : 'password'} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Type your password again" aria-label="Confirm password" /></div>
         )}
         {signup && (
           <label className="wl-agree">

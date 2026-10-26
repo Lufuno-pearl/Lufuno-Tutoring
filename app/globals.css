@@ -336,3 +336,10 @@ html:is([data-bg="black"],[data-bg="white"],[data-bg="ocean"],[data-bg="forest"]
 .tabbar button{font-size:.6rem !important;padding:6px 0 !important;color:#6b6490 !important;opacity:1 !important;border-radius:14px;min-width:0;}
 .tabbar button.active{color:#5B3FC4 !important;background:#EDE5FD !important;box-shadow:none !important;}
 .tabbar button svg{width:21px;height:21px;}
+
+.wl-girl{width:min(340px,92%);margin:6px auto -30px}
+.wl{padding-bottom:40px}
+.wl-seg{display:flex;background:#EDE5FD;border-radius:14px;padding:3px}.wl-seg span{flex:1;text-align:center;padding:8px;border-radius:11px;font-weight:800;font-size:.85rem;color:#6b6490;cursor:pointer}.wl-seg span.on{background:#fff;color:#4b2fa0;box-shadow:0 2px 6px rgba(91,63,192,.18)}
+
+.chip{border:0;border-radius:14px;padding:8px 13px;font-size:.82rem;font-weight:800;background:#F5F2FC;color:#6b6490;font-family:inherit;cursor:pointer}
+.chip.on{background:#7555DC;color:#fff}

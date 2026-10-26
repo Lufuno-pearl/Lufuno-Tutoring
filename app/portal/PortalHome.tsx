@@ -53,6 +53,31 @@ function AreaPicker({ areas, value, onChange, notListedHelp, onChooseOnline }: {
   )
 }
 
+// "Another subject" picker: subjects our tutors teach, plus a free text box for anything else.
+function ExtraSubjectPicker() {
+  const [subjects, setSubjects] = useState<string[]>([])
+  const [picked, setPicked] = useState<string[]>([])
+  const [other, setOther] = useState('')
+  useEffect(() => {
+    createClient().rpc('tutor_subjects').then(({ data }: any) => setSubjects(Array.isArray(data) ? data : []), () => {})
+  }, [])
+  const toggle = (x: string) => setPicked(p => p.includes(x) ? p.filter(y => y !== x) : [...p, x])
+  const value = [...picked, ...(other.trim() ? [other.trim()] : [])].join(', ').slice(0, 60)
+  return (
+    <div className="field">
+      <label>Another subject you need help with? (optional)</label>
+      {subjects.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
+          {subjects.map(x => <button type="button" key={x} onClick={() => toggle(x)} className={`chip${picked.includes(x) ? ' on' : ''}`}>{x}</button>)}
+        </div>
+      )}
+      <input value={other} onChange={e => setOther(e.target.value)} maxLength={40} placeholder={subjects.length ? 'Not listed? Type it here' : 'e.g. Accounting, Life Sciences'} />
+      <input type="hidden" name="extraSubject" value={value} />
+      <p className="meta" style={{ marginTop: 6 }}>The subjects shown are ones our tutors teach. Tell us and we will let your tutor know. Maths and Physical Sciences are what the plan covers.</p>
+    </div>
+  )
+}
+
 function StatusPill({ status }: { status: string }) {
   const label = status === 'confirmed' ? 'Confirmed' : status === 'awaiting' ? 'Payment submitted — confirming' : 'Awaiting payment'
   return <span className={`status ${status}`}>{label}</span>
@@ -866,11 +891,7 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
                   })()}
                 </p>
               </div>
-              <div className="field">
-                <label>Another subject you need help with? (optional)</label>
-                <input name="extraSubject" maxLength={60} placeholder="e.g. Accounting, Life Sciences" />
-                <p className="meta" style={{ marginTop: 6 }}>Tell us and we will let your tutor know. Maths and Physical Sciences are what the plan covers.</p>
-              </div>
+              <ExtraSubjectPicker />
               <div className="field">
                 <label>Online or physical?</label>
                 <select name="format" required value={hsFormat} onChange={e => setHsFormat(e.target.value)}>
