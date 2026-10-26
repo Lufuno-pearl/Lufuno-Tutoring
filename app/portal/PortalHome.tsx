@@ -21,14 +21,16 @@ import ModuleFinder from './ModuleFinder'
 import NextSession from './NextSession'
 import TestPrep from './TestPrep'
 import QuestionOfDay from './QuestionOfDay'
-import { StreakCard, CountdownCard, PlanCard, GetStarted, WhatYouGet, PriceStrip, ReferBanner, HelpButton, Hero, QuoteCloud, StatTrio, ReminderBar } from './HomeParts'
+import { StreakCard, CountdownCard, PlanCard, GetStarted, WhatYouGet, PriceStrip, ReferBanner, HelpButton, Hero, QuoteCloud, StatTrio, ReminderBar, XpCard, xpFor } from './HomeParts'
 import { daysUntil, whenLabel } from '../TestList'
 import { getAreas } from './actions'
 import StudentChat from './StudentChat'
+import { BADGES, earnedBadges } from '../../lib/xp'
+import { Check, Flame, Star, TrendingUp as TrendIcon, Award, Trophy } from 'lucide-react'
 import { hsPrice, hsSessions, toSessionType, EXTRA_PRICE, EXTRA_MAX, UNI_PRICE, GROUP_MAX, SessionType } from '../../lib/pricing'
 
 
-type Section = 'menu' | 'book' | 'packs' | 'chat' | 'history' | 'video' | 'guide' | 'homework' | 'referral' | 'testprep' | 'qotd' | 'marks' | 'school'
+type Section = 'menu' | 'badges' | 'book' | 'packs' | 'chat' | 'history' | 'video' | 'guide' | 'homework' | 'referral' | 'testprep' | 'qotd' | 'marks' | 'school'
 type Tab = 'home' | 'tutoring' | 'room' | 'chat' | 'learn' | 'more'
 
 function AreaPicker({ areas, value, onChange, notListedHelp, onChooseOnline }: { areas: string[]; value: string; onChange: (v: string) => void; notListedHelp: string; onChooseOnline?: () => void }) {
@@ -604,7 +606,7 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
   if (section === 'menu') {
     const waitingPay = [...(bookings || []), ...(subs || []), ...(orders || [])].filter((x: any) => x.status === 'pending').length
 
-    const FLAT: Record<string, any> = { '🙋': Hand, '🗓️': CalendarDays, '📈': TrendingUp, '🎯': Target, '💡': Lightbulb, '📚': Library, '🎬': Clapperboard, '📝': PencilLine, '🎁': Gift, '🏫': School, '❓': HelpCircle, '📜': ScrollText, '🔒': ShieldCheck, '📲': Smartphone, '🎨': Palette, '🚪': LogOut }
+    const FLAT: Record<string, any> = { '🙋': Hand, '🗓️': CalendarDays, '📈': TrendingUp, '🎯': Target, '💡': Lightbulb, '📚': Library, '🎬': Clapperboard, '📝': PencilLine, '🎁': Gift, '🏫': School, '❓': HelpCircle, '📜': ScrollText, '🔒': ShieldCheck, '📲': Smartphone, '🎨': Palette, '🚪': LogOut, '🏅': Award }
     const tile = (label: string, icon: any, gradient: string, onClick: () => void, sec?: Section) => {
       const isLocked = !!locked && !!sec && !OPEN_SECTIONS.includes(sec)
       const Flat = typeof icon === 'string' ? FLAT[icon] : null
@@ -673,6 +675,7 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
           <h3 style={{ marginTop: 0 }}>More</h3>
           {lockBanner}
           <div className="card-grid">
+            {tile('Badges & Level', '🏅', 'linear-gradient(135deg, #9B7FE8, #7A5FD0)', () => setSection('badges'))}
             {tile('Refer & Earn', '🎁', 'linear-gradient(135deg, #F2C14E, #D9A32E)', () => setSection('referral'), 'referral')}
             {tier === 'highschool' && tile('My School', '🏫', 'linear-gradient(135deg, #5FA3D9, #3F7FB8)', () => setSection('school'), 'school')}
             {tile('How It Works', '❓', 'linear-gradient(135deg, #B98CE0, #8B5FC7)', () => setSection('guide'), 'guide')}
@@ -746,6 +749,7 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
         <Hero name={name || ''} avatarPath={avatarPath} />
         <ReminderBar bookings={bookings || []} subs={subs || []} scheduled={scheduled || []} onOpen={() => { setTab('room'); setSection('menu'); scrollPageToTop() }} />
         <StatTrio attendance={attendance || []} marks={marks || []} tests={testPreps || []} />
+        <XpCard attendance={attendance || []} marks={marks || []} onOpen={() => { setTab('more'); setSection('badges'); scrollPageToTop() }} />
         {tier === 'highschool' && !hasSchool && <SchoolCard />}
         {payWaiting}
         <RateTutor due={ratingDue || []} submit={actions.submitRating} />
@@ -1057,6 +1061,27 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
     )
   }
 
+  if (section === 'badges') {
+    const x = xpFor(attendance || [], marks || [])
+    const got = earnedBadges(x.sessions, x.streak, marks || [], x.level.lv)
+    const IC: Record<string, any> = { check: Check, flame: Flame, star: Star, trend: TrendIcon, award: Award, trophy: Trophy }
+    return (
+      <div>
+        <Back />
+        <h3>Badges &amp; level</h3>
+        <XpCard attendance={attendance || []} marks={marks || []} onOpen={() => {}} />
+        <div className="panel">
+          <div className="badges-grid">
+            {BADGES.map(b => { const I = IC[b.icon]; const on = got.has(b.id); return (
+              <div key={b.id} className={`badge-it${on ? '' : ' off'}`}><div className="badge-c" style={{ background: b.color }}><I size={30} color="#fff" /></div><div className="badge-n">{b.name}</div><div className="badge-h">{b.hint}</div></div>
+            ) })}
+          </div>
+        </div>
+        <p className="meta">XP: 30 for every session you attend, 10 for every mark you add and 20 for every week of your streak.</p>
+      </div>
+    )
+  }
+
   if (section === 'chat') {
     return (
       <div>
@@ -1209,7 +1234,7 @@ export default function PortalHome(props: any) {
     try {
       const saved = sessionStorage.getItem('portalSection') as Section | null
       const savedTab = sessionStorage.getItem('portalTab') as Tab | null
-      const sections: Section[] = ['menu', 'book', 'packs', 'chat', 'history', 'video', 'guide', 'homework', 'referral', 'testprep', 'qotd', 'marks', 'school']
+      const sections: Section[] = ['menu', 'badges', 'book', 'packs', 'chat', 'history', 'video', 'guide', 'homework', 'referral', 'testprep', 'qotd', 'marks', 'school']
       const tabs: Tab[] = ['home', 'tutoring', 'room', 'chat', 'learn', 'more']
       if (saved && sections.includes(saved)) setSection(saved)
       if (savedTab && tabs.includes(savedTab)) setTab(savedTab)

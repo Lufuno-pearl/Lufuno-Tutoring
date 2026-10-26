@@ -343,3 +343,17 @@ html:is([data-bg="black"],[data-bg="white"],[data-bg="ocean"],[data-bg="forest"]
 
 .chip{border:0;border-radius:14px;padding:8px 13px;font-size:.82rem;font-weight:800;background:#F5F2FC;color:#6b6490;font-family:inherit;cursor:pointer}
 .chip.on{background:#7555DC;color:#fff}
+
+.complete{position:relative;background:#EDE4FF;border-radius:30px;padding:22px 18px;text-align:center;margin-bottom:16px;overflow:hidden;box-shadow:0 8px 22px rgba(122,95,208,.18)}
+.complete-pill{display:inline-block;background:#fff;border-radius:20px;padding:5px 14px;font-size:.72rem;font-weight:800;color:#4b2fa0;margin-top:6px}
+.complete h2{margin:8px 0 4px;font-size:1.7rem;color:#4b2fa0;letter-spacing:-.5px}
+.complete p{margin:0 6px 14px;font-size:.9rem;line-height:1.4;color:#3A2B66}
+.complete-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}.complete-stats div{background:#fff;border-radius:20px;padding:12px;font-size:.78rem;color:#6b6490}.complete-stats b{display:block;font-size:1.8rem;color:#4b2fa0}
+
+.xpcard{display:flex;align-items:center;gap:14px}
+.xp-ring{width:68px;height:68px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none}
+.xp-ring i{width:52px;height:52px;border-radius:50%;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-style:normal;font-weight:900;color:#4b2fa0;font-size:.95rem;line-height:1}.xp-ring small{font-size:.5rem;color:#8a85a8;font-weight:700}
+.badges-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.badge-it{text-align:center}.badge-c{width:62px;height:62px;border-radius:20px;margin:0 auto 6px;display:flex;align-items:center;justify-content:center}
+.badge-n{font-size:.76rem;font-weight:800;color:#4b2fa0}.badge-h{font-size:.64rem;color:#8a85a8;line-height:1.2}
+.badge-it.off{opacity:.38;filter:grayscale(1)}

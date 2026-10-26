@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import QRCode from 'qrcode'
 import { createClient } from '../../lib/supabase/client'
+import { CapBuddy, Sparkle } from '../Owl'
 
 type Room = { room_id: string; tutor_id: string; tutor_name: string | null; label: string; opened_at: string; joined: boolean; in_person: boolean }
 
@@ -113,14 +114,40 @@ function RoomCard({ room, reload }: { room: Room; reload: () => void }) {
 }
 
 // Shows when the tutor has started a session for this student
+type Done = { label: string; minutes: number }
+
+// Celebration shown when the tutor ends a session the student was in
+function SessionComplete({ done, onClose }: { done: Done; onClose: () => void }) {
+  return (
+    <div className="complete">
+      <Sparkle x="10%" y="8%" size={16} /><Sparkle x="86%" y="12%" size={14} color="#F3A4B7" /><Sparkle x="8%" y="62%" size={10} color="#B6A3F0" /><Sparkle x="90%" y="58%" size={16} /><Sparkle x="48%" y="3%" size={12} color="#8ED2AE" />
+      <CapBuddy size={150} />
+      <div className="complete-pill">SESSION</div>
+      <h2>Session complete!</h2>
+      <p>You showed up and did the work. Take a second to feel good about that.</p>
+      <div className="complete-stats"><div><b>{done.minutes}</b>minutes in class</div><div><b>+30</b>XP earned</div></div>
+      <div className="meta" style={{ marginTop: 6 }}>{done.label}</div>
+      <button className="btn btn-primary" style={{ width: '100%', marginTop: 10 }} onClick={onClose}>Back to Room</button>
+    </div>
+  )
+}
+
 export default function JoinCard({ showEmpty = false }: { showEmpty?: boolean }) {
   const [rooms, setRooms] = useState<Room[]>([])
   const [loaded, setLoaded] = useState(false)
+  const [done, setDone] = useState<Done | null>(null)
+
 
   async function load() {
     try {
       const { data } = await createClient().rpc('my_open_rooms')
-      setRooms((data as Room[]) || [])
+      const next = (data as Room[]) || []
+      setRooms(cur => {
+        // a session this student joined has closed: show the complete screen
+        const gone = cur.find(r => r.joined && !next.some(n => n.room_id === r.room_id))
+        if (gone) setDone({ label: gone.label, minutes: Math.max(1, Math.round((Date.now() - new Date(gone.opened_at).getTime()) / 60000)) })
+        return next
+      })
     } catch { /* leave as is */ }
     setLoaded(true)
   }
@@ -130,6 +157,7 @@ export default function JoinCard({ showEmpty = false }: { showEmpty?: boolean })
     return () => clearInterval(t)
   }, [])
 
+  if (done) return <SessionComplete done={done} onClose={() => setDone(null)} />
   if (rooms.length === 0) {
     if (!showEmpty || !loaded) return null
     return <div className="panel"><h4 style={{ margin: 0 }}>No live session right now</h4><div className="meta" style={{ marginBottom: 0 }}>When your tutor starts a session, a Join button shows here. You do not need to refresh.</div></div>

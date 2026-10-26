@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { Check, Flame, MessageCircle, Gift, TrendingUp, Target, CalendarDays, ChevronRight } from 'lucide-react'
 import { Owl, CapBuddy, Sparkle } from '../Owl'
+import { computeXp } from '../../lib/xp'
 import { HS_PRICE, UNI_PRICE, hsSessions, toSessionType } from '../../lib/pricing'
 import { daysUntil } from '../TestList'
 import Avatar from '../Avatar'
@@ -391,6 +392,27 @@ export function Hero({ name, avatarPath }: { name: string; avatarPath?: string |
         </div>
       </div>
       <Owl size={64} />
+    </div>
+  )
+}
+
+export function xpFor(attendance: any[], marks: any[]) {
+  const sessions = (attendance || []).filter(a => a.status === 'present').length
+  const streak = computeStreak(attendance || [], saToday()).streak
+  return { sessions, streak, ...computeXp(sessions, (marks || []).length, streak) }
+}
+
+export function XpCard({ attendance, marks, onOpen }: { attendance: any[]; marks: any[]; onOpen: () => void }) {
+  const x = xpFor(attendance, marks)
+  return (
+    <div className="panel xpcard" onClick={onOpen} role="button" style={{ cursor: 'pointer' }}>
+      <div className="xp-ring" style={{ background: `conic-gradient(#7555DC 0 ${x.pct}%, #E4DBFB 0)` }}><i>Lv {x.level.lv}<small>{x.level.name}</small></i></div>
+      <div style={{ flex: 1 }}>
+        <b style={{ fontSize: '1rem' }}>{x.xp} XP</b>
+        <div className="meta" style={{ margin: 0 }}>{x.next ? `${x.toNext} XP to Level ${x.next.lv} · ${x.next.name}` : 'You reached the top level!'}</div>
+        <div className="meta" style={{ margin: '4px 0 0', color: '#7A5FD0', fontWeight: 700 }}>See my badges</div>
+      </div>
+      <ChevronRight size={20} color="#7A5FD0" />
     </div>
   )
 }
