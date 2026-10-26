@@ -1,4 +1,5 @@
 'use client'
+import { PageTitle } from '../ui'
 import { useState, useEffect, useLayoutEffect } from 'react'
 import GroupSchedule from '../GroupSchedule'
 import RoomPanel from '../room/RoomPanel'
@@ -219,7 +220,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
     if (tab === 'room') {
       return (
         <div>
-          <h3 style={{ marginTop: 0 }}>Room</h3>
+          <PageTitle title="Room" />
           <p className="meta">Pick a subject group, paste ONE link for the whole subject, and start. Only those students see Join.</p>
           <RoomPanel />
         </div>
@@ -229,7 +230,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
     if (tab === 'requests') {
       return (
         <div>
-          <h3 style={{ marginTop: 0 }}>Requests</h3>
+          <PageTitle title="Requests" />
           <div className="card-grid">
             {tile('Pending Requests', '⏳', 'linear-gradient(135deg, #8B6FD9, #6E4FC7)', () => setSection('pending'), pendingCount)}
             {tile('Assign Tutor', '🧑‍🏫', 'linear-gradient(135deg, #7C6FE0, #5B4FC0)', () => setSection('assign'), unassigned)}
@@ -246,7 +247,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
     if (tab === 'students') {
       return (
         <div>
-          <h3 style={{ marginTop: 0 }}>Students</h3>
+          <PageTitle title="Students" />
           <div className="card-grid">
             {tile('Sessions Log', '📋', 'linear-gradient(135deg, #9B7FE8, #7A5FD0)', () => setSection('sessions'))}
             {tile('Upcoming Tests', '🎯', 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('tests'), soonTests)}
@@ -261,7 +262,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
     if (tab === 'more') {
       return (
         <div>
-          <h3 style={{ marginTop: 0 }}>More</h3>
+          <PageTitle title="More" />
           <div className="card-grid">
             {tile('Study Packs', '📚', 'linear-gradient(135deg, #C89B3C, #A87D24)', () => setSection('packs'))}
             {tile('Videos', '🎬', 'linear-gradient(135deg, #1FB6A3, #17897B)', () => setSection('videos'))}
@@ -351,7 +352,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
     return (
       <div>
         <Back />
-        <h3>University bookings</h3>
+        <PageTitle title="University bookings" />
         {(bookings || []).map((b: any) => (
           <div className="panel" key={b.id}>
             <h4>{b.subject} — {b.day} {b.time}</h4>
@@ -364,7 +365,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
             )}
           </div>
         ))}
-        <h3>High school subscriptions</h3>
+        <PageTitle title="High school subscriptions" />
         {(subs || []).map((s: any) => (
           <div className="panel" key={s.id}>
             <h4>{s.month}</h4>
@@ -377,7 +378,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
             )}
           </div>
         ))}
-        <h3>Extra sessions</h3>
+        <PageTitle title="Extra sessions" />
         {(extras || []).filter((x: any) => x.status !== 'pending').length === 0 && <p className="meta">None yet.</p>}
         {(extras || []).filter((x: any) => x.status !== 'pending').map((x: any) => (
           <div className="panel" key={x.id}>
@@ -391,7 +392,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
             )}
           </div>
         ))}
-        <h3>Video access requests</h3>
+        <PageTitle title="Video access requests" />
         {(videoRequests || []).length === 0 && <p className="meta">None yet.</p>}
         {(videoRequests || []).map((v: any) => (
           <div className="panel" key={v.id}>
@@ -422,7 +423,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
     return (
       <div>
         <Back />
-        <h3>Schedule</h3>
+        <PageTitle title="Schedule" />
         <GroupSchedule />
       </div>
     )
@@ -440,7 +441,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
     return (
       <div>
         <Back />
-        <h3>Tutor ratings</h3>
+        <PageTitle title="Tutor ratings" />
         <p className="meta">Students rate their tutor after every 3 sessions. Only you and Neliswa see this. Tutors never do.</p>
         {(ratings || []).length === 0 && <p className="meta">No ratings yet.</p>}
         {lows.length > 0 && (
@@ -520,10 +521,10 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
       <div>
         <Back />
         <p className="meta">Only you and Neliswa assign students. Each tutor's name shows how many students they have, and the tutor with the fewest comes first.</p>
-        <h3>University</h3>
+        <PageTitle title="University" />
         {uniItems.filter((r: any) => !r.tutor_id).length === 0 && <p className="meta">Nobody waiting for a tutor.</p>}
         {uniItems.filter((r: any) => !r.tutor_id).map(renderItem)}
-        <h3 style={{ marginTop: 20 }}>High School</h3>
+        <PageTitle title="High School" />
         {hsItems.filter((r: any) => !r.tutor_id).length === 0 && <p className="meta">Nobody waiting for a tutor.</p>}
         {hsItems.filter((r: any) => !r.tutor_id).map(renderItem)}
         {[...uniItems, ...hsItems].filter((r: any) => r.tutor_id).length > 0 && (
@@ -540,7 +541,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
     return (
       <div>
         <PacksAdmin orders={orders || []} confirmPayment={confirmPayment} Back={Back} extra={<>
-        <h3>Custom pack requests</h3>
+        <PageTitle title="Custom pack requests" />
         {(customPackRequests || []).length === 0 && <p className="meta">None yet.</p>}
         {(customPackRequests || []).map((c: any) => (
           <div className="panel" key={c.id}>
@@ -569,7 +570,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
     return (
       <div>
         <Back />
-        <h3>Manage videos</h3>
+        <PageTitle title="Manage videos" />
         <VideoManager only={videoOnly} />
       </div>
     )
@@ -579,7 +580,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
     return (
       <div>
         <Back />
-        <h3>Video requests{pendingVideos > 0 ? ` (${pendingVideos} waiting)` : ''}</h3>
+        <PageTitle title={`Video requests${pendingVideos > 0 ? ` (${pendingVideos} waiting)` : ''}`} />
         <VideoRequests requests={videoTopicRequests || []} partners={partners || []} />
       </div>
     )
@@ -613,7 +614,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
     return (
       <div>
         <Back />
-        <h3>Module requests{pendingModules > 0 ? ` (${pendingModules} waiting)` : ''}</h3>
+        <PageTitle title={`Module requests${pendingModules > 0 ? ` (${pendingModules} waiting)` : ''}`} />
         {open.length === 0 && <p className="meta">Nothing waiting right now.</p>}
         {open.map((r: any) => (
           <div className="panel" key={r.id}>
@@ -633,7 +634,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
             </form>
           </div>
         ))}
-        {done.length > 0 && <h3 style={{ marginTop: 20 }}>Answered</h3>}
+        {done.length > 0 && <PageTitle title="Answered" />}
         {done.map((r: any) => (
           <div className="panel" key={r.id}>
             <h4>{r.module?.name || 'Module'}</h4>
@@ -648,7 +649,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
     return (
       <div>
         <Back />
-        <h3>Upcoming tests & exams</h3>
+        <PageTitle title="Upcoming tests & exams" />
         <p className="meta">Topics students told us to prepare for, soonest first.</p>
         <TestList rows={testPreps || []} showStudent empty="No upcoming tests or exams yet." />
       </div>
@@ -659,7 +660,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
     return (
       <div>
         <Back />
-        <h3>Referrals</h3>
+        <PageTitle title="Referrals" />
         <ReferralAdmin />
       </div>
     )
@@ -669,7 +670,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
     return (
       <div>
         <Back />
-        <h3>Tutor availability</h3>
+        <PageTitle title="Tutor availability" />
         <AvailabilityOverview />
       </div>
     )
@@ -679,7 +680,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
     return (
       <div>
         <Back />
-        <h3>Sessions log</h3>
+        <PageTitle title="Sessions log" />
         {(attendanceRows || []).length === 0 && <p className="meta">No sessions logged yet.</p>}
         {(attendanceRows || []).map((a: any) => (
           <div className="panel" key={a.id}>
@@ -697,7 +698,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
       return (
         <div>
           <Back onClick={() => setSelectedStudentId(null)} />
-          <h3>{thread.name}</h3>
+          <PageTitle title={`${thread.name}`} />
           <div className="meta" style={{ marginBottom: 10 }}>{thread.email}</div>
           <ChatThread studentId={selectedStudentId} thread={thread} actions={actions} marks={(marksByStudent || {})[selectedStudentId]} schedule={(scheduleByStudent || {})[selectedStudentId]} format={studentFormat(selectedStudentId, bookings || [], subs || [])} alternate={studentAlternate(selectedStudentId, bookings || [], subs || [])} classmates={classmatesOf(selectedStudentId, subs || [])} />
         </div>
@@ -727,10 +728,10 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
         <div className="field">
           <input value={chatSearch} onChange={e => setChatSearch(e.target.value)} placeholder="Search by student name..." />
         </div>
-        <h3>University</h3>
+        <PageTitle title="University" />
         {uniEntries.length === 0 && <p className="meta">{chatSearch.trim() ? 'No matches.' : 'No students yet.'}</p>}
         {uniEntries.map(renderRow)}
-        <h3 style={{ marginTop: 20 }}>High School</h3>
+        <PageTitle title="High School" />
         {hsEntries.length === 0 && <p className="meta">{chatSearch.trim() ? 'No matches.' : 'No students yet.'}</p>}
         {hsEntries.map(renderRow)}
       </div>
@@ -745,7 +746,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
       return (
         <div>
           <Back onClick={() => setMyStudentId(null)} />
-          <h3>{thread.name}</h3>
+          <PageTitle title={`${thread.name}`} />
           {bookingsHere.map((b: any) => (
             <div key={b.id} style={{ marginBottom: 8 }}>
               <div className="meta">{b.subject} — {b.day} {b.time} · {kindLabel(b)}</div>
@@ -783,7 +784,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
         return (
           <div>
             <Back onClick={() => setMarksStudentId(null)} />
-            <h3>{t.name}: marks</h3>
+            <PageTitle title={`${t.name}: marks`} />
             <MarksView marks={(marksByStudent || {})[marksStudentId] || []} subjects={[]} mode="tutor" studentId={marksStudentId} />
           </div>
         )
@@ -794,7 +795,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
       return (
         <div>
           <Back onClick={() => setMyView('menu')} />
-          <h3>Student marks</h3>
+          <PageTitle title="Student marks" />
           <div className="field"><input value={marksSearch} onChange={e => setMarksSearch(e.target.value)} placeholder="Search by student name..." /></div>
           {all.length === 0 && <p className="meta">{marksSearch.trim() ? 'No matches.' : 'No students yet.'}</p>}
           {all.map(([sid, t]: any) => {
@@ -820,7 +821,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
       return (
         <div>
           <Back onClick={() => setMyView('menu')} />
-          <h3>Your availability</h3>
+          <PageTitle title="Your availability" />
           <AvailabilityBoard />
         </div>
       )
@@ -830,7 +831,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
       return (
         <div>
           <Back onClick={() => setMyView('menu')} />
-          <h3>Your subjects and areas</h3>
+          <PageTitle title="Your subjects and areas" />
           <TutorAreas />
         </div>
       )
@@ -840,7 +841,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
       return (
         <div>
           <Back onClick={() => setMyView('menu')} />
-          <h3>Students who want tutors</h3>
+          <PageTitle title="Students who want tutors" />
           <h4 style={{ marginTop: 12 }}>University</h4>
           {(openBookings || []).length === 0 && <p className="meta">Nothing open right now.</p>}
           {(openBookings || []).map((b: any) => (
@@ -871,7 +872,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
       return (
         <div>
           <Back onClick={() => setMyView('menu')} />
-          <h3>Your students</h3>
+          <PageTitle title="Your students" />
           {myStudentIds.length === 0 && <p className="meta">You haven't claimed any students yet.</p>}
           {myStudentIds.map((sid: string) => {
             const thread = threadsByStudent[sid] || { name: 'Student' }
@@ -889,7 +890,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
     return (
       <div>
         <Back />
-        <h3>My tutoring</h3>
+        <PageTitle title="My tutoring" />
         {row('Your students', myStudentIds.length === 0 ? 'None claimed yet' : `${myStudentIds.length} student${myStudentIds.length === 1 ? '' : 's'}`, () => setMyView('students'))}
         {row('Students who want tutors', openCount === 0 ? 'Nothing open right now' : `${openCount} waiting for a tutor`, () => setMyView('open'), openCount)}
         {row('Student marks', 'Add and edit marks for each student', () => setMyView('marks'))}

@@ -1,4 +1,5 @@
 'use client'
+import { PageTitle } from '../ui'
 import { useEffect, useState } from 'react'
 import PackUpload from './PackUpload'
 import ScopeFiles from './ScopeFiles'
@@ -58,7 +59,7 @@ export default function PacksAdmin({ orders, confirmPayment, Back, extra }: { or
     return (
       <div>
         <div className="meta" style={{ cursor: 'pointer', marginBottom: 16, color: 'var(--purple-dark)', fontWeight: 600 }} onClick={() => setStudentId(null)}>&larr; {level === 'uni' ? 'Varsity' : 'High school'}</div>
-        <h3 style={{ marginBottom: 2 }}>{f?.profiles?.full_name || 'Student'}</h3>
+        <PageTitle title={`${f?.profiles?.full_name || 'Student'}`} />
         <div className="meta">{f?.profiles?.email}</div>
         {reqs.map(r => {
           const first = r.rows[0]
@@ -95,7 +96,7 @@ export default function PacksAdmin({ orders, confirmPayment, Back, extra }: { or
     return (
       <div>
         <div className="meta" style={{ cursor: 'pointer', marginBottom: 16, color: 'var(--purple-dark)', fontWeight: 600 }} onClick={() => setLevel(null)}>&larr; Study packs</div>
-        <h3 style={{ marginTop: 0 }}>{level === 'uni' ? 'Varsity' : 'High school'}</h3>
+        <PageTitle title={`${level === 'uni' ? 'Varsity' : 'High school'}`} />
         {groups.length === 0 && <p className="meta">No pack orders yet.</p>}
         {groups.map((rows: any[], i: number) => {
           const f = rows[0]
@@ -127,7 +128,7 @@ export default function PacksAdmin({ orders, confirmPayment, Back, extra }: { or
   return (
     <div>
       <Back />
-      <h3 style={{ marginTop: 0 }}>Study packs</h3>
+      <PageTitle title="Study packs" />
       <div style={{ display: 'flex', gap: 12 }}>
         {big('hs', '🎒 High school', hs, '#E7DFFA')}
         {big('uni', '🎓 Varsity', uni, '#DDF1E6')}

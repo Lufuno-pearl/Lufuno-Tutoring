@@ -1,4 +1,5 @@
 'use client'
+import { PageTitle } from '../ui'
 import { useState, useEffect } from 'react'
 import { getAreas, getModuleCatalogue, addModule, requestModuleTutoring } from './actions'
 import { UNI_PRICE, GROUP_MAX, SessionType } from '../../lib/pricing'
@@ -123,7 +124,7 @@ export default function ModuleFinder({ moduleRequests }: { moduleRequests: any[]
 
   return (
     <div>
-      <h3>Tutoring for your modules</h3>
+      <PageTitle title="Tutoring for your modules" />
       <p className="meta">Tell us what you study, pick your module and ask if tutoring is available. If we have a tutor, we confirm it and then you pay. R{UNI_PRICE.group} a month for 5 sessions of 1h30 in a group (up to {GROUP_MAX} students), or R{UNI_PRICE.one_on_one} a month for 5 sessions of 1h30 one-on-one. Online or physical.</p>
 
       {(moduleRequests || []).length > 0 && (

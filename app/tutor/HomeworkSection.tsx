@@ -1,4 +1,5 @@
 'use client'
+import { PageTitle } from '../ui'
 import { useState } from 'react'
 import { ChevronRight } from 'lucide-react'
 import FileBox from '../FileBox'
@@ -34,7 +35,7 @@ export default function HomeworkSection({ requests, partners, markSolved }: {
     return (
       <div>
         {back(() => setSelected(null))}
-        <h3 style={{ marginTop: 0 }}>{s.name}</h3>
+        <PageTitle title={`${s.name}`} />
         <div className="meta" style={{ marginBottom: 10 }}>{s.email}</div>
         {sorted.map((h: any) => (
           <div className="panel" key={h.id}>
@@ -60,7 +61,7 @@ export default function HomeworkSection({ requests, partners, markSolved }: {
 
   return (
     <div>
-      <h3 style={{ marginTop: 0 }}>Homework help</h3>
+      <PageTitle title="Homework help" />
       <div className="field">
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by student name..." />
       </div>

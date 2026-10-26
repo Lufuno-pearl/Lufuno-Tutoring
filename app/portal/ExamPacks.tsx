@@ -1,4 +1,5 @@
 'use client'
+import { PageTitle } from '../ui'
 import { useState } from 'react'
 import { createClient } from '../../lib/supabase/client'
 import { PACK_PRICE, BUNDLE_SIZE, BUNDLE_PRICE, packTotal, DELIVERY_PROMISE } from '../../lib/examSpecial'
@@ -149,10 +150,10 @@ export default function ExamPacks({ tier, packs, takenIds, buyPacks, onOrdered }
 
   return (
     <div>
-      <h3 style={{ marginBottom: 4 }}>Exam Special 📚</h3>
+      <PageTitle title="Exam Special" sub="Study packs for your exams" />
       <p className="meta" style={{ marginTop: 0 }}>Each pack has a fact sheet, the formulas you need and lots of practice questions, organised topic by topic.</p>
       <div className="panel" style={{ background: '#FFF3D0', borderLeft: '5px solid #F2C14E', fontWeight: 700 }}>
-        🔥 R{PACK_PRICE} per pack{bundleOffer ? ` · any ${BUNDLE_SIZE} packs for R${BUNDLE_PRICE}` : ''}
+        R{PACK_PRICE} per pack{bundleOffer ? ` · any ${BUNDLE_SIZE} packs for R${BUNDLE_PRICE}` : ''}
       </div>
       <div className="panel" style={{ marginTop: 12 }}>
         {allPacks.map(p => {

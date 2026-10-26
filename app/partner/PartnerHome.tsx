@@ -1,4 +1,5 @@
 'use client'
+import { PageTitle } from '../ui'
 import { useState, useEffect, useLayoutEffect, ReactNode } from 'react'
 import GroupSchedule from '../GroupSchedule'
 import RoomPanel from '../room/RoomPanel'
@@ -98,18 +99,18 @@ export default function PartnerHome({ avatarPath, streakRows, monthSessions, mar
 
   let body: ReactNode = null
 
-  if (section === 'students') body = <div><h3 style={{ marginTop: 0 }}>My students</h3>{students}</div>
-  else if (section === 'open') body = <div><Back /><h3>Requests needing a tutor</h3>{open}</div>
-  else if (section === 'requests') body = <div><Back /><h3>Homework & video requests</h3>{requests}</div>
-  else if (section === 'tests') body = <div><Back /><h3>Upcoming tests & exams</h3><p className="meta">Topics your students told us to prepare for.</p>{tests}</div>
-  else if (section === 'schedule') body = <div><Back /><h3>Schedule</h3><GroupSchedule /></div>
-  else if (section === 'availability') body = <div><Back /><h3>My availability</h3>{availability}</div>
-  else if (section === 'areas') body = <div><Back /><h3>My subjects and areas</h3>{areas}</div>
-  else if (section === 'videos') body = <div><Back /><h3>Manage videos</h3>{videos}</div>
+  if (section === 'students') body = <div><PageTitle title="My students" />{students}</div>
+  else if (section === 'open') body = <div><Back /><PageTitle title="Requests needing a tutor" />{open}</div>
+  else if (section === 'requests') body = <div><Back /><PageTitle title="Homework & video requests" />{requests}</div>
+  else if (section === 'tests') body = <div><Back /><PageTitle title="Upcoming tests & exams" /><p className="meta">Topics your students told us to prepare for.</p>{tests}</div>
+  else if (section === 'schedule') body = <div><Back /><PageTitle title="Schedule" /><GroupSchedule /></div>
+  else if (section === 'availability') body = <div><Back /><PageTitle title="My availability" />{availability}</div>
+  else if (section === 'areas') body = <div><Back /><PageTitle title="My subjects and areas" />{areas}</div>
+  else if (section === 'videos') body = <div><Back /><PageTitle title="Manage videos" />{videos}</div>
   else if (tab === 'requests') {
     body = (
       <div>
-        <h3 style={{ marginTop: 0 }}>Requests</h3>
+        <PageTitle title="Requests" />
         <div className="card-grid">
           {tile('Homework & Video Requests', <Film size={36} color="#fff" />, 'linear-gradient(135deg, #E0956F, #C46B3E)', () => setSection('requests'), requestCount)}
           {tile('Upcoming Tests', <Target size={36} color="#fff" />, 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('tests'), testCount)}
@@ -119,7 +120,7 @@ export default function PartnerHome({ avatarPath, streakRows, monthSessions, mar
   } else if (tab === 'room') {
     body = (
       <div>
-        <h3 style={{ marginTop: 0 }}>Room</h3>
+        <PageTitle title="Room" />
         <p className="meta">Pick a subject group, paste ONE link for the whole subject, and start. Only those students see Join.</p>
         <RoomPanel />
       </div>
@@ -127,7 +128,7 @@ export default function PartnerHome({ avatarPath, streakRows, monthSessions, mar
   } else if (tab === 'manage') {
     body = (
       <div>
-        <h3 style={{ marginTop: 0 }}>Manage</h3>
+        <PageTitle title="Manage" />
         <div className="card-grid">
           {tile('Schedule', <Calendar size={36} color="#fff" />, 'linear-gradient(135deg, #8B6FD9, #6E4FC7)', () => setSection('schedule'))}
           {tile('My Availability', <Calendar size={36} color="#fff" />, 'linear-gradient(135deg, #6E4FC7, #4B2FA0)', () => setSection('availability'))}
