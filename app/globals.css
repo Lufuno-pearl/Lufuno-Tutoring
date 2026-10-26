@@ -396,3 +396,16 @@ html:is([data-bg="black"],[data-bg="white"],[data-bg="ocean"],[data-bg="forest"]
 .vthumb{height:110px;display:flex;align-items:center;justify-content:center}
 .vplay{width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.88);display:flex;align-items:center;justify-content:center}
 .vbody{padding:10px 14px}
+
+/* Funi softening for every card, button and field (tutor, partner, owner and application pages too) */
+.panel{border:0;border-radius:20px;padding:16px 18px;box-shadow:0 4px 16px rgba(43,23,102,.08);}
+.panel h4{font-weight:800;color:#2a2150;}
+.btn{border-radius:14px;font-weight:800;padding:11px 18px;}
+.btn-primary{background:#7555DC;}
+.field input,.field select{border-radius:14px;border:1.5px solid #ECE7F8;background:#FBF9FF;}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:#7555DC;}
+.field label{font-weight:700;color:#6b6490;}
+.status{display:inline-block;border-radius:100px;padding:4px 11px;font-size:.74rem;font-weight:800;}
+.status.confirmed{background:#E0F4E8;color:#1F5C38;}
+.status.awaiting{background:#FFF0CF;color:#9A6B00;}
+.status.pending{background:#EDE5FD;color:#5B3FC4;}

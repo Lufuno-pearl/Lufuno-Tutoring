@@ -1,6 +1,8 @@
 'use client'
 import { useState } from 'react'
 import { createClient } from '../../lib/supabase/client'
+import { Camera, FileText, GraduationCap, CheckCircle2, Circle, Trash2, Plus, ShieldCheck } from 'lucide-react'
+import { Row, PageTitle } from '../ui'
 import { saveDraft, submitApplication, Draft, Mark } from './actions'
 
 const STEPS = ['About you', 'What you teach', 'Your marks', 'Proof', 'Review']
@@ -67,24 +69,32 @@ export default function ApplyFlow({ userId, email, initial }: { userId: string; 
   }
 
   const hsPick = (s: string) => set({ hs_subjects: d.hs_subjects.includes(s) ? d.hs_subjects.filter(x => x !== s) : [...d.hs_subjects, s] })
-  const chip = (on: boolean) => ({ padding: '9px 16px', borderRadius: 100, border: '1px solid var(--line)', background: on ? 'var(--purple-dark)' : 'var(--card)', color: on ? '#fff' : 'var(--ink)', fontWeight: 600, fontSize: '0.88rem', cursor: 'pointer', fontFamily: 'inherit' } as React.CSSProperties)
+  const chip = (on: boolean) => ({ border: 0, borderRadius: 14, padding: '10px 15px', background: on ? '#7555DC' : '#F5F2FC', color: on ? '#fff' : '#6b6490', fontWeight: 800, fontSize: '0.85rem', cursor: 'pointer', fontFamily: 'inherit' } as React.CSSProperties)
   const file = (label: string, kind: 'selfie' | 'proof' | 'results', have: string | null, accept: string, hint: string, capture?: boolean) => (
-    <div className="field">
-      <label>{label}</label>
-      <div className="meta" style={{ marginBottom: 6 }}>{hint}</div>
-      <input type="file" accept={accept} {...(capture ? { capture: 'user' as any } : {})} onChange={e => upload(kind, e.target.files?.[0])} />
-      {have && <div style={{ color: '#2E7D4F', fontSize: '0.85rem', marginTop: 4 }}>✓ Uploaded</div>}
-    </div>
+    <label style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, marginBottom: 12, border: '2px dashed ' + (have ? '#9bd5b0' : '#d9d0f5'), borderRadius: 18, background: have ? '#F0FAF4' : '#FBF9FF', cursor: 'pointer' }}>
+      <div className="ftile" style={{ background: have ? '#E0F4E8' : '#EDE5FD', color: have ? '#1F5C38' : '#5B3FC4' }}>{kind === 'selfie' ? <Camera size={22} /> : kind === 'proof' ? <GraduationCap size={22} /> : <FileText size={22} />}</div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div className="frow-t">{label}</div>
+        <div className="frow-s">{have ? 'Uploaded. Tap to replace.' : hint}</div>
+      </div>
+      {have ? <CheckCircle2 size={22} color="#2E7D4F" /> : <Plus size={22} color="#7555DC" />}
+      <input type="file" accept={accept} {...(capture ? { capture: 'user' as any } : {})} onChange={e => upload(kind, e.target.files?.[0])} style={{ display: 'none' }} />
+    </label>
   )
 
   if (done) return null
   return (
     <div>
       {/* progress tracker */}
-      <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
-        {STEPS.map((s, i) => <div key={s} style={{ flex: 1, height: 6, borderRadius: 6, background: i <= step ? 'var(--gold)' : 'var(--line)' }} />)}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+        {STEPS.map((s, i) => (
+          <div key={s} style={{ display: 'flex', alignItems: 'center', flex: i < STEPS.length - 1 ? 1 : 'none', gap: 6 }}>
+            <div style={{ width: 30, height: 30, borderRadius: 15, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '.8rem', background: i <= step ? '#7555DC' : '#F5F2FC', color: i <= step ? '#fff' : '#6b6490', flex: 'none' }}>{i < step ? '✓' : i + 1}</div>
+            {i < STEPS.length - 1 && <div style={{ flex: 1, height: 4, borderRadius: 4, background: i < step ? '#7555DC' : '#EDE8F8' }} />}
+          </div>
+        ))}
       </div>
-      <div className="meta" style={{ marginBottom: 14 }}>Step {step + 1} of {STEPS.length} · <b>{STEPS[step]}</b></div>
+      <PageTitle title={STEPS[step]} sub={`Step ${step + 1} of ${STEPS.length}`} />
 
       <div className="panel">
         {step === 0 && (<>
@@ -96,8 +106,8 @@ export default function ApplyFlow({ userId, email, initial }: { userId: string; 
         </>)}
 
         {step === 1 && (<>
-          <div style={{ background: '#FFF6DD', borderRadius: 12, padding: '10px 14px', marginBottom: 14, fontSize: '0.88rem' }}>
-            🤝 Parents and students trust us with their marks. Please only tell us what is true. We check your results, and anyone who lies is removed.
+          <div style={{ background: '#FFF0CF', borderRadius: 16, padding: '12px 14px', marginBottom: 14, fontSize: '0.88rem', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+            <ShieldCheck size={20} color="#9A6B00" style={{ flex: 'none', marginTop: 1 }} /><span>Parents and students trust us with their marks. Please only tell us what is true. We check your results, and anyone who lies is removed.</span>
           </div>
           <label className="meta">What would you like to teach?</label>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: '8px 0 16px' }}>
@@ -122,14 +132,11 @@ export default function ApplyFlow({ userId, email, initial }: { userId: string; 
           <div className="meta" style={{ marginBottom: 10 }}>Add the marks that show what you can teach: matric subjects and/or university modules.</div>
           {d.marks.length === 0 && <div className="meta" style={{ padding: '8px 0' }}>No marks added yet.</div>}
           {d.marks.map((x, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid var(--line)' }}>
-              <div style={{ flex: 1 }}><b>{x.subject}</b><div className="meta">{x.level === 'hs' ? 'High school' : 'University'}{x.year ? ` · ${x.year}` : ''}</div></div>
-              <div style={{ fontWeight: 700 }}>{x.mark}%</div>
-              <button type="button" aria-label="Remove" onClick={() => set({ marks: d.marks.filter((_, j) => j !== i) })} style={{ background: 'none', border: 'none', color: '#A6443A', fontSize: '1.1rem', cursor: 'pointer' }}>✕</button>
-            </div>
+            <Row key={i} icon={<span style={{ fontWeight: 800 }}>{x.mark}%</span>} tone={x.mark >= 70 ? 'green' : 'gold'} title={x.subject} sub={`${x.level === 'hs' ? 'High school' : 'University'}${x.year ? ` · ${x.year}` : ''}`}
+              right={<button type="button" aria-label="Remove" onClick={() => set({ marks: d.marks.filter((_, j) => j !== i) })} style={{ background: 'none', border: 'none', color: '#C23A55', cursor: 'pointer' }}><Trash2 size={18} /></button>} />
           ))}
           {!addOpen ? (
-            <button type="button" className="btn btn-gold" style={{ marginTop: 14, width: '100%' }} onClick={() => setAddOpen(true)}>+ Add a mark</button>
+            <button type="button" className="btn btn-gold" style={{ marginTop: 14, width: '100%' }} onClick={() => setAddOpen(true)}>Add a mark</button>
           ) : (
             <div style={{ marginTop: 14, background: 'var(--card)', border: '1px dashed var(--line)', borderRadius: 14, padding: 14 }}>
               <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
@@ -160,16 +167,12 @@ export default function ApplyFlow({ userId, email, initial }: { userId: string; 
         </>)}
 
         {step === 4 && (<>
-          <h4>Check everything</h4>
-          <div className="meta" style={{ lineHeight: 1.7 }}>
-            <b>{d.full_name}</b> · {d.phone}<br />
-            {d.institution}{d.year_of_study ? ` · ${d.year_of_study}` : ''}<br />
-            Teaches: {[d.teaches_hs && 'High school', d.teaches_uni && 'University'].filter(Boolean).join(' and ')}<br />
-            {d.hs_subjects.length > 0 && <>Subjects: {d.hs_subjects.join(', ')}<br /></>}
-            Marks added: {d.marks.length}<br />
-            Selfie {d.selfie_path ? '✓' : '✗'} · {d.teaches_uni ? `Proof of registration ${d.proof_path ? '✓' : '✗'} · ` : ''}Results {d.results_path ? '✓' : '✗'}<br />
-            Honesty promise {d.honesty ? '✓' : '✗'}
-          </div>
+          <Row icon={<Circle size={20} />} tone="purple" title={d.full_name} sub={`${d.phone}${d.institution ? ' · ' + d.institution : ''}${d.year_of_study ? ' · ' + d.year_of_study : ''}`} />
+          <Row icon={<GraduationCap size={20} />} tone="gold" title={[d.teaches_hs && 'High school', d.teaches_uni && 'University'].filter(Boolean).join(' and ')} sub={d.hs_subjects.length > 0 ? d.hs_subjects.join(', ') : `${d.marks.length} mark${d.marks.length === 1 ? '' : 's'} added`} />
+          <Row icon={<Camera size={20} />} tone={d.selfie_path ? 'green' : 'pink'} title="Selfie" sub={d.selfie_path ? 'Uploaded' : 'Missing'} />
+          {d.teaches_uni && <Row icon={<GraduationCap size={20} />} tone={d.proof_path ? 'green' : 'pink'} title="Proof of registration" sub={d.proof_path ? 'Uploaded' : 'Missing'} />}
+          <Row icon={<FileText size={20} />} tone={d.results_path ? 'green' : 'pink'} title="Results" sub={d.results_path ? 'Uploaded' : 'Missing'} />
+          <Row icon={<ShieldCheck size={20} />} tone={d.honesty ? 'green' : 'pink'} title="Honesty promise" sub={d.honesty ? 'Accepted' : 'Not accepted'} />
           <div className="meta" style={{ marginTop: 10 }}>After you apply, we email you our answer. If we have enough tutors we may put you on a waiting list.</div>
         </>)}
 
