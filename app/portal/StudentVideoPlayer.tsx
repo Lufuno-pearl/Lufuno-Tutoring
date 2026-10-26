@@ -1,6 +1,9 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { Play } from 'lucide-react'
 import { createClient } from '../../lib/supabase/client'
+
+const GRADS = ['linear-gradient(135deg,#B6A3F0,#7555DC)', 'linear-gradient(135deg,#F3A4B7,#D96F8B)', 'linear-gradient(135deg,#8ED2AE,#3E9B6D)', 'linear-gradient(135deg,#F3CB59,#E39B2E)']
 
 export default function StudentVideoPlayer({ subject }: { subject: string }) {
   const [videos, setVideos] = useState<any[]>([])
@@ -25,25 +28,28 @@ export default function StudentVideoPlayer({ subject }: { subject: string }) {
 
   return (
     <div>
-      {videos.map(v => (
-        <div key={v.id} className="panel">
-          <h4>{v.title}</h4>
+      {videos.map((v, i) => (
+        <div key={v.id} className="vcard">
           {playingId === v.id ? (
             signedUrl ? (
               <video
                 src={signedUrl}
                 controls
+                autoPlay
                 controlsList="nodownload noremoteplayback"
                 disablePictureInPicture
                 onContextMenu={e => e.preventDefault()}
-                style={{ width: '100%', borderRadius: 8, marginTop: 8 }}
+                style={{ width: '100%', display: 'block', background: '#000' }}
               />
             ) : (
-              <p className="meta">Loading...</p>
+              <div className="vthumb" style={{ background: GRADS[i % GRADS.length] }}><span className="meta" style={{ color: '#fff', margin: 0 }}>Loading...</span></div>
             )
           ) : (
-            <button className="btn btn-primary" style={{ marginTop: 8 }} onClick={() => handlePlay(v)}>Watch</button>
+            <div className="vthumb" style={{ background: GRADS[i % GRADS.length], cursor: 'pointer' }} onClick={() => handlePlay(v)}>
+              <div className="vplay"><Play size={22} color="#5B3FC4" fill="#5B3FC4" /></div>
+            </div>
           )}
+          <div className="vbody"><b>{v.title}</b><div className="meta" style={{ margin: 0 }}>{subject}</div></div>
         </div>
       ))}
     </div>

@@ -19,6 +19,11 @@ import SchoolCard from './SchoolCard'
 import RateTutor from './RateTutor'
 import ModuleFinder from './ModuleFinder'
 import NextSession from './NextSession'
+import BookingsView from './BookingsView'
+import { PageTitle, Seg, Row } from '../ui'
+import FlatIcon from '../FlatIcon'
+import Avatar from '../Avatar'
+import { ChevronRight } from 'lucide-react'
 import TestPrep from './TestPrep'
 import QuestionOfDay from './QuestionOfDay'
 import { StreakCard, CountdownCard, PlanCard, GetStarted, WhatYouGet, PriceStrip, ReferBanner, HelpButton, Hero, QuoteCloud, StatTrio, ReminderBar, XpCard, xpFor } from './HomeParts'
@@ -672,18 +677,30 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
     if (tab === 'more') {
       return (
         <div>
-          <h3 style={{ marginTop: 0 }}>More</h3>
+          <PageTitle title="More" sub="Settings and help" />
           {lockBanner}
-          <div className="card-grid">
-            {tile('Badges & Level', '🏅', 'linear-gradient(135deg, #9B7FE8, #7A5FD0)', () => setSection('badges'))}
-            {tile('Refer & Earn', '🎁', 'linear-gradient(135deg, #F2C14E, #D9A32E)', () => setSection('referral'), 'referral')}
-            {tier === 'highschool' && tile('My School', '🏫', 'linear-gradient(135deg, #5FA3D9, #3F7FB8)', () => setSection('school'), 'school')}
-            {tile('How It Works', '❓', 'linear-gradient(135deg, #B98CE0, #8B5FC7)', () => setSection('guide'), 'guide')}
-            {tile('Terms & Conditions', '📜', 'linear-gradient(135deg, #7A8FB0, #566B8F)', () => router.push('/terms'))}
-            {tile('Privacy', '🔒', 'linear-gradient(135deg, #6BB59A, #4A9279)', () => router.push('/privacy'))}
-            {tile('Add to Phone', '📲', 'linear-gradient(135deg, #E39B6B, #C97B49)', () => router.push('/install'))}
-            {tile('Appearance', '🎨', 'linear-gradient(135deg, #D96FB5, #A8478F)', () => router.push('/appearance'))}
-            <form action={actions.signOut} style={{ display: 'contents' }}><button type="submit" style={{ all: 'unset', display: 'contents' }}>{tile('Log out', '🚪', 'linear-gradient(135deg, #B9B2CF, #8F86B3)', () => {})}</button></form>
+          <div className="panel" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <a href="/appearance" style={{ textDecoration: 'none' }}><Avatar path={avatarPath} name={name} size={52} /></a>
+            <div style={{ flex: 1 }}><b>{name || 'Your profile'}</b><div className="meta" style={{ margin: 0 }}>{tier === 'highschool' ? 'High school' : 'University'}</div></div>
+          </div>
+          <div className="panel">
+            {([
+              ['Badges & level', '🏅', 'purple', () => setSection('badges')],
+              ['Refer & earn', '🎁', 'gold', () => setSection('referral')],
+              ...(tier === 'highschool' ? [['My school', '🏫', 'purple', () => setSection('school')]] : []),
+              ['How it works', '❓', 'gold', () => setSection('guide')],
+              ['Appearance', '🎨', 'pink', () => router.push('/appearance')],
+              ['Add to phone', '📲', 'green', () => router.push('/install')],
+              ['Terms & conditions', '📜', 'purple', () => router.push('/terms')],
+              ['Privacy', '🔒', 'purple', () => router.push('/privacy')],
+            ] as any[]).map(([label, emoji, tone, go]) => (
+              <Row key={label} icon={<FlatIcon e={emoji} size={22} />} tone={tone} title={label} right={<ChevronRight size={18} color="#8a85a8" />} onClick={go} />
+            ))}
+            <form action={actions.signOut}>
+              <button type="submit" style={{ all: 'unset', display: 'block', width: '100%', cursor: 'pointer' }}>
+                <Row icon={<LogOut size={22} />} tone="grey" title="Log out" right={<ChevronRight size={18} color="#8a85a8" />} />
+              </button>
+            </form>
           </div>
         </div>
       )
@@ -847,70 +864,65 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
         )}
         {tier === 'highschool' && (
           <section>
-            <h3>Subscribe — high school (Gr 8–12)</h3>
+            <PageTitle title="Request tutoring" sub="High school (Gr 8–12)" />
             <form onSubmit={handleHsSubmit}>
-              <div className="field">
-                <label>Which grade are you in?</label>
-                <select name="grade" required value={hsGrade} onChange={e => setHsGrade(e.target.value)}>
-                  <option value="">Select your grade</option>
-                  {[8, 9, 10, 11, 12].map(g => <option key={g} value={String(g)}>Grade {g}</option>)}
-                </select>
+              <div className="fsec">GRADE</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {[8, 9, 10, 11, 12].map(g => <button type="button" key={g} className={`chip${hsGrade === String(g) ? ' on' : ''}`} onClick={() => setHsGrade(String(g))}>Grade {g}</button>)}
               </div>
-              <div className="field">
-                <label>Group or one-on-one?</label>
-                <select name="sessionType" value={hsType} onChange={e => setHsType(e.target.value as SessionType)}>
-                  <option value="group">Group (up to {GROUP_MAX} students)</option>
-                  <option value="one_on_one">One-on-one</option>
-                </select>
-                <p className="meta" style={{ marginTop: 6 }}>
-                  {hsType === 'group'
-                    ? `Groups have up to ${GROUP_MAX} students. Some groups will have fewer, but never more.`
-                    : 'Just you and your tutor.'}
-                </p>
-              </div>
-              <div className="field">
-                <label>Which subject(s)?</label>
-                {hsGrade === '8' || hsGrade === '9' ? (
-                  <>
-                    <input type="hidden" name="subjectChoice" value="maths" />
-                    <select disabled value="maths">
-                      <option value="maths">Mathematics only — R{hsPrice('maths', hsType)}/month</option>
-                    </select>
-                    <p className="meta" style={{ marginTop: 6 }}>Grades 8 and 9 are Mathematics only.</p>
-                  </>
-                ) : (
-                  <select name="subjectChoice" required value={hsChoice} onChange={e => setHsChoice(e.target.value)}>
-                    <option value="maths">Mathematics only — R{hsPrice('maths', hsType)}/month</option>
-                    <option value="physics">Physical Sciences only — R{hsPrice('physics', hsType)}/month</option>
-                    <option value="both">Both subjects — R{hsPrice('both', hsType)}/month</option>
-                  </select>
-                )}
-                <p className="meta" style={{ marginTop: 6 }}>
-                  {(() => {
-                    const c = hsGrade === '8' || hsGrade === '9' ? 'maths' : hsChoice
-                    const n = hsSessions(c, hsType)
-                    return c === 'both'
-                      ? `${n} sessions a month in total (${n / 2} for each subject).`
-                      : `${n} sessions a month.`
-                  })()}
-                </p>
-              </div>
+              <input type="hidden" name="grade" value={hsGrade} />
+
+              <div className="fsec">GROUP OR ONE-ON-ONE?</div>
+              <Seg options={[{ id: 'group', label: 'Group' }, { id: 'one_on_one', label: 'One-on-one' }]} value={hsType} onChange={v => setHsType(v as SessionType)} />
+              <input type="hidden" name="sessionType" value={hsType} />
+              <p className="meta" style={{ marginTop: -4 }}>
+                {hsType === 'group' ? `Groups have up to ${GROUP_MAX} students. Some groups will have fewer, but never more.` : 'Just you and your tutor.'}
+              </p>
+
+              <div className="fsec">SUBJECT</div>
+              {hsGrade === '8' || hsGrade === '9' ? (
+                <>
+                  <input type="hidden" name="subjectChoice" value="maths" />
+                  <div><span className="chip on">Mathematics</span></div>
+                  <p className="meta" style={{ marginTop: 6 }}>Grades 8 and 9 are Mathematics only.</p>
+                </>
+              ) : (
+                <>
+                  <input type="hidden" name="subjectChoice" value={hsChoice} />
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    {[['maths', 'Mathematics'], ['physics', 'Physical Sciences'], ['both', 'Both subjects']].map(([k, l]) => <button type="button" key={k} className={`chip${hsChoice === k ? ' on' : ''}`} onClick={() => setHsChoice(k)}>{l}</button>)}
+                  </div>
+                </>
+              )}
+
+              <div className="fsec">ANOTHER SUBJECT? (OPTIONAL)</div>
               <ExtraSubjectPicker />
-              <div className="field">
-                <label>Online or physical?</label>
-                <select name="format" required value={hsFormat} onChange={e => setHsFormat(e.target.value)}>
-                  <option value="online">Online</option>
-                  <option value="physical">Physical</option>
-                  <option value="both">Both (some in person, some online)</option>
-                </select>
-                <p className="meta" style={{ marginTop: 6 }}>Online and physical cost the same. Physical sessions happen in your area with a tutor who lives nearby. Prefer meeting in person but sometimes can't make it? Choose Both and your tutor will alternate some sessions in person and some online. On any day you can't come, your tutor can switch that one session to online.</p>
+
+              <div className="fsec">ONLINE OR IN PERSON?</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {[['online', 'Online'], ['physical', 'In person'], ['both', 'Both']].map(([k, l]) => <button type="button" key={k} className={`chip${hsFormat === k ? ' on' : ''}`} onClick={() => setHsFormat(k)}>{l}</button>)}
               </div>
+              <input type="hidden" name="format" value={hsFormat} />
+              <p className="meta" style={{ marginTop: 6 }}>Online and in person cost the same. In-person sessions happen in your area with a tutor who lives nearby. Choose Both and your tutor alternates some sessions in person and some online. On any day you can't come, your tutor can switch that one session to online.</p>
               {(hsFormat === 'physical' || hsFormat === 'both') && (
                 <AreaPicker areas={areas} value={hsArea} onChange={setHsArea} notListedHelp="Online sessions work just as well, so we suggest choosing Online." onChooseOnline={() => { setHsFormat('online'); setHsArea('') }} />
               )}
-              <button className="btn btn-primary" disabled={bookingSubmitting || ((hsFormat === 'physical' || hsFormat === 'both') && hsArea === '__none__')} style={{ opacity: bookingSubmitting || ((hsFormat === 'physical' || hsFormat === 'both') && hsArea === '__none__') ? 0.6 : 1 }}>
-                {bookingSubmitting ? 'Submitting...' : 'Subscribe & get payment details'}
+
+              {(() => {
+                const c = hsGrade === '8' || hsGrade === '9' ? 'maths' : hsChoice
+                const n = hsSessions(c, hsType)
+                return (
+                  <div className="panel" style={{ marginTop: 14 }}>
+                    <b>Your plan</b>
+                    <div className="meta" style={{ margin: '2px 0 8px' }}>{c === 'both' ? `Both subjects · ${n} sessions a month in total (${n / 2} for each)` : `${c === 'maths' ? 'Mathematics' : 'Physical Sciences'} · ${n} sessions a month`}</div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}><span>Monthly</span><b style={{ fontSize: '1.4rem' }}>R {hsPrice(c, hsType)}</b></div>
+                  </div>
+                )
+              })()}
+              <button className="btn btn-primary" style={{ width: '100%', opacity: bookingSubmitting || !hsGrade || ((hsFormat === 'physical' || hsFormat === 'both') && hsArea === '__none__') ? 0.6 : 1 }} disabled={bookingSubmitting || !hsGrade || ((hsFormat === 'physical' || hsFormat === 'both') && hsArea === '__none__')}>
+                {bookingSubmitting ? 'Sending...' : 'Send request'}
               </button>
+              <p className="meta" style={{ marginTop: 8 }}>You will see payment details right after you send. Your tutor is assigned once your payment is confirmed.</p>
             </form>
           </section>
         )}
@@ -929,10 +941,9 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
   return (
     <div>
       <button className="btn" onClick={() => setSection('menu')}>← Back</button>
-      <h2>Video Lessons</h2>
+      <PageTitle title="Video lessons" sub="Watch, pause, repeat" />
       {(myVideoSubjects || []).length > 0 && (
         <section>
-          <h3>Your video lessons</h3>
           <MyVideos subjects={myVideoSubjects || []} />
         </section>
       )}
@@ -959,7 +970,7 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
   return (
     <div>
       <button className="btn" onClick={() => setSection('menu')}>← Back</button>
-      <h2>How It Works</h2>
+      <PageTitle title="How it works" />
       <div className="panel">
         <h4>1. Choose what you need</h4>
         <p className="meta">Book a session, buy a study pack, or ask a homework question from the menu.</p>
@@ -1068,7 +1079,7 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
     return (
       <div>
         <Back />
-        <h3>Badges &amp; level</h3>
+        <PageTitle title="Badges & level" sub="Collect them all" />
         <XpCard attendance={attendance || []} marks={marks || []} onOpen={() => {}} />
         <div className="panel">
           <div className="badges-grid">
@@ -1086,7 +1097,7 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
     return (
       <div>
         <Back />
-        <h3>Messages</h3>
+        <PageTitle title="Messages" sub="Your tutors and support" />
         <StudentChat messages={messages || []} sendMessage={sendMessage} getChatContacts={getChatContacts} />
         {actions.userId && <MaterialsSection userId={actions.userId} />}
       </div>
@@ -1113,7 +1124,7 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
     return (
       <div>
         <Back />
-        <h3>My School</h3>
+        <PageTitle title="My school" />
         <SchoolCard editing initialSchool={mySchool || ''} initialProvince={myProvince || ''} />
       </div>
     )
@@ -1132,7 +1143,7 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
     return (
       <div>
         <Back />
-        <h3>Question of the Day</h3>
+        <PageTitle title="Question of the day" sub="+10 XP for trying" />
         {canTestPrep ? (
           <QuestionOfDay tier={tier} />
         ) : (
@@ -1153,7 +1164,7 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
     return (
       <div>
         <Back />
-        <h3>My Marks</h3>
+        <PageTitle title="My marks" sub="Your progress" />
         {canTestPrep ? (
           <MarksView marks={marks || []} subjects={markSubjects} mode="student" />
         ) : (
@@ -1174,7 +1185,7 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
     return (
       <div>
         <Back />
-        <h3>Test & Exam Prep</h3>
+        <PageTitle title="Test & exam prep" sub="What is coming" />
         {canTestPrep ? (
           <TestPrep rows={testPreps || []} subjects={subjectOptions} />
         ) : (
@@ -1192,33 +1203,8 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
     return (
       <div>
         <Back />
-        <h3>My bookings & orders</h3>
-        {[...(bookings || []), ...(subs || []), ...(orders || [])].length === 0 && <p className="meta">Nothing yet.</p>}
-        {(bookings || []).map((b: any) => (
-          <div className="panel" key={b.id}>
-            <h4>{b.subject}</h4>
-            <div className="meta">{b.day} at {b.time} · {b.format === 'physical' ? 'Physical' : 'Online'}{b.session_type === 'one_on_one' ? ' · One-on-one' : ' · Group'}{b.area ? ` · ${b.area}` : ''} · R{b.price}</div>
-            <StatusPill status={b.status} />
-            <PaySteps status={b.status} />
-            {b.status === 'confirmed' && b.format === 'online' && <p className="meta" style={{ marginTop: 8 }}>Your tutor will send the link when the session starts. Tap Join on your home screen then.</p>}
-          </div>
-        ))}
-        {(subs || []).map((s: any) => (
-          <div className="panel" key={s.id}>
-            <h4>Monthly subscription — {s.month}</h4>
-            <div className="meta">{s.subject_choice === 'maths' ? 'Mathematics' : s.subject_choice === 'physics' ? 'Physical Sciences' : 'Maths + Physical Sciences'}{s.grade ? ` · Gr ${s.grade}` : ''} · {s.format === 'physical' ? (s.alternate ? 'In person + online' : 'Physical') : 'Online'}{s.session_type === 'one_on_one' ? ' · One-on-one' : ' · Group'}{s.area ? ` · ${s.area}` : ''} · R{s.price}{s.status === 'confirmed' && s.end_date ? ` · Active until ${s.end_date}` : ''}</div>
-            <StatusPill status={s.status} />
-            <PaySteps status={s.status} />
-            {s.status === 'confirmed' && s.format === 'online' && <p className="meta" style={{ marginTop: 8 }}>Your tutor will send the link when the session starts. Tap Join on your home screen then.</p>}
-          </div>
-        ))}
-        <h3 style={{ marginTop: 24 }}>My attendance</h3>
-        <div className="panel">
-          {(attendance || []).length === 0 && <p className="meta">No sessions logged yet.</p>}
-          {(attendance || []).map((a: any) => (
-            <div key={a.id} className="meta">{a.session_date} — {a.status}</div>
-          ))}
-        </div>
+        <PageTitle title="Bookings" sub="And attendance" />
+        <BookingsView bookings={bookings || []} subs={subs || []} orders={orders || []} attendance={attendance || []} scheduled={scheduled || []} onPay={() => setSection(orders && orders.some((o: any) => o.status === 'pending') && locked ? 'packs' : 'book')} />
       </div>
     )
   }
