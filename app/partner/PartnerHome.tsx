@@ -1,5 +1,6 @@
 'use client'
 import { PageTitle, NavRow } from '../ui'
+import FilesManager from '../tutor/FilesManager'
 import { useState, useEffect, useLayoutEffect, ReactNode } from 'react'
 import GroupSchedule from '../GroupSchedule'
 import RoomPanel from '../room/RoomPanel'
@@ -9,9 +10,9 @@ import { useRouter } from 'next/navigation'
 import InstallButton from '../InstallButton'
 import { Hero, QuoteCloud, StreakCard, TUTOR_QUOTES } from '../portal/HomeParts'
 import { Check, Users as UsersIcon, CalendarDays, Wallet } from 'lucide-react'
-import { Pencil, UserPlus, Calendar, Inbox, Film, Users, Video, MapPin, ScrollText, Target, Home, Settings, CalendarClock } from 'lucide-react'
+import { FolderOpen, Pencil, UserPlus, Calendar, Inbox, Film, Users, Video, MapPin, ScrollText, Target, Home, Settings, CalendarClock } from 'lucide-react'
 
-type Section = 'menu' | 'schedule' | 'availability' | 'open' | 'requests' | 'students' | 'videos' | 'areas' | 'tests'
+type Section = 'menu' | 'schedule' | 'availability' | 'open' | 'requests' | 'students' | 'videos' | 'areas' | 'tests' | 'files'
 type Tab = 'home' | 'students' | 'requests' | 'room' | 'manage'
 
 type TodaySession = { id: string; studentId?: string; subject: string; time: string; format: string; area?: string | null; meeting_link?: string | null; studentName: string }
@@ -47,11 +48,11 @@ function Badge({ n }: { n: number }) {
 function tabOf(section: Section): Tab | null {
   if (section === 'students') return 'students'
   if (section === 'open' || section === 'requests' || section === 'tests') return 'requests'
-  if (section === 'availability' || section === 'videos' || section === 'areas' || section === 'schedule') return 'manage'
+  if (section === 'availability' || section === 'videos' || section === 'areas' || section === 'schedule' || section === 'files') return 'manage'
   return null
 }
 
-const SECTIONS: Section[] = ['menu', 'schedule', 'availability', 'open', 'requests', 'students', 'videos', 'areas', 'tests']
+const SECTIONS: Section[] = ['menu', 'schedule', 'availability', 'open', 'requests', 'students', 'videos', 'areas', 'tests', 'files']
 const TABS: Tab[] = ['home', 'students', 'requests', 'room', 'manage']
 
 export default function PartnerHome({ avatarPath, streakRows, monthSessions, markedToday, markAttendance, name, today, openCount, requestCount, studentCount, testCount, tests, availability, open, requests, students, videos, areas }: Props) {
@@ -108,6 +109,7 @@ export default function PartnerHome({ avatarPath, streakRows, monthSessions, mar
   else if (section === 'schedule') body = <div><Back /><PageTitle title="Schedule" /><GroupSchedule /></div>
   else if (section === 'availability') body = <div><Back /><PageTitle title="My availability" />{availability}</div>
   else if (section === 'areas') body = <div><Back /><PageTitle title="My subjects and areas" />{areas}</div>
+  else if (section === 'files') body = <div><Back /><FilesManager /></div>
   else if (section === 'videos') body = <div><Back /><PageTitle title="Manage videos" />{videos}</div>
   else if (tab === 'requests') {
     body = (
@@ -134,6 +136,7 @@ export default function PartnerHome({ avatarPath, streakRows, monthSessions, mar
         <div className="card-grid">
           {tile('Schedule', <Calendar size={36} color="#fff" />, 'linear-gradient(135deg, #8B6FD9, #6E4FC7)', () => setSection('schedule'))}
           {tile('My Availability', <Calendar size={36} color="#fff" />, 'linear-gradient(135deg, #6E4FC7, #4B2FA0)', () => setSection('availability'))}
+          {tile('Files for students', <FolderOpen size={36} color="#fff" />, 'linear-gradient(135deg, #8B6FD9, #6E4FC7)', () => setSection('files'))}
           {tile('Manage Videos', <Video size={36} color="#fff" />, 'linear-gradient(135deg, #1FB6A3, #17897B)', () => setSection('videos'))}
           {tile('Subjects & Areas', <MapPin size={36} color="#fff" />, 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('areas'))}
           {tile('My Earnings', <Wallet size={36} color="#fff" />, 'linear-gradient(135deg, #2E7D4F, #1F5C38)', () => router.push('/earnings'))}
