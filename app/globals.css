@@ -426,3 +426,17 @@ html:is([data-bg="black"],[data-bg="white"],[data-bg="ocean"],[data-bg="forest"]
 .card-grid.g3 .tile-body .name{font-size:.78rem;}
 .skel{background:linear-gradient(90deg,#f1ecfb,#faf8ff,#f1ecfb);background-size:200% 100%;animation:skel 1.2s infinite;border-radius:12px;}
 @keyframes skel{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* Laptop and desktop: the bottom bar becomes a side menu and the page uses the width */
+@media (min-width: 900px) {
+  body:has(.tabbar){padding-left:230px;flex-direction:column;}
+  .tabbar{position:fixed;left:0;top:0;bottom:0;width:230px;flex-direction:column;justify-content:flex-start;gap:6px;border-radius:0 26px 26px 0;padding:84px 14px 20px;box-shadow:6px 0 24px rgba(122,95,208,.14);}
+  .tabbar::before{content:'Aid & Ace';position:absolute;top:26px;left:26px;font-family:'Fraunces',serif;font-weight:700;font-size:1.25rem;color:#4B2FA0;}
+  .tabbar button{flex:none;flex-direction:row;justify-content:flex-start;gap:12px;font-size:.95rem;padding:12px 14px;border-radius:14px;text-align:left;}
+  body:has(.tabbar) > nav{display:none;}
+  body:has(.tabbar) > .wrap{max-width:none;padding:28px 40px 60px;}
+  body:has(.tabbar) > .wrap > div{max-width:1000px;margin:0 auto;}
+  body:has(.tabbar) .card-grid{grid-template-columns:repeat(4,1fr);}
+  body:has(.tabbar) .card-grid.g3{grid-template-columns:repeat(4,1fr);}
+  body:has(.tabbar) .chat-pane{max-height:60vh;}
+}
