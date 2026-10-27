@@ -1274,7 +1274,14 @@ export default function PortalHome(props: any) {
       if (saved && sections.includes(saved)) setSection(saved)
       if (savedTab && tabs.includes(savedTab)) setTab(savedTab)
       // a link such as /portal?section=packs (from a push notification) opens that screen
-      const want = new URLSearchParams(window.location.search).get('section') as Section | null
+      const qs = new URLSearchParams(window.location.search)
+      const wantTab = qs.get('tab') as Tab | null
+      if (wantTab && tabs.includes(wantTab)) {
+        setSection('menu')
+        setTab(wantTab)
+        window.history.replaceState(null, '', window.location.pathname + (qs.get('view') ? '?view=' + qs.get('view') : ''))
+      }
+      const want = qs.get('section') as Section | null
       if (want && sections.includes(want)) {
         if (want === 'packs') sessionStorage.setItem('portalPackView', 'orders')
         setSection(want)

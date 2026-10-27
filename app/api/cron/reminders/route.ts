@@ -25,7 +25,7 @@ export async function GET(req: Request) {
   for (const b of bookings || []) {
     const time = String(b.time || '').slice(0, 5)
     const where = b.format === 'physical' ? 'in person' : (b.meeting_link ? 'online. Your join link is in the app' : 'online')
-    await sendPushToUser(b.student_id, 'Session today', `You have ${b.subject} today at ${time}, ${where}.`, '/portal')
+    await sendPushToUser(b.student_id, 'Session today', `You have ${b.subject} today at ${time}, ${where}.`, '/portal?view=student&tab=room')
     if (b.tutor_id) {
       await sendPushToUser(b.tutor_id, 'Session today', `You teach ${b.subject} today at ${time}, ${where}.`, '/partner')
     }
