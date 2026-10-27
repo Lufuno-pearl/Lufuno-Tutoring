@@ -12,6 +12,7 @@ import { Owl } from '../Owl'
 import { QuoteCloud, TUTOR_QUOTES } from '../portal/HomeParts'
 import PacksAdmin from './PacksAdmin'
 import SessionsLog from './SessionsLog'
+import FilesManager from './FilesManager'
 import OwnerOverview, { AttentionItem } from './OwnerOverview'
 import { useRouter } from 'next/navigation'
 import ScopeFiles from './ScopeFiles'
@@ -33,7 +34,7 @@ import HomeworkSection from './HomeworkSection'
 import TestList, { daysUntil } from '../TestList'
 
 type Tab = 'home' | 'requests' | 'students' | 'room' | 'chat' | 'more'
-type Section = 'menu' | 'schedule' | 'pending' | 'assign' | 'packs' | 'sessions' | 'chat' | 'mytutoring' | 'homework' | 'videos' | 'videoreq' | 'referrals' | 'availability' | 'modules' | 'tests' | 'ratings'
+type Section = 'menu' | 'schedule' | 'pending' | 'assign' | 'packs' | 'sessions' | 'chat' | 'mytutoring' | 'homework' | 'videos' | 'videoreq' | 'referrals' | 'availability' | 'modules' | 'tests' | 'ratings' | 'files'
 
 function subjectLabel(choice?: string) {
   return choice === 'maths' ? 'Mathematics' : choice === 'physics' ? 'Physical Sciences' : 'Maths & Physical Sciences'
@@ -269,6 +270,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
         <div>
           <PageTitle title="More" />
           <div className="panel">
+            {mrow('Files for students', '📁', '', () => setSection('files'))}
             {mrow('Study Packs', '📚', 'linear-gradient(135deg, #C89B3C, #A87D24)', () => setSection('packs'))}
             {mrow('Videos', '🎬', 'linear-gradient(135deg, #1FB6A3, #17897B)', () => setSection('videos'))}
             {mrow('Tutor Availability', '📅', 'linear-gradient(135deg, #6E4FC7, #4B2FA0)', () => setSection('availability'))}
@@ -666,6 +668,15 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
         <Back />
         <PageTitle title="Tutor availability" />
         <AvailabilityOverview />
+      </div>
+    )
+  }
+
+  if (section === 'files') {
+    return (
+      <div>
+        <Back />
+        <FilesManager />
       </div>
     )
   }
