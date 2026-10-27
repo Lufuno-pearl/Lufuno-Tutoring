@@ -42,7 +42,7 @@ export async function addSessions(formData: FormData): Promise<{ ok: boolean; me
   const text = weeks > 1 ? `${subject}: ${first} at ${time}, then every week for ${weeks} weeks.` : `${subject}: ${first} at ${time}.`
   for (const sid of targets) {
     await supabase.from('notifications').insert({ student_id: sid, for_role: 'student', message: `New session scheduled. ${text}` })
-    await sendPushToUser(sid, 'New session scheduled', text, '/portal')
+    await sendPushToUser(sid, 'New session scheduled', text, '/portal?view=student&tab=room')
   }
 
   revalidatePath('/portal')
@@ -70,7 +70,7 @@ export async function setSessionFormat(id: string, format: 'online' | 'physical'
   const day = new Date(row.session_date + 'T12:00:00Z').toLocaleDateString('en-ZA', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' })
   const text = `${row.subject} on ${day} at ${String(row.session_time).slice(0, 5)} is now ${format === 'online' ? 'online' : 'in person'}.`
   await supabase.from('notifications').insert({ student_id: row.student_id, for_role: 'student', message: `Session changed. ${text}` })
-  await sendPushToUser(row.student_id, 'Session changed', text, '/portal')
+  await sendPushToUser(row.student_id, 'Session changed', text, '/portal?view=student&tab=room')
   revalidatePath('/portal')
   revalidatePath('/partner')
   revalidatePath('/tutor')

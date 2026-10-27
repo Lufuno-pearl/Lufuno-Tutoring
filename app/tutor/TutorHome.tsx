@@ -344,7 +344,6 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
             </div>
           ))}
         </div>
-        <MonthSummary subs={subs || []} schoolByStudent={schoolByStudent || {}} />
         <OwnerOverview stats={overviewStats} week={weekCounts} items={attentionItems} />
         <QuoteCloud quotes={TUTOR_QUOTES} />
       </div>

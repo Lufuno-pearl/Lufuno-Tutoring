@@ -99,7 +99,7 @@ export async function startRoom(key: string, rawLink: string, inPerson: boolean)
   const subjectText = item.kind === 'one' ? 'Your session' : `Your ${item.level === 'hs' ? subjectName(item.subject) : item.subject} session`
   for (const id of item.studentIds) {
     await supabase.from('notifications').insert({ student_id: id, for_role: 'student', message: `${subjectText} has started. Tap Join on your home screen.` })
-    await sendPushToUser(id, `${subjectText} has started`, 'Tap Join to start your session.', '/portal')
+    await sendPushToUser(id, `${subjectText} has started`, 'Tap Join to start your session.', '/portal?view=student&tab=room')
   }
   revalidatePath('/partner'); revalidatePath('/tutor')
   return { ok: true }
