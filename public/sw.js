@@ -1,5 +1,5 @@
-const STATIC = 'aa-static-v1'
-const PAGES = 'aa-pages-v1'
+const STATIC = 'aa-static-v2'
+const PAGES = 'aa-pages-v2'
 
 self.addEventListener('install', () => self.skipWaiting())
 
@@ -21,10 +21,14 @@ self.addEventListener('fetch', (event) => {
     )
     return
   }
-  if (req.mode === 'navigate' && (url.pathname.startsWith('/portal') || url.pathname.startsWith('/partner') || url.pathname.startsWith('/tutor') || url.pathname === '/')) {
+  if (req.mode === 'navigate' && url.origin === self.location.origin && !url.pathname.startsWith('/api') && !url.pathname.startsWith('/auth')) {
     event.respondWith(
       fetch(req).then((res) => { if (res.ok && !res.redirected) caches.open(PAGES).then((c) => c.put(req, res.clone())); return res })
-        .catch(() => caches.open(PAGES).then((c) => c.match(req).then((hit) => hit || c.match('/portal') || new Response('<!doctype html><meta name=viewport content="width=device-width,initial-scale=1"><body style="font-family:sans-serif;text-align:center;padding:48px"><h2>You are offline</h2><p>Open the app once with data and your files will work offline.</p>', { headers: { 'Content-Type': 'text/html' } }))))
+        .catch(async () => {
+          const c = await caches.open(PAGES)
+          const opts = { ignoreSearch: true, ignoreVary: true }
+          return (await c.match(req, { ignoreVary: true })) || (await c.match(req, opts)) || (await c.match('/portal', opts)) || (await c.match('/partner', opts)) || (await c.match('/tutor', opts)) || new Response('<!doctype html><meta name=viewport content="width=device-width,initial-scale=1"><body style="font-family:sans-serif;text-align:center;padding:48px"><h2>You are offline</h2><p>Open the app once with data, then your pages and files work offline.</p>', { headers: { 'Content-Type': 'text/html' } })
+        })
     )
   }
 })
@@ -58,4 +62,18 @@ self.addEventListener('notificationclick', (event) => {
       return self.clients.openWindow(url)
     })
   )
+})
+
+
+// The page tells us which files it loaded, so the very first visit is saved too (not only later ones).
+self.addEventListener('message', (event) => {
+  const d = event.data || {}
+  if (d.type !== 'precache') return
+  event.waitUntil((async () => {
+    const st = await caches.open(STATIC)
+    await Promise.all((d.urls || []).map((u) => st.match(u).then((hit) => hit || fetch(u).then((r) => { if (r.ok) return st.put(u, r) }).catch(() => {}))))
+    if (d.page) {
+      try { const r = await fetch(d.page, { credentials: 'same-origin' }); if (r.ok && !r.redirected) await (await caches.open(PAGES)).put(d.page, r) } catch (e) {}
+    }
+  })())
 })

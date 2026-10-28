@@ -25,6 +25,7 @@ export default function FilesView() {
   const [msg, setMsg] = useState('')
   const [busy, setBusy] = useState('')
   const [offline, setOffline] = useState(false)
+  const [saving, setSaving] = useState(false)
 
   async function refreshSaved() {
     try { const c = await caches.open(CACHE); const ks = await c.keys(); setSaved(ks.map(k => decodeURIComponent(new URL(k.url).pathname.replace('/offline-file/', '')))) } catch { /* no cache support */ }
@@ -62,6 +63,25 @@ export default function FilesView() {
     setBusy('')
   }
 
+  async function saveAll() {
+    if (!files || saving) return
+    setSaving(true); setMsg('')
+    let failed = 0
+    for (const f of files) {
+      if (saved.includes(f.path)) continue
+      try {
+        const { data, error } = await createClient().storage.from('class-files').download(f.path)
+        if (error || !data) { failed++; continue }
+        const c = await caches.open(CACHE)
+        await c.put(keyOf(f.path), new Response(data, { headers: { 'Content-Type': data.type || 'application/octet-stream' } }))
+      } catch { failed++ }
+    }
+    await refreshSaved()
+    setSaving(false)
+    setMsg(failed ? `${failed} file${failed === 1 ? '' : 's'} could not be saved. Try again with better data.` : 'All files saved. They open without data now.')
+  }
+
+  const unsaved = (files || []).filter(f => !saved.includes(f.path)).length
   const subjects = Array.from(new Set((files || []).map(f => f.subject)))
   const shown = (files || []).filter(f => (subject === 'All' || f.subject === subject) && (cat === 'All' || f.category === cat))
   const catOf = (id: string) => FILE_CATS.find(c => c.id === id) || FILE_CATS[0]
@@ -74,6 +94,9 @@ export default function FilesView() {
       {files !== null && subjects.length > 1 && <div style={{ marginBottom: 10 }}><Chips options={['All', ...subjects]} value={[subject]} onChange={v => setSubject(v[0])} /></div>}
       {files !== null && files.length > 0 && <div style={{ marginBottom: 12 }}><Chips options={['All', ...FILE_CATS.map(c => c.label)]} value={[cat === 'All' ? 'All' : catOf(cat).label]} onChange={v => setCat(v[0] === 'All' ? 'All' : (FILE_CATS.find(c => c.label === v[0])?.id || 'All'))} /></div>}
       {files !== null && files.length === 0 && <div className="panel"><h4 style={{ margin: 0 }}>No files yet</h4><div className="meta" style={{ marginBottom: 0 }}>When your tutor shares notes or practice questions for your subject, they show here.</div></div>}
+      {files !== null && files.length > 0 && !offline && (
+        <button className="btn" style={{ width: '100%', marginBottom: 12, background: '#EDE5FD', color: '#5B3FC4' }} disabled={saving || unsaved === 0} onClick={saveAll}>{saving ? 'Saving…' : unsaved === 0 ? 'All files are saved for offline' : `Save ${unsaved} file${unsaved === 1 ? '' : 's'} for offline`}</button>
+      )}
       {shown.length > 0 && (
         <div className="panel" style={{ padding: '4px 16px' }}>
           {shown.map(f => {
