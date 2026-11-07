@@ -1,7 +1,8 @@
 'use client'
 import { useState } from 'react'
 import { ChevronRight, Users } from 'lucide-react'
-import { LevelBrowser } from '../ui'
+import { LevelBrowser, Seg } from '../ui'
+import Avatar from '../Avatar'
 import { NavRow } from '../ui'
 import AttendanceButtons from '../AttendanceButtons'
 import MarksView from '../MarksView'
@@ -16,6 +17,7 @@ function subjectLabel(choice?: string) {
 
 export default function PartnerStudents({ feelingsByStudent, allSubs, scheduleByStudent, marksByStudent, myStudentIds, threads, bookingsByStudent, subsByStudent, attendanceByStudent, actions }: any) {
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [view, setView] = useState('chat')
   const [search, setSearch] = useState('')
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
@@ -78,8 +80,13 @@ export default function PartnerStudents({ feelingsByStudent, allSubs, scheduleBy
 
   return (
     <div>
-      <div className="meta" style={{ cursor: 'pointer', marginBottom: 16, color: 'var(--purple-dark)', fontWeight: 600 }} onClick={() => setSelectedId(null)}>&larr; Back to students</div>
-      <h3>{thread.name}</h3>
+      <div className="chat-top" onClick={() => { setSelectedId(null); setView('chat') }}>
+        <span className="chat-back">&larr;</span>
+        <Avatar name={thread.name} size={34} look={(thread as any).look} sex={(thread as any).sex} feeling={(thread as any).feeling} />
+        <b>{thread.name}</b>
+      </div>
+      <Seg options={[{ id: 'chat', label: 'Messages' }, { id: 'marks', label: 'Marks' }, { id: 'schedule', label: 'Schedule' }, { id: 'attendance', label: 'Attendance' }]} value={view} onChange={setView} />
+      {view === 'attendance' && <>
       {(feelingsByStudent?.[sid] || []).length > 0 && (
         <div style={{ margin: '4px 0 12px' }}>
           <div className="meta" style={{ margin: '0 0 6px', fontWeight: 700 }}>How they have felt lately</div>
@@ -119,6 +126,8 @@ export default function PartnerStudents({ feelingsByStudent, allSubs, scheduleBy
           </div>
         )
       })}
+      </>}
+      {view === 'chat' && <>
       <div className="chat-pane">
         {(thread.msgs || []).length === 0 && <p className="meta">No messages yet.</p>}
         {(thread.msgs || []).filter((m: any) => !hidden.includes(m.id)).map((m: any) => (
@@ -127,20 +136,28 @@ export default function PartnerStudents({ feelingsByStudent, allSubs, scheduleBy
       </div>
       <ReplyBar to={replyTo} onCancel={() => setReplyTo(null)} />
       <Composer value={text} onChange={setText} onSend={() => handleSend(sid)} sending={sending} placeholder="Reply…" attach={{ folder: sid, onFile: n => handleSend(sid, `[file] ${n}`) }} />
-      <div style={{ marginTop: 14, borderTop: '1px solid var(--line)', paddingTop: 12 }}>
+      </>}
+      {view === 'schedule' && (
+      <div style={{ marginTop: 14 }}>
         <h4 style={{ marginTop: 0 }}>Schedule</h4>
         <ScheduleManager readOnly={isGroupStudent(sid, bookingsHere, subsHere)} studentId={sid} rows={(scheduleByStudent || {})[sid] || []} defaultFormat={studentFormat(sid, bookingsHere, subsHere)} alternateDefault={studentAlternate(sid, bookingsHere, subsHere)} classmates={classmatesOf(sid, allSubs || [])} />
       </div>
-      <div style={{ marginTop: 14, borderTop: '1px solid var(--line)', paddingTop: 12 }}>
+      )}
+      {view === 'marks' && (
+      <div style={{ marginTop: 14 }}>
         <h4 style={{ marginTop: 0 }}>Marks</h4>
         <MarksView marks={(marksByStudent || {})[sid] || []} subjects={[]} mode="tutor" studentId={sid} />
       </div>
-      <div style={{ marginTop: 14, borderTop: '1px solid var(--line)', paddingTop: 12 }}>
+      )}
+      {view === 'attendance' && (
+      <div style={{ marginTop: 14 }}>
         <div className="meta" style={{ marginBottom: 6 }}>Recent sessions</div>
-        {(attendanceByStudent[sid] || []).slice(0, 5).map((a: any) => (
+        {(attendanceByStudent[sid] || []).length === 0 && <p className="meta">No sessions marked yet.</p>}
+        {(attendanceByStudent[sid] || []).slice(0, 20).map((a: any) => (
           <div key={a.id} className="meta">{a.session_date} — {String(a.status).replace('_', ' ')}</div>
         ))}
       </div>
+      )}
     </div>
   )
 }

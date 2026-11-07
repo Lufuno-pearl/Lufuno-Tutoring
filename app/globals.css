@@ -599,3 +599,15 @@ nav .brand,.brand{color:#5B3FC4 !important;font-family:'Nunito',sans-serif !impo
 .srow-chat b{font-size:.92rem}
 .srow-chat span{font-size:.78rem;color:#6E6890;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .composer{box-shadow:none !important;border:1px solid #E7E0F5}
+
+/* ===== WhatsApp-style chat, friends banner, login scene ===== */
+.chat-top{position:sticky;top:0;z-index:5;background:var(--bg,#F7F4FF);padding:8px 0;margin:0 0 6px !important}
+.in-chat .screen-head{display:none !important}
+.composer{position:sticky;bottom:6px;z-index:5;background:var(--card,#fff)}
+.banner-friends{display:flex;align-items:center;gap:6px;background:#EDE6FF;border-radius:22px;padding:6px 14px 6px 6px;margin:0 0 14px;cursor:pointer;overflow:hidden}
+.banner-friends .bf-art{flex:none;width:118px}
+.banner-friends .bf-art svg{width:100%;display:block}
+.banner-friends .bf-text{display:flex;flex-direction:column;min-width:0}
+.banner-friends b{color:#5B3FC4;font-size:1.02rem;line-height:1.2}
+.banner-friends span{color:#5B3FC4;font-size:.8rem}
+.wl-scene svg{width:100%;display:block}

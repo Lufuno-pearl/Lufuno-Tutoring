@@ -1,6 +1,7 @@
 'use client'
 import ClassFeelings from '../character/ClassFeelings'
-import { PageTitle, Row, Pill, Tone, NavRow, LevelBrowser } from '../ui'
+import { PageTitle, Row, Pill, Tone, NavRow, LevelBrowser, Seg } from '../ui'
+import Avatar from '../Avatar'
 import { useState, useEffect, useLayoutEffect } from 'react'
 import GroupSchedule from '../GroupSchedule'
 import RoomPanel from '../room/RoomPanel'
@@ -56,6 +57,7 @@ function ChatThread({ studentId, thread, actions, marks, schedule, format, alter
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
   const [replyTo, setReplyTo] = useState<any | null>(null)
+  const [view, setView] = useState('chat')
   const { hidden, hide } = useHidden()
 
   async function handleSend(override?: string) {
@@ -73,6 +75,8 @@ function ChatThread({ studentId, thread, actions, marks, schedule, format, alter
 
   return (
     <div>
+      <Seg options={[{ id: 'chat', label: 'Messages' }, { id: 'marks', label: 'Marks' }, { id: 'schedule', label: 'Schedule' }]} value={view} onChange={setView} />
+      {view === 'chat' && <>
       <div className="chat-pane">
         {thread.msgs.length === 0 && <p className="meta">No messages yet.</p>}
         {thread.msgs.filter((m: any) => !hidden.includes(m.id)).map((m: any) => (
@@ -81,14 +85,19 @@ function ChatThread({ studentId, thread, actions, marks, schedule, format, alter
       </div>
       <ReplyBar to={replyTo} onCancel={() => setReplyTo(null)} />
       <Composer value={text} onChange={setText} onSend={() => handleSend()} sending={sending} placeholder="Reply…" attach={{ folder: studentId, onFile: n => handleSend(`[file] ${n}`) }} />
-      <div style={{ marginTop: 14, borderTop: '1px solid var(--line)', paddingTop: 12 }}>
+      </>}
+      {view === 'schedule' && (
+      <div style={{ marginTop: 14 }}>
         <h4 style={{ marginTop: 0 }}>Schedule</h4>
         <ScheduleManager readOnly={!!groupOnly} studentId={studentId} rows={schedule || []} defaultFormat={format || 'online'} alternateDefault={!!alternate} classmates={classmates || []} />
       </div>
-      <div style={{ marginTop: 14, borderTop: '1px solid var(--line)', paddingTop: 12 }}>
+      )}
+      {view === 'marks' && (
+      <div style={{ marginTop: 14 }}>
         <h4 style={{ marginTop: 0 }}>Marks</h4>
         <MarksView marks={marks || []} subjects={[]} mode="tutor" studentId={studentId} />
       </div>
+      )}
     </div>
   )
 }
@@ -708,9 +717,11 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
       const thread = threadsByStudent[selectedStudentId]
       return (
         <div>
-          <Back onClick={() => setSelectedStudentId(null)} />
-          <PageTitle title={`${thread.name}`} />
-          <div className="meta" style={{ marginBottom: 10 }}>{thread.email}</div>
+          <div className="chat-top" onClick={() => setSelectedStudentId(null)}>
+            <span className="chat-back">&larr;</span>
+            <Avatar name={thread.name} size={34} look={(thread as any).look} sex={(thread as any).sex} feeling={(thread as any).feeling} />
+            <b>{thread.name}</b>
+          </div>
           <ChatThread studentId={selectedStudentId} thread={thread} actions={actions} marks={(marksByStudent || {})[selectedStudentId]} schedule={(scheduleByStudent || {})[selectedStudentId]} format={studentFormat(selectedStudentId, bookings || [], subs || [])} alternate={studentAlternate(selectedStudentId, bookings || [], subs || [])} classmates={classmatesOf(selectedStudentId, subs || [])} />
         </div>
       )

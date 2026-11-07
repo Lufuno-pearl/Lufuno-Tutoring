@@ -16,6 +16,11 @@ export default function StudentChat({ messages, sendMessage, getChatContacts, my
 
   useEffect(() => { getChatContacts().then(c => setContacts(c)).catch(() => setContacts([])) }, [])
 
+  useEffect(() => {
+    document.body.classList.toggle('in-chat', !!withId)
+    return () => document.body.classList.remove('in-chat')
+  }, [withId])
+
   if (contacts === null) return <p className="meta">Loading…</p>
   if (contacts.length === 0) return <p className="meta">Messages are not ready yet. Please try again in a moment.</p>
 
