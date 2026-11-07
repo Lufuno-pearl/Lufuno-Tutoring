@@ -87,6 +87,20 @@ export async function confirmPayment(table: 'bookings' | 'hs_subscriptions' | 'p
   revalidatePath('/tutor')
 }
 
+// The owner could not find the payment: the request is cancelled and the student is told.
+export async function rejectPayment(table: 'bookings' | 'hs_subscriptions' | 'video_access_requests', id: string) {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
+  const { data }: { data: any } = await supabase.from(table).update({ status: 'rejected' }).eq('id', id).neq('status', 'confirmed').select('student_id').single()
+  if (data) {
+    const message = 'We could not find your payment, so this request was cancelled. Please check your reference and request again, or message us.'
+    await supabase.from('notifications').insert({ student_id: data.student_id, for_role: 'student', message })
+    await sendPushToUser(data.student_id, 'Payment not found', message, '/portal')
+  }
+  revalidatePath('/tutor')
+}
+
 export async function setMeetingLink(table: 'bookings' | 'hs_subscriptions', id: string, rawUrl: string) {
   const supabase = createClient()
   const checked = checkMeetingLink(rawUrl)

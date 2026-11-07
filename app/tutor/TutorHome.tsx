@@ -28,6 +28,7 @@ import AvailabilityOverview from './AvailabilityOverview'
 import { eligibility } from '../../lib/matching'
 import { GROUP_MAX, UNI_PRICE } from '../../lib/pricing'
 import MarksView from '../MarksView'
+import RejectButton from './RejectButton'
 import { ChatBubble, ReplyBar, Composer, useHidden } from '../ChatParts'
 import ScheduleManager, { studentFormat, studentAlternate, classmatesOf, isGroupStudent } from '../ScheduleManager'
 import HomeworkSection from './HomeworkSection'
@@ -199,7 +200,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
   const soonTests = (testPreps || []).filter((t: any) => daysUntil(t.test_date) >= 0 && daysUntil(t.test_date) <= 7).length
   const openHomework = (homeworkRequests || []).filter((h: any) => h.status !== 'solved').length
   const pendingVideos = (videoTopicRequests || []).filter((v: any) => v.status !== 'ready').length
-  const { answerModuleRequest, confirmPayment, setMeetingLink, assignTutor, toggleAvailable, claim, markAttendance, sendTutorMessage, setCustomPackLink, markHomeworkSolved, setVideoTopicLink } = actions
+  const { answerModuleRequest, confirmPayment, rejectPayment, setMeetingLink, assignTutor, toggleAvailable, claim, markAttendance, sendTutorMessage, setCustomPackLink, markHomeworkSolved, setVideoTopicLink } = actions
 
   if (section === 'menu') {
     const TONE_CYCLE: Tone[] = ['purple', 'gold', 'green', 'pink', 'purple', 'gold', 'green']
@@ -363,9 +364,12 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
           <div className="panel" key={b.id}>
             <Row icon={<GraduationCap size={20} />} tone={b.status === 'confirmed' ? 'green' : 'gold'} title={<>{b.subject} — {b.day} {b.time}</>} sub={<>{b.profiles?.full_name} · {b.profiles?.email} · {kindLabel(b)} · R{b.price}{b.reference ? ` · Ref: ${b.reference}` : ''}</>} right={<StatusPill status={b.status} />} />
             {b.status !== 'confirmed' && (
-              <form action={async () => { await confirmPayment('bookings', b.id) }} style={{ marginTop: 8 }}>
-                <button className="btn" style={{ background: "#E0F4E8", color: "#1F5C38" }}>Approve payment</button>
-              </form>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 8, flexWrap: 'wrap' }}>
+                <form action={async () => { await confirmPayment('bookings', b.id) }}>
+                  <button className="btn" style={{ background: "#E0F4E8", color: "#1F5C38" }}>Approve payment</button>
+                </form>
+                <RejectButton onReject={async () => { await rejectPayment('bookings', b.id) }} />
+              </div>
             )}
           </div>
         ))}
@@ -374,9 +378,12 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
           <div className="panel" key={s.id}>
             <Row icon={<Calendar size={20} />} tone={s.status === 'confirmed' ? 'green' : 'gold'} title={<>{s.month}</>} sub={<>{s.profiles?.full_name} · {s.profiles?.email}{s.grade ? ` · Gr ${s.grade}` : ''} · {subjectLabel(s.subject_choice)}{s.extra_subject ? ` + ${s.extra_subject}` : ''} · {kindLabel(s)} · R{s.price}{s.reference ? ` · Ref: ${s.reference}` : ''}{s.status === 'confirmed' && s.end_date ? ` · Active until ${s.end_date}` : ''}</>} right={<StatusPill status={s.status} />} />
             {s.status !== 'confirmed' && (
-              <form action={async () => { await confirmPayment('hs_subscriptions', s.id) }} style={{ marginTop: 8 }}>
-                <button className="btn" style={{ background: "#E0F4E8", color: "#1F5C38" }}>Approve payment</button>
-              </form>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 8, flexWrap: 'wrap' }}>
+                <form action={async () => { await confirmPayment('hs_subscriptions', s.id) }}>
+                  <button className="btn" style={{ background: "#E0F4E8", color: "#1F5C38" }}>Approve payment</button>
+                </form>
+                <RejectButton onReject={async () => { await rejectPayment('hs_subscriptions', s.id) }} />
+              </div>
             )}
           </div>
         ))}
@@ -398,9 +405,12 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
           <div className="panel" key={v.id}>
             <Row icon={<Video size={20} />} tone={v.status === 'confirmed' ? 'green' : 'gold'} title={<>{v.subject}</>} sub={<>{v.profiles?.full_name} · {v.profiles?.email} · R{v.price}{v.reference ? ` · Ref: ${v.reference}` : ''}</>} right={<StatusPill status={v.status} />} />
             {v.status !== 'confirmed' && (
-              <form action={async () => { await confirmPayment('video_access_requests', v.id) }} style={{ marginTop: 8 }}>
-                <button className="btn" style={{ background: "#E0F4E8", color: "#1F5C38" }}>Approve payment</button>
-              </form>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 8, flexWrap: 'wrap' }}>
+                <form action={async () => { await confirmPayment('video_access_requests', v.id) }}>
+                  <button className="btn" style={{ background: "#E0F4E8", color: "#1F5C38" }}>Approve payment</button>
+                </form>
+                <RejectButton onReject={async () => { await rejectPayment('video_access_requests', v.id) }} />
+              </div>
             )}
           </div>
         ))}
