@@ -1,9 +1,14 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { createClient } from '../lib/supabase/client'
+import { FuniArt } from './avatarArt'
 
-// A round profile picture. Shows the first letter of the name until a photo is added.
-export default function Avatar({ path, name, size = 44, refreshKey = 0 }: { path?: string | null; name?: string; size?: number; refreshKey?: number }) {
+// A round profile picture. A photo wins if there is one; otherwise the person's cartoon character
+// (their own look, or one made from their name so everybody has a character from day one).
+export default function Avatar({ path, name, size = 44, refreshKey = 0, look, sex, feeling }: {
+  path?: string | null; name?: string; size?: number; refreshKey?: number
+  look?: any; sex?: string | null; feeling?: string | null
+}) {
   const [url, setUrl] = useState<string | null>(null)
   useEffect(() => {
     let cancelled = false
@@ -14,10 +19,13 @@ export default function Avatar({ path, name, size = 44, refreshKey = 0 }: { path
     })
     return () => { cancelled = true }
   }, [path, refreshKey])
-  const letter = (name || '?').trim().charAt(0).toUpperCase() || '?'
+  const seed = name || 'aid-and-ace'
+  const svg = FuniArt.avatarSVG(FuniArt.lookFor(look || null, seed, sex || null), feeling || 'Happy', 'u' + seed)
   return (
-    <div style={{ width: size, height: size, borderRadius: '50%', overflow: 'hidden', flex: '0 0 auto', background: 'linear-gradient(135deg,#C9B3F7,#8B6FD9)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: size * 0.42, boxShadow: '0 3px 10px rgba(122,95,208,.3)', border: '2px solid rgba(255,255,255,.85)' }}>
-      {url ? <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : letter}
+    <div style={{ width: size, height: size, borderRadius: '50%', overflow: 'hidden', flex: '0 0 auto', background: 'var(--soft, #EDE6FF)', boxShadow: '0 3px 10px rgba(122,95,208,.22)', border: '2px solid rgba(255,255,255,.85)' }}>
+      {url && path
+        ? <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        : <div aria-hidden="true" style={{ width: '100%', height: '100%', display: 'block' }} className="ava-fill" dangerouslySetInnerHTML={{ __html: svg }} />}
     </div>
   )
 }

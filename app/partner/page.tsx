@@ -1,3 +1,4 @@
+import { attachLooks } from '../../lib/studentLooks'
 import { createClient } from '../../lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { isAdminEmail } from '../../lib/admin'
@@ -52,6 +53,8 @@ async function PartnerDashboardInner() {
 
   // photo is read separately so nothing breaks before the photo setup has been run
   const avatarPath = (avatarRow as any)?.avatar_path || null
+  const { data: lookRow } = await supabase.from('profiles').select('avatar_look, sex').eq('id', user.id).single()
+  const me = { look: (lookRow as any)?.avatar_look || null, sex: (lookRow as any)?.sex || null, feeling: null as string | null }
   // sessions this tutor marked present (for the streak and the month count)
   const streakRows = (attendanceRows || []).filter((a: any) => a.marked_by === user.id && a.status === 'present')
   const saMonth = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString().slice(0, 7)
@@ -81,7 +84,7 @@ async function PartnerDashboardInner() {
   const scheduleByStudent: Record<string, any[]> = {}
   ;(schedRows || []).forEach((r: any) => { (scheduleByStudent[r.student_id] = scheduleByStudent[r.student_id] || []).push(r) })
 
-  let threads: Record<string, { name: string; msgs: any[] }> = {}
+  let threads: Record<string, { name: string; msgs: any[]; look?: any; sex?: string | null; feeling?: string | null }> = {}
   if (myStudentIds.length > 0) {
     const { data: messages } = await supabase
       .from('messages')
@@ -100,6 +103,7 @@ async function PartnerDashboardInner() {
         threads[sid] = { name: b?.profiles?.full_name || s?.profiles?.full_name || 'Student', msgs: [] }
       }
     })
+    await attachLooks(supabase, threads)
   }
 
   const bookingsByStudent: Record<string, any[]> = {}
@@ -158,6 +162,7 @@ async function PartnerDashboardInner() {
       <PartnerHome
         name={profile.full_name || ''}
         avatarPath={avatarPath}
+        me={me}
         streakRows={streakRows}
         monthSessions={monthSessions}
         today={todaySessions}

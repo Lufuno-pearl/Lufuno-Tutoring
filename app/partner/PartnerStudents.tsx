@@ -63,7 +63,7 @@ export default function PartnerStudents({ allSubs, scheduleByStudent, marksByStu
         <LevelBrowser search={search} onPick={sid => { setSelectedId(sid); setText('') }} items={myStudentIds.filter((sid: string) => matches(sid)).map((sid: string) => {
           const hsRow = (subsByStudent[sid] || [])[0]
           const b = (bookingsByStudent[sid] || [])[0]
-          return { id: sid, name: (threads[sid]?.name || 'Student'), level: hsRow ? 'hs' as const : 'uni' as const, grade: hsRow?.grade || null, subject: hsRow ? hsRow.subject_choice : b?.subject, sub: hsRow ? `${subjectLabel(hsRow.subject_choice)}${hsRow.extra_subject ? ` + ${hsRow.extra_subject}` : ''}` : b?.subject }
+          return { id: sid, name: (threads[sid]?.name || 'Student'), level: hsRow ? 'hs' as const : 'uni' as const, grade: hsRow?.grade || null, subject: hsRow ? hsRow.subject_choice : b?.subject, sub: hsRow ? `${subjectLabel(hsRow.subject_choice)}${hsRow.extra_subject ? ` + ${hsRow.extra_subject}` : ''}` : b?.subject, look: threads[sid]?.look, sex: threads[sid]?.sex, feeling: threads[sid]?.feeling }
         })} />
       </div>
     )

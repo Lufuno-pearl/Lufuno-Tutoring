@@ -23,7 +23,9 @@ import { PageTitle, Seg, Row, Chips } from '../ui'
 import FilesView from './FilesView'
 import FlatIcon from '../FlatIcon'
 import Avatar from '../Avatar'
-import { ChevronRight } from 'lucide-react'
+import FeelingCard from '../character/Feeling'
+import { FuniArt } from '../avatarArt'
+import { ChevronRight, LayoutGrid } from 'lucide-react'
 import TestPrep from './TestPrep'
 import QuestionOfDay from './QuestionOfDay'
 import { StreakCard, CountdownCard, PlanCard, GetStarted, WhatYouGet, PriceStrip, ReferBanner, HelpButton, Hero, QuoteCloud, StatTrio, ReminderBar, XpCard, xpFor } from './HomeParts'
@@ -36,7 +38,7 @@ import { hsPrice, hsSessions, toSessionType, EXTRA_PRICE, EXTRA_MAX, UNI_PRICE, 
 
 
 type Section = 'menu' | 'badges' | 'book' | 'packs' | 'chat' | 'history' | 'video' | 'guide' | 'homework' | 'referral' | 'testprep' | 'qotd' | 'marks' | 'school' | 'files'
-type Tab = 'home' | 'tutoring' | 'room' | 'chat' | 'learn' | 'more'
+type Tab = 'home' | 'hub' | 'tutoring' | 'room' | 'chat' | 'learn' | 'more'
 
 function AreaPicker({ areas, value, onChange, notListedHelp, onChooseOnline }: { areas: string[]; value: string; onChange: (v: string) => void; notListedHelp: string; onChooseOnline?: () => void }) {
   if (areas.length === 0) return null
@@ -616,8 +618,9 @@ function ReportMissed({ reportMissedSession }: { reportMissedSession: any }) {
   )
 }
 
-function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects, visiblePacks, bookings, subs, orders, messages, attendance, videoRequests, myVideoSubjects, homeworkRequests, videoTopicRequests, moduleRequests, testPreps, canTestPrep, marks, scheduled, extras, ratingDue, hasSchool, mySchool, myProvince, avatarPath, locked, actions }: any) {
+function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects, visiblePacks, bookings, subs, orders, messages, attendance, videoRequests, myVideoSubjects, homeworkRequests, videoTopicRequests, moduleRequests, testPreps, canTestPrep, marks, scheduled, extras, ratingDue, hasSchool, mySchool, myProvince, avatarPath, me: meProp, locked, actions }: any) {
   const router = useRouter()
+  const [me, setMe] = useState<any>(meProp || { look: null, sex: null, feeling: null })
   const [lockNote, setLockNote] = useState(false)
   const [packView, setPackView] = useState<'menu' | 'order' | 'orders'>('menu')
   // a notification or link can ask to open straight on My pack orders
@@ -688,6 +691,45 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
       </div>
     )
 
+    if (tab === 'hub') {
+      const x = xpFor(attendance || [], marks || [])
+      const L = FuniArt.lookFor(me?.look || null, name || 'aid-and-ace', me?.sex || null)
+      return (
+        <div>
+          <PageTitle title="Hub" sub="Everything in one place" />
+          {lockBanner}
+          <div className="panel circle-card">
+            <div className="circle-art art-box" dangerouslySetInnerHTML={{ __html: FuniArt.dreamyScene(L, me?.feeling || 'Happy', 'hub' + (name || '')) }} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <h4 style={{ margin: '0 0 8px' }}>Your tutor circle</h4>
+              <div className="circle-stats">
+                <div><b>{x.sessions}</b><span>Sessions</span></div>
+                <div><b>{x.streak}</b><span>Day streak</span></div>
+              </div>
+            </div>
+          </div>
+          <button className="btn btn-primary" style={{ width: '100%', marginBottom: 14 }} onClick={() => setSection('history')}>View my bookings</button>
+          <FeelingCard name={name || ''} look={me?.look} sex={me?.sex} feeling={me?.feeling} onChange={f => setMe((m: any) => ({ ...m, feeling: f }))} />
+          <div className="sec-title">Quick actions</div>
+          <div className="card-grid g3">
+            {tile('Request tutoring', '🙋', 'linear-gradient(135deg, #8B6FD9, #6E4FC7)', () => setSection('book'), 'book')}
+            {tile('My bookings', '🗓️', 'linear-gradient(135deg, #9B7FE8, #7A5FD0)', () => setSection('history'), 'history')}
+            {tile('My marks', '📈', 'linear-gradient(135deg, #2E7D4F, #1F5C38)', () => setSection('marks'), 'marks')}
+            {tile('Test & exam prep', '🎯', 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('testprep'), 'testprep')}
+            {tile('Files', '📁', 'linear-gradient(135deg, #8B6FD9, #6E4FC7)', () => setSection('files'), 'files')}
+            {tile('Study packs', '📚', 'linear-gradient(135deg, #C89B3C, #A87D24)', () => setSection('packs'), 'packs')}
+            {tile('Video lessons', '🎬', 'linear-gradient(135deg, #1FB6A3, #17897B)', () => setSection('video'), 'video')}
+            {tile('Question of the day', '💡', 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('qotd'), 'qotd')}
+            {tier === 'highschool' && tile('Homework help', '📝', 'linear-gradient(135deg, #E0956F, #C46B3E)', () => setSection('homework'), 'homework')}
+            {tile('Badges & level', '🏅', 'linear-gradient(135deg, #C89B3C, #A87D24)', () => setSection('badges'), 'badges')}
+            {tile('Refer & earn', '🎁', 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('referral'), 'referral')}
+          </div>
+          {!locked && <ReportMissed reportMissedSession={reportMissedSession} />}
+          <ReferBanner subscribed={!!canTestPrep} onOpen={() => setSection('referral')} />
+        </div>
+      )
+    }
+
     if (tab === 'room') {
       return (
         <div>
@@ -737,7 +779,7 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
           <PageTitle title="More" sub="Settings and help" />
           {lockBanner}
           <div className="panel" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <a href="/appearance" style={{ textDecoration: 'none' }}><Avatar path={avatarPath} name={name} size={52} /></a>
+            <a href="/appearance" style={{ textDecoration: 'none' }}><Avatar path={avatarPath} name={name} size={52} look={me?.look} sex={me?.sex} feeling={me?.feeling} /></a>
             <div style={{ flex: 1 }}><b>{name || 'Your profile'}</b><div className="meta" style={{ margin: 0 }}>{tier === 'highschool' ? 'High school' : 'University'}</div></div>
           </div>
           <div className="panel">
@@ -778,7 +820,7 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
       const soon = [['🙋', 'Tutoring with real tutors'], ['🎬', 'Video lessons'], ['📈', 'Marks and test prep'], ['🎁', 'Refer and earn']]
       return (
         <div>
-          <Hero name={name || ''} avatarPath={avatarPath} />
+          <Hero name={name || ''} avatarPath={avatarPath} me={me} />
           {payWaiting}
           <div className="panel" style={{ background: 'linear-gradient(135deg, #2B1766, #4a2fa0)', color: '#fff', position: 'relative', overflow: 'hidden', paddingRight: 120 }}>
             <div style={{ fontWeight: 800, fontSize: '0.8rem', color: '#F2C14E' }}>🚀 LAUNCHING IN DECEMBER</div>
@@ -803,7 +845,8 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
     if (!canTestPrep) {
       return (
         <div>
-          <Hero name={name || ''} avatarPath={avatarPath} />
+          <Hero name={name || ''} avatarPath={avatarPath} me={me} />
+          <FeelingCard name={name || ''} look={me?.look} sex={me?.sex} feeling={me?.feeling} onChange={f => setMe((m: any) => ({ ...m, feeling: f }))} />
           {tier === 'highschool' && !hasSchool && <SchoolCard />}
           {payWaiting}
           <RateTutor due={ratingDue || []} submit={actions.submitRating} />
@@ -820,7 +863,8 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
 
     return (
       <div>
-        <Hero name={name || ''} avatarPath={avatarPath} />
+        <Hero name={name || ''} avatarPath={avatarPath} me={me} />
+        <FeelingCard name={name || ''} look={me?.look} sex={me?.sex} feeling={me?.feeling} onChange={f => setMe((m: any) => ({ ...m, feeling: f }))} />
         <ReminderBar bookings={bookings || []} subs={subs || []} scheduled={scheduled || []} onOpen={() => { setTab('room'); setSection('menu'); scrollPageToTop() }} />
         <StatTrio attendance={attendance || []} marks={marks || []} tests={testPreps || []} />
         <XpCard attendance={attendance || []} marks={marks || []} onOpen={() => { setSection('badges'); scrollPageToTop() }} />
@@ -1281,7 +1325,7 @@ export default function PortalHome(props: any) {
       const saved = sessionStorage.getItem('portalSection') as Section | null
       const savedTab = sessionStorage.getItem('portalTab') as Tab | null
       const sections: Section[] = ['menu', 'badges', 'book', 'packs', 'chat', 'history', 'video', 'guide', 'homework', 'referral', 'testprep', 'qotd', 'marks', 'school', 'files']
-      const tabs: Tab[] = ['home', 'tutoring', 'room', 'chat', 'learn', 'more']
+      const tabs: Tab[] = ['home', 'hub', 'tutoring', 'room', 'chat', 'learn', 'more']
       if (saved && sections.includes(saved)) setSection(saved)
       if (savedTab && tabs.includes(savedTab)) setTab(savedTab)
       // a link such as /portal?section=packs (from a push notification) opens that screen
@@ -1309,7 +1353,7 @@ export default function PortalHome(props: any) {
     try { sessionStorage.setItem('portalTab', tab) } catch (e) {}
   }, [tab])
 
-  const current: Tab = tab
+  const current: Tab = tab === 'tutoring' || tab === 'learn' ? 'hub' : tab
   function go(t: Tab) {
     setTab(t)
     setSection(t === 'chat' ? 'chat' : 'menu')
@@ -1317,9 +1361,8 @@ export default function PortalHome(props: any) {
   }
   const items: { id: Tab; label: string; icon: any }[] = [
     { id: 'home', label: 'Home', icon: <Home size={20} /> },
-    { id: 'tutoring', label: 'Tutoring', icon: <CalendarCheck size={20} /> },
+    { id: 'hub', label: 'Hub', icon: <LayoutGrid size={20} /> },
     { id: 'room', label: 'Room', icon: <Video size={20} /> },
-    { id: 'learn', label: 'Learn', icon: <BookOpen size={20} /> },
     { id: 'chat', label: 'Messages', icon: <MessageCircle size={20} /> },
     { id: 'more', label: 'More', icon: <MoreHorizontal size={20} /> },
   ]

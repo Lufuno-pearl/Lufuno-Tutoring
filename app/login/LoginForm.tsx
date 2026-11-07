@@ -17,12 +17,16 @@ export default function LoginForm() {
   const [success, setSuccess] = useState('')
   const [loading, setLoading] = useState(false)
   const [agreed, setAgreed] = useState(false)
+  const [sex, setSex] = useState<'' | 'female' | 'male'>('')
   const router = useRouter()
   const searchParams = useSearchParams()
   const tier = searchParams.get('tier')
 
   async function afterAuth(user: any, supabase: any) {
     if (!user) { router.push('/portal'); return }
+    // boy/girl chosen at sign-up is saved to the profile once (it sets which characters they are offered)
+    const metaSex = (user.user_metadata || {}).sex
+    if (metaSex === 'female' || metaSex === 'male') await supabase.from('profiles').update({ sex: metaSex }).eq('id', user.id).is('sex', null)
     if (tier === 'tutor') { router.push('/apply'); return }
     if (isAdminEmail(user.email)) { router.push('/tutor'); return }
     const { data: profile } = await supabase.from('profiles').select('role, tier').eq('id', user.id).single()
@@ -38,13 +42,14 @@ export default function LoginForm() {
     if (!email || !name || !password || !confirmPassword) { setError('Please fill in all fields.'); return }
     if (password.length < 6) { setError('Password must be at least 6 characters.'); return }
     if (password !== confirmPassword) { setError('Passwords do not match.'); return }
+    if (!sex) { setError('Please choose Girl or Boy.'); return }
     if (!agreed) { setError('Please agree to the Terms and Conditions to continue.'); return }
     setLoading(true)
     const supabase = createClient()
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: name, accepted_terms_at: new Date().toISOString() } },
+      options: { data: { full_name: name, sex, accepted_terms_at: new Date().toISOString() } },
     })
     if (error) { setLoading(false); setError(error.message); return }
     await supabase.auth.signOut()
@@ -86,6 +91,15 @@ export default function LoginForm() {
         {signup && <p className="wl-note">Hi there! Create your account and we will help you fix the gaps and ace the exam.</p>}
         {signup && (
           <div className="wl-field"><i><User size={20} /></i><input value={name} onChange={e => setName(e.target.value)} placeholder="Full name" aria-label="Full name" /></div>
+        )}
+        {signup && (
+          <div className="wl-note">
+            <div style={{ marginBottom: 8 }}>I am a</div>
+            <div className="wl-seg">
+              <span className={sex === 'female' ? 'on' : ''} onClick={() => setSex('female')}>Girl</span>
+              <span className={sex === 'male' ? 'on' : ''} onClick={() => setSex('male')}>Boy</span>
+            </div>
+          </div>
         )}
         <div className="wl-field"><i><Mail size={20} /></i><input value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" aria-label="Email" autoCapitalize="none" /></div>
         <div className="wl-field">

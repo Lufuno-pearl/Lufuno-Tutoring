@@ -1,5 +1,6 @@
 'use client'
 import { ReactNode, useState } from 'react'
+import Avatar from './Avatar'
 
 // Small building blocks for the Funi-style pages (soft rows with a coloured icon tile, pills, tabs, chips).
 export const TONES = {
@@ -61,7 +62,7 @@ export function NavRow({ icon, tone = 'purple', title, sub, badge = 0, warn, onC
   )
 }
 
-export type BrowseItem = { id: string; name: string; sub?: string; level: 'uni' | 'hs'; grade?: number | null; subject?: string }
+export type BrowseItem = { id: string; name: string; sub?: string; level: 'uni' | 'hs'; grade?: number | null; subject?: string; look?: any; sex?: string | null; feeling?: string | null }
 
 // University / High school choice, then grade (or module), then the students. Everything is tappable, nothing is a long list.
 export function LevelBrowser({ items, onPick, search }: { items: BrowseItem[]; onPick: (id: string) => void; search?: string }) {
@@ -72,7 +73,7 @@ export function LevelBrowser({ items, onPick, search }: { items: BrowseItem[]; o
   const uni = shown.filter(i => i.level === 'uni')
   const hs = shown.filter(i => i.level === 'hs')
   const back = (fn: () => void) => <div className="meta" style={{ cursor: 'pointer', marginBottom: 12, color: 'var(--purple-dark)', fontWeight: 600 }} onClick={fn}>&larr; Back</div>
-  const student = (i: BrowseItem) => <Row key={i.id} icon={<span style={{ fontWeight: 800 }}>{(i.name || '?').trim().charAt(0).toUpperCase()}</span>} tone="purple" title={i.name} sub={i.sub} onClick={() => onPick(i.id)} right={<span style={{ color: '#8a85a8', fontSize: '1.3rem' }}>›</span>} />
+  const student = (i: BrowseItem) => <Row key={i.id} icon={<Avatar name={i.name} size={40} look={i.look} sex={i.sex} feeling={i.feeling} />} tone="purple" title={i.name} sub={i.sub} onClick={() => onPick(i.id)} right={<span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>{i.feeling && (i.feeling === 'Need help' || i.feeling === 'Confused' || i.feeling === 'Stressed') && <span className="ss-pill warn" style={i.feeling === 'Need help' ? undefined : { background: '#FFE2EE', color: '#B8416F' }}>{i.feeling}</span>}<span style={{ color: '#8a85a8', fontSize: '1.3rem' }}>›</span></span>} />
   const gradeOf = (i: BrowseItem) => i.level === 'hs' ? (i.grade ? `Grade ${i.grade}` : 'Grade not set') : (i.subject || 'Module not set')
 
   // a search shows matching students straight away

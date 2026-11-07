@@ -711,7 +711,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
         <div className="field">
           <input value={chatSearch} onChange={e => setChatSearch(e.target.value)} placeholder="Search by student name..." />
         </div>
-        <LevelBrowser items={entries.map(([sid, t]: any) => ({ id: sid, name: t.name, sub: t.email, level: t.tier === 'highschool' ? 'hs' : 'uni', grade: t.grade, subject: t.subject }))} search={chatSearch} onPick={setSelectedStudentId} />
+        <LevelBrowser items={entries.map(([sid, t]: any) => ({ id: sid, name: t.name, sub: t.email, level: t.tier === 'highschool' ? 'hs' : 'uni', grade: t.grade, subject: t.subject, look: t.look, sex: t.sex, feeling: t.feeling }))} search={chatSearch} onPick={setSelectedStudentId} />
       </div>
     )
   }
@@ -837,7 +837,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
           <Back onClick={() => setMyView('menu')} />
           <PageTitle title="Your students" />
           {myStudentIds.length === 0 && <p className="meta">You haven't claimed any students yet.</p>}
-          <LevelBrowser onPick={setMyStudentId} items={myStudentIds.map((sid: string) => { const t: any = threadsByStudent[sid] || { name: 'Student' }; return { id: sid, name: t.name, sub: t.email, level: t.tier === 'highschool' ? 'hs' as const : 'uni' as const, grade: t.grade, subject: t.subject } })} />
+          <LevelBrowser onPick={setMyStudentId} items={myStudentIds.map((sid: string) => { const t: any = threadsByStudent[sid] || { name: 'Student' }; return { id: sid, name: t.name, sub: t.email, level: t.tier === 'highschool' ? 'hs' as const : 'uni' as const, grade: t.grade, subject: t.subject, look: t.look, sex: t.sex, feeling: t.feeling } })} />
         </div>
       )
     }

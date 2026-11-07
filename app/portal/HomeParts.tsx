@@ -377,14 +377,14 @@ function greeting() {
   return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening'
 }
 
-export function Hero({ name, avatarPath }: { name: string; avatarPath?: string | null }) {
+export function Hero({ name, avatarPath, me }: { name: string; avatarPath?: string | null; me?: any }) {
   const first = (name || '').trim().split(' ')[0]
   const [hi, setHi] = useState('Welcome')
   useEffect(() => { setHi(greeting()) }, [])
   return (
     <div className="hero">
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
-        <a href="/appearance" aria-label="Your photo and appearance" style={{ textDecoration: 'none' }}><Avatar path={avatarPath} name={name} size={50} /></a>
+        <a href="/appearance" aria-label="Your photo and appearance" style={{ textDecoration: 'none' }}><Avatar path={avatarPath} name={name} size={50} look={me?.look} sex={me?.sex} feeling={me?.feeling} /></a>
         <div className="hero-text">
           <div className="hero-hi">{first ? `${hi}, ${first}!` : `${hi}!`}</div>
           <div className="hero-sub">Let&apos;s make today amazing!</div>
