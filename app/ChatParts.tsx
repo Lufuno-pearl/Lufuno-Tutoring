@@ -1,4 +1,5 @@
 'use client'
+import Avatar from './Avatar'
 import { useEffect, useRef, useState } from 'react'
 import { CornerUpLeft, Copy, Trash2, X, Send, Paperclip, FileText } from 'lucide-react'
 import { createClient } from '../lib/supabase/client'
@@ -21,7 +22,7 @@ export function useHidden() {
 }
 
 // One chat bubble. Press and hold (or right-click) to open Reply, Copy and Delete.
-export function ChatBubble({ m, all, label, mine, otherLabel, onReply, onHide }: { m: any; all: any[]; label: string; mine: boolean; otherLabel: string; onReply: (m: any) => void; onHide?: (id: string) => void }) {
+export function ChatBubble({ m, all, label, mine, otherLabel, onReply, person, onHide }: { m: any; all: any[]; label: string; mine: boolean; otherLabel: string; onReply: (m: any) => void; person?: { name: string; look?: any; sex?: string | null; feeling?: string | null }; onHide?: (id: string) => void }) {
   const [menu, setMenu] = useState(false)
   const [note, setNote] = useState('')
   const timer = useRef<any>(null)
@@ -42,6 +43,8 @@ export function ChatBubble({ m, all, label, mine, otherLabel, onReply, onHide }:
 
   return (
     <div className={`cb ${mine ? 'cb-me' : 'cb-them'}`}>
+      <div className="cb-line">
+      {!mine && <span className="cb-ava"><Avatar name={person?.name || label} size={28} look={person?.look} sex={person?.sex} feeling={person?.feeling} /></span>}
       <div
         className="cb-bubble"
         onTouchStart={start} onTouchEnd={clear} onTouchMove={clear} onTouchCancel={clear}
@@ -55,7 +58,8 @@ export function ChatBubble({ m, all, label, mine, otherLabel, onReply, onHide }:
         )}
         {String(m.body || '').startsWith('[file] ') ? <FileBubble name={String(m.body).slice(7)} owner={m.student_id} /> : m.body}
       </div>
-      <div className="cb-time">{mine ? 'You' : label} · {chatTime(m.created_at)}</div>
+      </div>
+      <div className="cb-time" style={mine ? undefined : { marginLeft: 36 }}>{mine ? 'You' : label} · {chatTime(m.created_at)}</div>
       {note && <div className="cb-time" style={{ color: '#A6443A' }}>{note}</div>}
       {menu && (
         <div className="cb-overlay" onClick={() => setMenu(false)}>

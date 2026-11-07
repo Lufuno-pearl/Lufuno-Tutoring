@@ -63,7 +63,7 @@ export default function PartnerStudents({ allSubs, scheduleByStudent, marksByStu
         <LevelBrowser search={search} onPick={sid => { setSelectedId(sid); setText('') }} items={myStudentIds.filter((sid: string) => matches(sid)).map((sid: string) => {
           const hsRow = (subsByStudent[sid] || [])[0]
           const b = (bookingsByStudent[sid] || [])[0]
-          return { id: sid, name: (threads[sid]?.name || 'Student'), level: hsRow ? 'hs' as const : 'uni' as const, grade: hsRow?.grade || null, subject: hsRow ? hsRow.subject_choice : b?.subject, sub: hsRow ? `${subjectLabel(hsRow.subject_choice)}${hsRow.extra_subject ? ` + ${hsRow.extra_subject}` : ''}` : b?.subject }
+          return { id: sid, name: (threads[sid]?.name || 'Student'), level: hsRow ? 'hs' as const : 'uni' as const, grade: hsRow?.grade || null, subject: hsRow ? hsRow.subject_choice : b?.subject, sub: hsRow ? `${subjectLabel(hsRow.subject_choice)}${hsRow.extra_subject ? ` + ${hsRow.extra_subject}` : ''}` : b?.subject, look: threads[sid]?.look, sex: threads[sid]?.sex, feeling: threads[sid]?.feeling }
         })} />
       </div>
     )
@@ -91,7 +91,7 @@ export default function PartnerStudents({ allSubs, scheduleByStudent, marksByStu
       <div className="chat-pane">
         {(thread.msgs || []).length === 0 && <p className="meta">No messages yet.</p>}
         {(thread.msgs || []).filter((m: any) => !hidden.includes(m.id)).map((m: any) => (
-          <ChatBubble key={m.id} m={m} all={thread.msgs} label={m.sender === 'tutor' ? 'You' : thread.name} mine={m.sender === 'tutor'} otherLabel={thread.name} onReply={setReplyTo} onHide={hide} />
+          <ChatBubble key={m.id} m={m} all={thread.msgs} label={m.sender === 'tutor' ? 'You' : thread.name} mine={m.sender === 'tutor'} otherLabel={thread.name} onReply={setReplyTo} person={{ name: thread.name, look: (thread as any).look, sex: (thread as any).sex, feeling: (thread as any).feeling }} onHide={hide} />
         ))}
       </div>
       <ReplyBar to={replyTo} onCancel={() => setReplyTo(null)} />

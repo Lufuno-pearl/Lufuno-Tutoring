@@ -13,8 +13,9 @@ const subjectName = (k: string) => k === 'maths' ? 'Mathematics' : k === 'physic
 // something the tutor can start: a group (grade + subject) or one one-on-one student
 export type Startable = { key: string; label: string; kind: 'group' | 'one'; level: 'hs' | 'uni'; grade: number | null; subject: string; studentId: string | null; studentIds: string[]; lastLink: string; physical: boolean }
 export type RoomStudent = { id: string; name: string; joinedAt: string | null; source: string | null }
+export type Person = { name: string; feeling: string | null; look: any; sex: string | null }
 export type OpenRoom = { id: string; label: string; inPerson: boolean; code: string | null; link: string; students: RoomStudent[] }
-export type RoomState = { rooms: OpenRoom[]; startable: Startable[]; hasAnyStudents: boolean }
+export type RoomState = { rooms: OpenRoom[]; startable: Startable[]; hasAnyStudents: boolean; people: Record<string, Person> }
 
 // Everything the tutor's session panel needs: sessions that are open now, and what can be started
 export async function getRoomState(): Promise<RoomState | null> {
@@ -23,7 +24,7 @@ export async function getRoomState(): Promise<RoomState | null> {
   if (!user) return null
   const today = saToday()
   const [{ data: rooms }, { data: subs }, { data: books }, { data: att }] = await Promise.all([
-    supabase.from('session_rooms').select('id, level, grade, subject, student_id, label, link, in_person, code, ended_at, opened_at').eq('tutor_id', user.id).eq('room_date', today).order('opened_at', { ascending: false }),
+    supabase.from('session_rooms').select('*').eq('tutor_id', user.id).eq('room_date', today).order('opened_at', { ascending: false }),
     supabase.from('hs_subscriptions').select('student_id, subject_choice, session_type, grade, format, meeting_link').eq('tutor_id', user.id).eq('status', 'confirmed').gte('end_date', today).order('created_at', { ascending: false }),
     supabase.from('bookings').select('student_id, subject, session_type, format, meeting_link').eq('tutor_id', user.id).eq('status', 'confirmed').order('created_at', { ascending: false }),
     supabase.from('attendance').select('student_id, joined_at, source, status, created_at').eq('marked_by', user.id).eq('session_date', today),
@@ -32,6 +33,11 @@ export async function getRoomState(): Promise<RoomState | null> {
   const { data: people } = ids.length ? await supabase.from('profiles').select('id, full_name').in('id', ids) : { data: [] as any[] }
   const nameOf: Record<string, string> = {}
   ;(people || []).forEach((p: any) => { nameOf[p.id] = p.full_name || 'Student' })
+  // feeling, character and boy/girl (funi-style.sql); a separate query so this works before that SQL is run
+  const { data: extra } = ids.length ? await supabase.from('profiles').select('id, feeling, avatar_look, sex').in('id', ids) : { data: [] as any[] }
+  const peopleMap: Record<string, Person> = {}
+  ids.forEach((id: any) => { peopleMap[id] = { name: nameOf[id] || 'Student', feeling: null, look: null, sex: null } })
+  ;(extra || []).forEach((p: any) => { if (peopleMap[p.id]) peopleMap[p.id] = { ...peopleMap[p.id], feeling: p.feeling || null, look: p.avatar_look || null, sex: p.sex || null } })
 
   // build what can be started
   const groups = new Map<string, Startable>()
@@ -68,7 +74,7 @@ export async function getRoomState(): Promise<RoomState | null> {
 
   const open: OpenRoom[] = (rooms || []).filter((r: any) => !r.ended_at).map((r: any) => {
     const match = startable.find(x => (r.student_id ? x.studentId === r.student_id : x.kind === 'group' && x.level === r.level && x.grade === r.grade && x.subject === r.subject))
-    const sids = match?.studentIds || (r.student_id ? [r.student_id] : [])
+    const sids = (r.student_ids && r.student_ids.length > 0) ? r.student_ids : (match?.studentIds || (r.student_id ? [r.student_id] : []))
     return {
       id: r.id, label: r.label || 'Session', inPerson: !!r.in_person, code: r.code || null, link: r.link || '',
       students: sids.map((id: string) => ({ id, name: nameOf[id] || 'Student', joinedAt: joined.get(id)?.at || null, source: joined.get(id)?.source || null })).sort((a: RoomStudent, b: RoomStudent) => (a.joinedAt ? 0 : 1) - (b.joinedAt ? 0 : 1) || a.name.localeCompare(b.name)),
@@ -76,7 +82,7 @@ export async function getRoomState(): Promise<RoomState | null> {
   })
   const openKeys = new Set((rooms || []).filter((r: any) => !r.ended_at).map((r: any) => (r.student_id ? 'one-' + r.student_id : `${r.level}-${r.level === 'hs' ? r.grade + '-' : ''}${r.subject}`)))
   startable = startable.filter(x => !openKeys.has(x.key))
-  return { rooms: open, startable, hasAnyStudents: ids.length > 0 }
+  return { rooms: open, startable, hasAnyStudents: ids.length > 0, people: peopleMap }
 }
 
 // Start a session for one group or one one-on-one student. Only those students see Join.
@@ -143,4 +149,32 @@ export async function scanStudent(token: string): Promise<{ ok: boolean; name?: 
     login: 'Please log in again.',
   }
   return { ok: false, message: reasons[r.reason] || 'Could not scan that code.' }
+}
+
+// Physical session in small groups: one in-person session per group. Only the students in a group see that group's session.
+export async function startGroupRooms(key: string, groups: string[][]): Promise<{ ok: boolean; message?: string }> {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, message: 'Please sign in again.' }
+  const state = await getRoomState()
+  const item = state?.startable.find(x => x.key === key && x.kind === 'group')
+  if (!item) return { ok: false, message: 'That session is already open, or the group has no students.' }
+  const clean = groups.map(g => g.filter(id => item.studentIds.includes(id))).filter(g => g.length > 0)
+  if (clean.length === 0) return { ok: false, message: 'Add at least one student to a group first.' }
+  const base = item.label
+  for (let i = 0; i < clean.length; i++) {
+    const code = String(Math.floor(1000 + Math.random() * 9000))
+    const label = clean.length > 1 ? `${base} · Group ${i + 1}` : base
+    const { error } = await supabase.from('session_rooms').insert({
+      tutor_id: user.id, room_date: saToday(), level: item.level, grade: item.grade, subject: item.subject,
+      student_id: null, student_ids: clean.length > 1 || clean[0].length < item.studentIds.length ? clean[i] : null, label, link: null, in_person: true, code,
+    })
+    if (error) return { ok: false, message: 'Could not open the groups. Please run the session-groups SQL first.' }
+    for (const id of clean[i]) {
+      await supabase.from('notifications').insert({ student_id: id, for_role: 'student', message: `Your ${label} session has started. Open Room and show your code.` })
+      await sendPushToUser(id, `Your ${label} session has started`, 'Open Room to check in.', '/portal?view=student&tab=room')
+    }
+  }
+  revalidatePath('/partner'); revalidatePath('/tutor')
+  return { ok: true }
 }

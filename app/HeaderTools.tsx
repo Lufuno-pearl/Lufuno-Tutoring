@@ -11,6 +11,7 @@ export default function HeaderTools({ forRole }: { forRole: 'student' | 'staff' 
   const [mode, setMode] = useState('light')
   const [path, setPath] = useState<string | null>(null)
   const [name, setName] = useState('')
+  const [me, setMe] = useState<{ look: any; sex: string | null }>({ look: null, sex: null })
 
   useEffect(() => {
     setMode(document.documentElement.dataset.mode === 'dark' ? 'dark' : 'light')
@@ -21,6 +22,8 @@ export default function HeaderTools({ forRole }: { forRole: 'student' | 'staff' 
       setName((u.user_metadata as any)?.full_name || u.email || '')
       const { data: a } = await supabase.from('profiles').select('avatar_path').eq('id', u.id).single()
       setPath((a as any)?.avatar_path || null)
+      const { data: l } = await supabase.from('profiles').select('avatar_look, sex').eq('id', u.id).single()
+      setMe({ look: (l as any)?.avatar_look || null, sex: (l as any)?.sex || null })
     })
   }, [])
 
@@ -39,7 +42,7 @@ export default function HeaderTools({ forRole }: { forRole: 'student' | 'staff' 
       </button>
       <NotificationBell forRole={forRole} />
       <Link href="/appearance" aria-label="Profile picture and appearance" style={{ display: 'flex' }}>
-        <Avatar path={path} name={name} size={34} />
+        <Avatar path={path} name={name} size={34} look={me.look} sex={me.sex} />
       </Link>
     </div>
   )

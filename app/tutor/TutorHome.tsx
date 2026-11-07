@@ -74,7 +74,7 @@ function ChatThread({ studentId, thread, actions, marks, schedule, format, alter
       <div className="chat-pane">
         {thread.msgs.length === 0 && <p className="meta">No messages yet.</p>}
         {thread.msgs.filter((m: any) => !hidden.includes(m.id)).map((m: any) => (
-          <ChatBubble key={m.id} m={m} all={thread.msgs} label={m.sender === 'tutor' ? 'You' : thread.name} mine={m.sender === 'tutor'} otherLabel={thread.name} onReply={setReplyTo} onHide={hide} />
+          <ChatBubble key={m.id} m={m} all={thread.msgs} label={m.sender === 'tutor' ? 'You' : thread.name} mine={m.sender === 'tutor'} otherLabel={thread.name} onReply={setReplyTo} person={{ name: thread.name, look: (thread as any).look, sex: (thread as any).sex, feeling: (thread as any).feeling }} onHide={hide} />
         ))}
       </div>
       <ReplyBar to={replyTo} onCancel={() => setReplyTo(null)} />
@@ -711,7 +711,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
         <div className="field">
           <input value={chatSearch} onChange={e => setChatSearch(e.target.value)} placeholder="Search by student name..." />
         </div>
-        <LevelBrowser items={entries.map(([sid, t]: any) => ({ id: sid, name: t.name, sub: t.email, level: t.tier === 'highschool' ? 'hs' : 'uni', grade: t.grade, subject: t.subject }))} search={chatSearch} onPick={setSelectedStudentId} />
+        <LevelBrowser items={entries.map(([sid, t]: any) => ({ id: sid, name: t.name, sub: t.email, level: t.tier === 'highschool' ? 'hs' : 'uni', grade: t.grade, subject: t.subject, look: t.look, sex: t.sex, feeling: t.feeling }))} search={chatSearch} onPick={setSelectedStudentId} />
       </div>
     )
   }
@@ -837,7 +837,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
           <Back onClick={() => setMyView('menu')} />
           <PageTitle title="Your students" />
           {myStudentIds.length === 0 && <p className="meta">You haven't claimed any students yet.</p>}
-          <LevelBrowser onPick={setMyStudentId} items={myStudentIds.map((sid: string) => { const t: any = threadsByStudent[sid] || { name: 'Student' }; return { id: sid, name: t.name, sub: t.email, level: t.tier === 'highschool' ? 'hs' as const : 'uni' as const, grade: t.grade, subject: t.subject } })} />
+          <LevelBrowser onPick={setMyStudentId} items={myStudentIds.map((sid: string) => { const t: any = threadsByStudent[sid] || { name: 'Student' }; return { id: sid, name: t.name, sub: t.email, level: t.tier === 'highschool' ? 'hs' as const : 'uni' as const, grade: t.grade, subject: t.subject, look: t.look, sex: t.sex, feeling: t.feeling } })} />
         </div>
       )
     }

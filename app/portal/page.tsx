@@ -60,6 +60,9 @@ export default async function Portal({ searchParams }: { searchParams?: { view?:
   // photo is read separately too, so nothing breaks before the photo setup has been run
   const { data: avatarRow } = await supabase.from('profiles').select('avatar_path').eq('id', user.id).single()
   const avatarPath = (avatarRow as any)?.avatar_path || null
+  // new columns (funi-style.sql); a separate query so the page still works before that SQL is run
+  const { data: lookRow } = await supabase.from('profiles').select('avatar_look, sex, feeling').eq('id', user.id).single()
+  const me = { look: (lookRow as any)?.avatar_look || null, sex: (lookRow as any)?.sex || null, feeling: (lookRow as any)?.feeling || null }
 
   if (!profile?.tier) {
     return (
@@ -125,6 +128,7 @@ export default async function Portal({ searchParams }: { searchParams?: { view?:
         extras={extrasRows || []}
         ratingDue={(ratingDueRows as any) || []}
         avatarPath={avatarPath}
+        me={me}
         locked={locked}
         hasSchool={!!(schoolRow as any)?.school}
         mySchool={(schoolRow as any)?.school || ''}

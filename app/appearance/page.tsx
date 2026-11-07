@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '../../lib/supabase/client'
 import Avatar from '../Avatar'
+import CharacterPicker from '../character/CharacterPicker'
 
 const BACKGROUNDS = [
   { id: 'lilac', name: 'Lilac glow', swatch: 'linear-gradient(135deg,#E8DEF5,#8A6FC4)' },
@@ -143,8 +144,10 @@ export default function AppearancePage() {
   return (
     <div>
       <div className="meta" style={{ cursor: 'pointer', marginBottom: 16, color: 'var(--purple-dark)', fontWeight: 600 }} onClick={() => router.back()}>&larr; Back</div>
-      <h2 style={{ marginTop: 0 }}>Appearance &amp; photo</h2>
+      <h2 style={{ marginTop: 0 }}>My character &amp; appearance</h2>
       <p className="meta">Pick how the app looks on this phone. The look is free and saved on this device.</p>
+
+      {uid && <CharacterPicker uid={uid} name={name} onSaved={() => setBump(b => b + 1)} />}
 
       {uid && (
         <div className="panel" style={{ display: 'flex', alignItems: 'center', gap: 14 }}>

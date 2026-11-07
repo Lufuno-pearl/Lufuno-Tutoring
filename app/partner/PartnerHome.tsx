@@ -20,6 +20,7 @@ type TodaySession = { id: string; studentId?: string; subject: string; time: str
 type Props = {
   name: string
   avatarPath?: string | null
+  me?: any
   streakRows?: any[]
   monthSessions?: number
   today: TodaySession[]
@@ -55,7 +56,7 @@ function tabOf(section: Section): Tab | null {
 const SECTIONS: Section[] = ['menu', 'schedule', 'availability', 'open', 'requests', 'students', 'videos', 'areas', 'tests', 'files']
 const TABS: Tab[] = ['home', 'students', 'requests', 'room', 'manage']
 
-export default function PartnerHome({ avatarPath, streakRows, monthSessions, markedToday, markAttendance, name, today, openCount, requestCount, studentCount, testCount, tests, availability, open, requests, students, videos, areas }: Props) {
+export default function PartnerHome({ avatarPath, me, streakRows, monthSessions, markedToday, markAttendance, name, today, openCount, requestCount, studentCount, testCount, tests, availability, open, requests, students, videos, areas }: Props) {
   const [section, setSection] = useState<Section>('menu')
   const [tab, setTab] = useState<Tab>('home')
   const [ready, setReady] = useState(false)
@@ -151,7 +152,7 @@ export default function PartnerHome({ avatarPath, streakRows, monthSessions, mar
     const attention = openCount + requestCount + testCount
     body = (
       <div>
-        <Hero name={name} avatarPath={avatarPath} />
+        <Hero name={name} avatarPath={avatarPath} me={me} />
         <StreakCard attendance={streakRows || []} mode="tutor" />
         <InstallButton hideWhenInstalled />
         <div className="fstats">

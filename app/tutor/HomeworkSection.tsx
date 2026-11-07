@@ -3,6 +3,7 @@ import { PageTitle } from '../ui'
 import { useState } from 'react'
 import { ChevronRight } from 'lucide-react'
 import FileBox from '../FileBox'
+import Avatar from '../Avatar'
 
 // Homework help for the owner: students listed like chats, tap a student to see their requests.
 export default function HomeworkSection({ requests, partners, markSolved }: {
@@ -70,13 +71,14 @@ export default function HomeworkSection({ requests, partners, markSolved }: {
         const o = open(s.items)
         const latest = [...s.items].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))[0]
         return (
-          <div key={s.id} className="panel" style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderLeft: o > 0 ? '5px solid #E0956F' : undefined }} onClick={() => setSelected(s.id)}>
-            <div>
+          <div key={s.id} className="panel" style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }} onClick={() => setSelected(s.id)}>
+            <Avatar name={s.name} size={40} />
+            <div style={{ flex: 1, minWidth: 0 }}>
               <h4 style={{ margin: 0 }}>{s.name}</h4>
               <div className="meta" style={{ marginBottom: 0 }}>{o > 0 ? `${o} open` : 'All solved'} · latest: {latest?.subject}</div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              {o > 0 && <span style={{ background: '#A6443A', color: '#fff', fontSize: '0.75rem', borderRadius: 100, minWidth: 22, height: 22, padding: '0 5px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{o}</span>}
+              {o > 0 ? <span className="ss-pill warn">{o} open</span> : <span className="ss-pill mint">All solved</span>}
               <ChevronRight size={18} color="var(--purple-dark)" />
             </div>
           </div>
