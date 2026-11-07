@@ -25,7 +25,7 @@ import FlatIcon from '../FlatIcon'
 import Avatar from '../Avatar'
 import FeelingCard from '../character/Feeling'
 import { FuniArt } from '../avatarArt'
-import { ChevronRight, LayoutGrid } from 'lucide-react'
+import { ChevronRight, LayoutGrid, Paperclip } from 'lucide-react'
 import TestPrep from './TestPrep'
 import QuestionOfDay from './QuestionOfDay'
 import { StreakCard, CountdownCard, PlanCard, GetStarted, WhatYouGet, PriceStrip, ReferBanner, HelpButton, Hero, QuoteCloud, StatTrio, ReminderBar, XpCard, xpFor } from './HomeParts'
@@ -363,18 +363,18 @@ function HomeworkBox({ userId, subjectOptions, submitHomework, myRequests }: { u
       )}
       <div className="field">
         <label>Subject</label>
-        <select value={subject} onChange={e => setSubject(e.target.value)}>
-          {subjectOptions.map(s => <option key={s}>{s}</option>)}
-        </select>
+        <Chips options={subjectOptions} value={[subject]} onChange={v => setSubject(v[0])} />
       </div>
       <div className="field">
         <label>What do you need help with?</label>
         <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="e.g. Assignment 3, question 4 — stuck on the working" />
       </div>
       <div className="field">
-        <label>Your homework document</label>
-        <input key={fileKey} type="file" onChange={e => setFile(e.target.files?.[0] || null)} />
-        {file && <div className="meta" style={{ marginTop: 6 }}>Attached: <strong>{file.name}</strong> ({Math.max(1, Math.round(file.size / 1024))} KB)</div>}
+        <label className={`attach-row${file ? ' has' : ''}`}>
+          <Paperclip size={20} />
+          <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file ? `${file.name} (${Math.max(1, Math.round(file.size / 1024))} KB)` : 'Attach your homework document'}</span>
+          <input key={fileKey} type="file" style={{ display: 'none' }} onChange={e => setFile(e.target.files?.[0] || null)} />
+        </label>
       </div>
       <button className="btn btn-primary" onClick={handleSubmit} disabled={sending}>{sending ? 'Sending...' : 'Submit request'}</button>
 

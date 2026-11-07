@@ -490,3 +490,9 @@ html:is([data-bg="black"],[data-bg="white"],[data-bg="ocean"],[data-bg="forest"]
 .ss-gcard.left{background:#FFF1D2;border-color:transparent}
 .ss-gh{display:flex;align-items:center;gap:8px;margin-bottom:6px}.ss-gh b{flex:1}
 .ss-mv{padding:4px 10px;border-radius:999px;background:#7556DB;color:#fff;font-size:.74rem;font-weight:800;border:0;cursor:pointer;font-family:inherit}
+.cb-line{display:flex;align-items:flex-end;gap:8px;max-width:100%}
+.cb-ava{flex:none}
+.cb-line .cb-bubble{max-width:calc(100% - 40px)}
+.cb-me .cb-line .cb-bubble{max-width:100%}
+.attach-row{display:flex;align-items:center;gap:10px;background:var(--t-lav,#EDE6FF);color:#6E4FD0;border-radius:14px;padding:12px;font-weight:700;cursor:pointer;margin:0}
+.attach-row.has{background:#DDF3EA;color:#2E8A66}

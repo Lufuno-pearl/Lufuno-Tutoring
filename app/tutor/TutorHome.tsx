@@ -74,7 +74,7 @@ function ChatThread({ studentId, thread, actions, marks, schedule, format, alter
       <div className="chat-pane">
         {thread.msgs.length === 0 && <p className="meta">No messages yet.</p>}
         {thread.msgs.filter((m: any) => !hidden.includes(m.id)).map((m: any) => (
-          <ChatBubble key={m.id} m={m} all={thread.msgs} label={m.sender === 'tutor' ? 'You' : thread.name} mine={m.sender === 'tutor'} otherLabel={thread.name} onReply={setReplyTo} onHide={hide} />
+          <ChatBubble key={m.id} m={m} all={thread.msgs} label={m.sender === 'tutor' ? 'You' : thread.name} mine={m.sender === 'tutor'} otherLabel={thread.name} onReply={setReplyTo} person={{ name: thread.name, look: (thread as any).look, sex: (thread as any).sex, feeling: (thread as any).feeling }} onHide={hide} />
         ))}
       </div>
       <ReplyBar to={replyTo} onCancel={() => setReplyTo(null)} />
