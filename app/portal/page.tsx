@@ -98,14 +98,11 @@ export default async function Portal({ searchParams }: { searchParams?: { view?:
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <h2 style={{ margin: 0 }}>My portal</h2>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          {isAdmin && <Link href="/tutor" className="btn btn-primary" style={{ padding: '8px 14px', fontSize: '0.8rem' }}>Owner dashboard</Link>}
-          <HeaderTools forRole="student" />
-          <form action={signOut}><button className="btn" style={{ background: 'none', border: '1px solid var(--ink)' }}>Sign out</button></form>
+      {isAdmin && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+          <Link href="/tutor" className="owner-link">Owner dashboard</Link>
         </div>
-      </div>
+      )}
 
       <PortalHome
         name={profile.full_name}

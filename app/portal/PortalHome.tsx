@@ -23,12 +23,13 @@ import { PageTitle, Seg, Row, Chips } from '../ui'
 import FilesView from './FilesView'
 import FlatIcon from '../FlatIcon'
 import Avatar from '../Avatar'
+import HeaderTools from '../HeaderTools'
 import FeelingCard from '../character/Feeling'
 import { FuniArt } from '../avatarArt'
 import { ChevronRight, LayoutGrid, Paperclip } from 'lucide-react'
 import TestPrep from './TestPrep'
 import QuestionOfDay from './QuestionOfDay'
-import { StreakCard, CountdownCard, PlanCard, GetStarted, WhatYouGet, PriceStrip, ReferBanner, HelpButton, Hero, QuoteCloud, StatTrio, ReminderBar, XpCard, xpFor } from './HomeParts'
+import { StreakCard, CountdownCard, PlanCard, GetStarted, WhatYouGet, PriceStrip, ReferBanner, HelpButton, Hero, QuoteCloud, StatTrio, ReminderBar, XpCard, xpFor, ThisWeek, greeting } from './HomeParts'
 import { daysUntil, whenLabel } from '../TestList'
 import { getAreas } from './actions'
 import StudentChat from './StudentChat'
@@ -696,7 +697,6 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
       const L = FuniArt.lookFor(me?.look || null, name || 'aid-and-ace', me?.sex || null)
       return (
         <div>
-          <PageTitle title="Hub" sub="Everything in one place" />
           {lockBanner}
           <div className="panel circle-card">
             <div className="circle-art art-box" dangerouslySetInnerHTML={{ __html: FuniArt.dreamyScene(L, me?.feeling || 'Happy', 'hub' + (name || '')) }} />
@@ -733,8 +733,6 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
     if (tab === 'room') {
       return (
         <div>
-          <h3 style={{ marginTop: 0 }}>Room</h3>
-          <p className="meta">Your live sessions. Your tutor starts a session once for the whole subject, then a Join button shows here.</p>
           <JoinCard showEmpty />
           {canTestPrep && <NextSession name={name || ''} bookings={bookings || []} subs={subs || []} scheduled={scheduled || []} onRequest={() => setSection('book')} />}
         </div>
@@ -760,7 +758,6 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
     if (tab === 'learn') {
       return (
         <div>
-          <h3 style={{ marginTop: 0 }}>Learn</h3>
           {lockBanner}
           <div className="card-grid">
             {tile('Question of the Day', '💡', 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('qotd'), 'qotd')}
@@ -776,7 +773,6 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
     if (tab === 'more') {
       return (
         <div>
-          <PageTitle title="More" sub="Settings and help" />
           {lockBanner}
           <div className="panel" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <a href="/appearance" style={{ textDecoration: 'none' }}><Avatar path={avatarPath} name={name} size={52} look={me?.look} sex={me?.sex} feeling={me?.feeling} /></a>
@@ -820,8 +816,7 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
       const soon = [['🙋', 'Tutoring with real tutors'], ['🎬', 'Video lessons'], ['📈', 'Marks and test prep'], ['🎁', 'Refer and earn']]
       return (
         <div>
-          <Hero name={name || ''} avatarPath={avatarPath} me={me} />
-          {payWaiting}
+                    {payWaiting}
           <div className="panel" style={{ background: 'linear-gradient(135deg, #2B1766, #4a2fa0)', color: '#fff', position: 'relative', overflow: 'hidden', paddingRight: 120 }}>
             <div style={{ fontWeight: 800, fontSize: '0.8rem', color: '#F2C14E' }}>🚀 LAUNCHING IN DECEMBER</div>
             <h3 style={{ margin: '6px 0', color: '#fff' }}>Welcome to Aid &amp; Ace{name ? `, ${name.trim().split(' ')[0]}` : ''}!</h3>
@@ -845,8 +840,7 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
     if (!canTestPrep) {
       return (
         <div>
-          <Hero name={name || ''} avatarPath={avatarPath} me={me} />
-          <FeelingCard name={name || ''} look={me?.look} sex={me?.sex} feeling={me?.feeling} onChange={f => setMe((m: any) => ({ ...m, feeling: f }))} />
+                    <FeelingCard name={name || ''} look={me?.look} sex={me?.sex} feeling={me?.feeling} onChange={f => setMe((m: any) => ({ ...m, feeling: f }))} />
           {tier === 'highschool' && !hasSchool && <SchoolCard />}
           {payWaiting}
           <RateTutor due={ratingDue || []} submit={actions.submitRating} />
@@ -863,10 +857,10 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
 
     return (
       <div>
-        <Hero name={name || ''} avatarPath={avatarPath} me={me} />
-        <FeelingCard name={name || ''} look={me?.look} sex={me?.sex} feeling={me?.feeling} onChange={f => setMe((m: any) => ({ ...m, feeling: f }))} />
-        <ReminderBar bookings={bookings || []} subs={subs || []} scheduled={scheduled || []} onOpen={() => { setTab('room'); setSection('menu'); scrollPageToTop() }} />
+                <ReminderBar bookings={bookings || []} subs={subs || []} scheduled={scheduled || []} onOpen={() => { setTab('room'); setSection('menu'); scrollPageToTop() }} art={FuniArt.studyScene(FuniArt.lookFor(me?.look || null, name || 'aid-and-ace', me?.sex || null), me?.feeling || 'Happy', 'rem' + (name || ''))} />
         <StatTrio attendance={attendance || []} marks={marks || []} tests={testPreps || []} />
+        <ThisWeek bookings={bookings || []} subs={subs || []} scheduled={scheduled || []} />
+        <FeelingCard name={name || ''} look={me?.look} sex={me?.sex} feeling={me?.feeling} onChange={f => setMe((m: any) => ({ ...m, feeling: f }))} />
         <XpCard attendance={attendance || []} marks={marks || []} onOpen={() => { setSection('badges'); scrollPageToTop() }} />
         {tier === 'highschool' && !hasSchool && <SchoolCard />}
         {payWaiting}
@@ -1201,7 +1195,6 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
     return (
       <div>
         <Back />
-        <PageTitle title="Messages" sub="Your tutors and support" />
         <StudentChat messages={messages || []} sendMessage={sendMessage} getChatContacts={getChatContacts} myId={actions.userId} />
       </div>
     )
@@ -1353,7 +1346,7 @@ export default function PortalHome(props: any) {
     try { sessionStorage.setItem('portalTab', tab) } catch (e) {}
   }, [tab])
 
-  const current: Tab = tab === 'tutoring' || tab === 'learn' ? 'hub' : tab
+  const current: Tab = tab === 'tutoring' ? 'hub' : tab
   function go(t: Tab) {
     setTab(t)
     setSection(t === 'chat' ? 'chat' : 'menu')
@@ -1362,13 +1355,36 @@ export default function PortalHome(props: any) {
   const items: { id: Tab; label: string; icon: any }[] = [
     { id: 'home', label: 'Home', icon: <Home size={20} /> },
     { id: 'hub', label: 'Hub', icon: <LayoutGrid size={20} /> },
+    { id: 'learn', label: 'Learn', icon: <BookOpen size={20} /> },
     { id: 'room', label: 'Room', icon: <Video size={20} /> },
     { id: 'chat', label: 'Messages', icon: <MessageCircle size={20} /> },
-    { id: 'more', label: 'More', icon: <MoreHorizontal size={20} /> },
   ]
+  const first = (props.name || '').trim().split(' ')[0]
+  const [hi, setHi] = useState('Welcome')
+  useEffect(() => { setHi(greeting()) }, [])
+  const heads: Record<string, [string, string]> = {
+    home: [first ? `${hi}, ${first}!` : `${hi}!`, 'Ready for your session?'],
+    hub: ['Hub', 'Everything in one place'],
+    tutoring: ['Tutoring', 'Sessions, marks and test prep'],
+    learn: ['Learn', 'Notes, practice and videos'],
+    room: ['Room', 'Your live sessions'],
+    chat: ['Messages', 'Your tutors and support'],
+    more: ['More', 'Settings and help'],
+  }
+  const head = heads[current] || heads.home
+  const showHead = section === 'menu' || section === 'chat'
 
   return (
     <div style={{ visibility: ready ? 'visible' : 'hidden' }}>
+      {showHead && (
+        <div className="screen-head">
+          <a className="sh-ava" onClick={() => go('more')} role="button" aria-label="More">
+            <Avatar path={props.avatarPath} name={props.name} size={46} look={props.me?.look} sex={props.me?.sex} feeling={props.me?.feeling} />
+          </a>
+          <div className="sh-t"><b>{head[0]}</b><span>{head[1]}</span></div>
+          <HeaderTools forRole="student" bare />
+        </div>
+      )}
       <PortalInner {...props} section={section} setSection={setSection} tab={tab} setTab={setTab} />
       <TabBarPortal>
         {items.map(i => (

@@ -7,7 +7,7 @@ import NotificationBell from './NotificationBell'
 import Avatar from './Avatar'
 
 // Top bar tools: light/dark switch, notification bell, and the round profile picture.
-export default function HeaderTools({ forRole }: { forRole: 'student' | 'staff' }) {
+export default function HeaderTools({ forRole, bare }: { forRole: 'student' | 'staff'; bare?: boolean }) {
   const [mode, setMode] = useState('light')
   const [path, setPath] = useState<string | null>(null)
   const [name, setName] = useState('')
@@ -41,9 +41,11 @@ export default function HeaderTools({ forRole }: { forRole: 'student' | 'staff' 
         {mode === 'dark' ? <Sun size={22} color="#F3D68A" /> : <Moon size={22} color="var(--purple-dark)" />}
       </button>
       <NotificationBell forRole={forRole} />
-      <Link href="/appearance" aria-label="Profile picture and appearance" style={{ display: 'flex' }}>
-        <Avatar path={path} name={name} size={34} look={me.look} sex={me.sex} />
-      </Link>
+      {!bare && (
+        <Link href="/appearance" aria-label="Profile picture and appearance" style={{ display: 'flex' }}>
+          <Avatar path={path} name={name} size={34} look={me.look} sex={me.sex} />
+        </Link>
+      )}
     </div>
   )
 }
