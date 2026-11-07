@@ -1,11 +1,13 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { PROVINCES } from './AreaSelect'
 import { getMyAreas, addArea, removeArea, getOneOnOne, setOneOnOne, getMySubjects, setMySubjects } from './areaActions'
 
 const COMMON = ['Mathematics', 'Physical Sciences', 'Life Sciences', 'Mathematical Literacy', 'Accounting', 'Business Studies', 'Economics', 'Geography', 'History', 'English', 'Afrikaans']
 
 export default function TutorAreas() {
-  const [areas, setAreas] = useState<{ id: string; name: string }[]>([])
+  const [areas, setAreas] = useState<{ id: string; name: string; province?: string | null }[]>([])
+  const [province, setProvince] = useState('')
   const [text, setText] = useState('')
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
@@ -62,7 +64,7 @@ export default function TutorAreas() {
     if (busy) return
     setBusy(true)
     setMsg('')
-    const r = await addArea(text)
+    const r = await addArea(text, province)
     setMsg(r.message)
     setMsgOk(r.ok)
     if (r.ok) {
@@ -105,7 +107,11 @@ export default function TutorAreas() {
       </label>
       <p className="meta">Add the areas where you can meet students in person. Students will only see these areas when they book a physical session.</p>
 
-      <form onSubmit={handleAdd} style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+      <form onSubmit={handleAdd} style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+        <select value={province} onChange={e => setProvince(e.target.value)} required style={{ flex: '1 1 100%' }}>
+          <option value="">Choose your province</option>
+          {PROVINCES.map(p => <option key={p} value={p}>{p}</option>)}
+        </select>
         <input
           value={text}
           onChange={e => setText(e.target.value)}
@@ -113,7 +119,7 @@ export default function TutorAreas() {
           maxLength={60}
           style={{ flex: 1 }}
         />
-        <button className="btn btn-primary" disabled={busy || !text.trim()} style={{ opacity: busy || !text.trim() ? 0.6 : 1 }}>Add</button>
+        <button className="btn btn-primary" disabled={busy || !text.trim() || !province} style={{ opacity: busy || !text.trim() || !province ? 0.6 : 1 }}>Add</button>
       </form>
 
       {msg && <p className="meta" style={{ marginTop: 8, color: msgOk ? 'var(--purple-dark)' : '#A6443A' }}>{msg}</p>}
@@ -123,7 +129,7 @@ export default function TutorAreas() {
         {!loading && areas.length === 0 && <p className="meta">You have not added an area yet.</p>}
         {areas.map(a => (
           <div className="panel" key={a.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h4 style={{ margin: 0 }}>{a.name}</h4>
+            <div><h4 style={{ margin: 0 }}>{a.name}</h4>{a.province && <div className="meta" style={{ margin: 0 }}>{a.province}</div>}</div>
             <button className="btn" onClick={() => handleRemove(a.id)} disabled={busy} style={{ background: 'none', border: '1px solid var(--ink)' }}>Remove</button>
           </div>
         ))}

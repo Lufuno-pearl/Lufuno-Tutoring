@@ -31,7 +31,8 @@ import TestPrep from './TestPrep'
 import QuestionOfDay from './QuestionOfDay'
 import { StreakCard, CountdownCard, PlanCard, GetStarted, WhatYouGet, PriceStrip, ReferBanner, HelpButton, Hero, QuoteCloud, StatTrio, ReminderBar, XpCard, xpFor, ThisWeek, greeting } from './HomeParts'
 import { daysUntil, whenLabel } from '../TestList'
-import { getAreas } from './actions'
+import { getAreas, getAreaList } from './actions'
+import AreaSelect from '../AreaSelect'
 import StudentChat from './StudentChat'
 import { BADGES, earnedBadges } from '../../lib/xp'
 import { Check, Flame, Star, TrendingUp as TrendIcon, Award, Trophy } from 'lucide-react'
@@ -41,17 +42,13 @@ import { hsPrice, hsSessions, toSessionType, EXTRA_PRICE, EXTRA_MAX, UNI_PRICE, 
 type Section = 'menu' | 'badges' | 'book' | 'packs' | 'chat' | 'history' | 'video' | 'guide' | 'homework' | 'referral' | 'testprep' | 'qotd' | 'marks' | 'school' | 'files'
 type Tab = 'home' | 'hub' | 'tutoring' | 'room' | 'chat' | 'learn' | 'more'
 
-function AreaPicker({ areas, value, onChange, notListedHelp, onChooseOnline }: { areas: string[]; value: string; onChange: (v: string) => void; notListedHelp: string; onChooseOnline?: () => void }) {
+function AreaPicker({ areas, list, value, onChange, notListedHelp, onChooseOnline }: { areas: string[]; list: { name: string; province: string | null }[]; value: string; onChange: (v: string) => void; notListedHelp: string; onChooseOnline?: () => void }) {
   if (areas.length === 0) return null
   const notListed = value === '__none__'
   return (
     <div className="field">
       <label>Which area are you in?</label>
-      <select name={notListed ? undefined : 'area'} value={value} onChange={e => onChange(e.target.value)} required>
-        <option value="">Select your area</option>
-        {areas.map(a => <option key={a} value={a}>{a}</option>)}
-        <option value="__none__">My area is not listed</option>
-      </select>
+      <AreaSelect list={list.length ? list : areas.map(n => ({ name: n }))} value={value} onChange={onChange} />
       {notListed && (
         <div className="panel" style={{ background: '#F3E6C7', marginTop: 8 }}>
           <p style={{ margin: 0, fontWeight: 600 }}>We don't have a tutor in your area yet.</p>
@@ -639,6 +636,7 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
   const [hsGrade, setHsGrade] = useState('')
   const [answered, setAnswered] = useState<string[]>([])
   const [areas, setAreas] = useState<string[]>([])
+  const [areaList, setAreaList] = useState<{ name: string; province: string | null }[]>([])
   const [formError, setFormError] = useState('')
   const [hsType, setHsType] = useState<SessionType>('group')
   const [hsChoice, setHsChoice] = useState('both')
@@ -649,6 +647,7 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
   useEffect(() => {
     if (section === 'book' && areas.length === 0) {
       getAreas().then(a => setAreas(a)).catch(() => {})
+      getAreaList().then(a => setAreaList(a)).catch(() => {})
     }
   }, [section])
   const { createBooking, createHsSub, buyPack, markAwaiting, sendMessage, getChatContacts, requestCustomPack, requestVideoAccess, submitHomework, requestVideoTopic, respondToSession, reportMissedSession, buyExtraSessions } = actions
@@ -721,6 +720,7 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
             {tile('Video lessons', '🎬', 'linear-gradient(135deg, #1FB6A3, #17897B)', () => setSection('video'), 'video')}
             {tile('Question of the day', '💡', 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('qotd'), 'qotd')}
             {tier === 'highschool' && tile('Homework help', '📝', 'linear-gradient(135deg, #E0956F, #C46B3E)', () => setSection('homework'), 'homework')}
+            {tier === 'highschool' && tile('My school', '🏫', 'linear-gradient(135deg, #8B6FD9, #6E4FC7)', () => setSection('school'), 'school')}
             {tile('Badges & level', '🏅', 'linear-gradient(135deg, #C89B3C, #A87D24)', () => setSection('badges'), 'badges')}
             {tile('Refer & earn', '🎁', 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('referral'), 'referral')}
           </div>
@@ -999,7 +999,7 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
               <input type="hidden" name="format" value={hsFormat} />
               <p className="meta" style={{ marginTop: 6 }}>Online and in person cost the same. In-person sessions happen in your area with a tutor who lives nearby. Choose Both and your tutor alternates some sessions in person and some online. On any day you can't come, your tutor can switch that one session to online.</p>
               {(hsFormat === 'physical' || hsFormat === 'both') && (
-                <AreaPicker areas={areas} value={hsArea} onChange={setHsArea} notListedHelp="Online sessions work just as well, so we suggest choosing Online." onChooseOnline={() => { setHsFormat('online'); setHsArea('') }} />
+                <AreaPicker areas={areas} list={areaList} value={hsArea} onChange={setHsArea} notListedHelp="Online sessions work just as well, so we suggest choosing Online." onChooseOnline={() => { setHsFormat('online'); setHsArea('') }} />
               )}
 
               {(() => {
