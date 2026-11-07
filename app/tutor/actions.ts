@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { sendPushToUser, sendPushToRole } from '../../lib/push'
 import { UNI_PRICE, toSessionType } from '../../lib/pricing'
 import { DELIVERY_PROMISE } from '../../lib/examSpecial'
+import { isAdminEmail } from '../../lib/admin'
 
 async function countReferral(supabase: any, studentId: string) {
   const { data: res, error } = await supabase.rpc('count_referral', { p_student: studentId })
@@ -330,4 +331,52 @@ export async function answerModuleRequest(id: string, available: boolean, tutorI
   revalidatePath('/tutor')
   revalidatePath('/portal')
   return { ok: true, message: 'Student told. They can pay now.' }
+}
+
+// Monthly data draw: pick 5 random subscribers once per month and tell them.
+const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December']
+function thisMonthLabel() {
+  const sa = new Date(Date.now() + 2 * 60 * 60 * 1000)
+  return { label: `${MONTH_NAMES[sa.getUTCMonth()]} ${sa.getUTCFullYear()}`, iso: sa.toISOString().slice(0, 7) }
+}
+
+export async function getDataDraw() {
+  const supabase = createClient()
+  const { label } = thisMonthLabel()
+  const { data, error } = await supabase.from('data_draws').select('student_id').eq('month', label)
+  if (error) return { month: label, winners: [] as string[], missing: true }
+  const ids = (data || []).map((r: any) => r.student_id)
+  if (ids.length === 0) return { month: label, winners: [] as string[], missing: false }
+  const { data: profs } = await supabase.from('profiles').select('id, full_name').in('id', ids)
+  return { month: label, winners: ids.map((id: string) => (profs || []).find((p: any) => p.id === id)?.full_name || 'Student'), missing: false }
+}
+
+export async function drawDataWinners() {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, message: 'Please sign in again.' }
+  if (!isAdminEmail(user.email)) return { ok: false, message: 'Only the owners can run the draw.' }
+  const { label, iso } = thisMonthLabel()
+  const existing = await getDataDraw()
+  if (existing.missing) return { ok: false, message: 'Run the data-draw SQL first.' }
+  if (existing.winners.length > 0) return { ok: true, month: label, winners: existing.winners, already: true }
+  const { data: hs } = await supabase.from('hs_subscriptions').select('student_id').eq('status', 'confirmed').eq('month', label)
+  const { data: uni } = await supabase.from('bookings').select('student_id, day').eq('status', 'confirmed')
+  const pool = Array.from(new Set<string>([
+    ...(hs || []).map((r: any) => r.student_id),
+    ...(uni || []).filter((r: any) => String(r.day || '').startsWith(iso)).map((r: any) => r.student_id),
+  ]))
+  if (pool.length === 0) return { ok: false, message: 'No paid subscribers this month yet.' }
+  for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]] }
+  const picked = pool.slice(0, 5)
+  const { error } = await supabase.from('data_draws').insert(picked.map(id => ({ month: label, student_id: id })))
+  if (error) return { ok: false, message: error.message }
+  const message = `You won data this month! Well done for being a subscriber. We will contact you to send it.`
+  for (const id of picked) {
+    await supabase.from('notifications').insert({ student_id: id, for_role: 'student', message })
+    await sendPushToUser(id, 'You won data!', message, '/portal')
+  }
+  revalidatePath('/tutor')
+  const d = await getDataDraw()
+  return { ok: true, month: label, winners: d.winners, already: false }
 }

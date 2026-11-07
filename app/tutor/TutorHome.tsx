@@ -16,6 +16,7 @@ import PacksAdmin from './PacksAdmin'
 import SessionsLog from './SessionsLog'
 import FilesManager from './FilesManager'
 import OwnerOverview, { AttentionItem } from './OwnerOverview'
+import DataDraw from './DataDraw'
 import { useRouter } from 'next/navigation'
 import ScopeFiles from './ScopeFiles'
 import VideoManager from './VideoManager'
@@ -359,6 +360,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
         </div>
         <ClassFeelings items={Object.entries(threadsByStudent || {}).map(([id, t]: any) => ({ id, name: t.name, look: t.look, sex: t.sex, feeling: t.feeling }))} />
         <OwnerOverview stats={overviewStats} week={weekCounts} items={attentionItems} />
+        <DataDraw />
         <QuoteCloud quotes={TUTOR_QUOTES} />
       </div>
     )
