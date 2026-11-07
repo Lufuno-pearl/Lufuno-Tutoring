@@ -166,6 +166,7 @@ async function PartnerDashboardInner() {
       <p className="meta">Signed in as {profile.full_name}</p>
 
       <PartnerHome
+        feelingItems={Object.entries(threads).map(([id, t]: any) => ({ id, name: t.name, look: t.look, sex: t.sex, feeling: t.feeling }))}
         name={profile.full_name || ''}
         avatarPath={avatarPath}
         me={me}

@@ -1,4 +1,5 @@
 'use client'
+import ClassFeelings from '../character/ClassFeelings'
 import { PageTitle, Row, Pill, Tone, NavRow, LevelBrowser } from '../ui'
 import { useState, useEffect, useLayoutEffect } from 'react'
 import GroupSchedule from '../GroupSchedule'
@@ -347,6 +348,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
             </div>
           ))}
         </div>
+        <ClassFeelings items={Object.entries(threadsByStudent || {}).map(([id, t]: any) => ({ id, name: t.name, look: t.look, sex: t.sex, feeling: t.feeling }))} />
         <OwnerOverview stats={overviewStats} week={weekCounts} items={attentionItems} />
         <QuoteCloud quotes={TUTOR_QUOTES} />
       </div>
