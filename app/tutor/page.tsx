@@ -2,7 +2,7 @@ import { attachLooks } from '../../lib/studentLooks'
 import Link from 'next/link'
 import { createClient } from '../../lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { answerModuleRequest, confirmPayment, setMeetingLink, assignTutor, markAttendance, sendTutorMessage, toggleAvailable, claim, setCustomPackLink, markHomeworkSolved, setVideoTopicLink } from './actions'
+import { answerModuleRequest, confirmPayment, rejectPayment, setMeetingLink, assignTutor, markAttendance, sendTutorMessage, toggleAvailable, claim, setCustomPackLink, markHomeworkSolved, setVideoTopicLink } from './actions'
 import { signOut } from '../portal/actions'
 import TutorHome from './TutorHome'
 import HeaderTools from '../HeaderTools'
@@ -185,7 +185,7 @@ export default async function TutorDashboard() {
         marksByStudent={marksByStudent}
         schoolByStudent={schoolByStudent}
         scheduleByStudent={scheduleByStudent}
-        actions={{ signOut, answerModuleRequest, confirmPayment, setMeetingLink, assignTutor, markAttendance, sendTutorMessage, toggleAvailable, claim, setCustomPackLink, markHomeworkSolved, setVideoTopicLink }}
+        actions={{ signOut, answerModuleRequest, confirmPayment, rejectPayment, setMeetingLink, assignTutor, markAttendance, sendTutorMessage, toggleAvailable, claim, setCustomPackLink, markHomeworkSolved, setVideoTopicLink }}
       />
     </div>
   )
