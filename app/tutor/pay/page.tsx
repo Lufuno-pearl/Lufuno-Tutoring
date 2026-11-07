@@ -4,6 +4,7 @@ import { createClient } from '../../../lib/supabase/server'
 import { isAdminEmail } from '../../../lib/admin'
 import { TUTOR_SHARE } from './calc'
 import { loadPay, LEVELS } from './load'
+import Avatar from '../../Avatar'
 import { money, shiftMonth, monthLabel, pickMonth, shortName } from './util'
 
 const r2 = (n: number) => Math.round(n * 100) / 100
@@ -45,21 +46,25 @@ export default async function TutorPayPage({ searchParams }: { searchParams: { m
       <Link href="/tutor" className="meta" style={{ color: 'var(--purple-dark)', fontWeight: 600 }}>&larr; Back to dashboard</Link>
       <h2 style={{ marginTop: 12 }}>Tutor pay</h2>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
-        <Link href={`/tutor/pay?month=${shiftMonth(month, -1)}`} className="btn" style={{ background: 'none', border: '1px solid var(--ink)' }}>&larr;</Link>
+      <div className="pay-month">
+        <Link href={`/tutor/pay?month=${shiftMonth(month, -1)}`} aria-label="Previous month">&lsaquo;</Link>
         <strong>{monthLabel(month)}</strong>
-        <Link href={`/tutor/pay?month=${shiftMonth(month, 1)}`} className="btn" style={{ background: 'none', border: '1px solid var(--ink)' }}>&rarr;</Link>
+        <Link href={`/tutor/pay?month=${shiftMonth(month, 1)}`} aria-label="Next month">&rsaquo;</Link>
       </div>
 
-      <div className="panel">
-        <div className="meta">Total owed to tutors (high school + varsity)</div>
-        <div style={{ fontSize: '1.8rem', fontWeight: 700 }}>{money(allOwed)}</div>
-        <div className="meta" style={{ marginBottom: 0 }}>App share {money(allShare)} · Still to pay {money(allLeft)}</div>
+      <div className="pay-hero">
+        <small>Total owed to tutors</small>
+        <div className="pay-big">{money(allOwed)}</div>
+        <div className="pay-minis">
+          <div className="t-mint-bg"><b>{money(allLeft)}</b><span>Still to pay</span></div>
+          <div className="t-lav-bg"><b>{money(r2(allOwed - allLeft))}</b><span>Paid out</span></div>
+          <div className="t-butter-bg"><b>{money(allShare)}</b><span>App share</span></div>
+        </div>
       </div>
 
       {sections.map(sec => (
         <div key={sec.id} style={{ marginTop: 22 }}>
-          <h3 style={{ marginBottom: 8 }}>{sec.label}</h3>
+          <div className="sec-title">{sec.label}</div>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             <div className="panel" style={{ flex: '1 1 130px', margin: '0 0 12px' }}>
               <div className="meta">Collected</div>
@@ -79,19 +84,16 @@ export default async function TutorPayPage({ searchParams }: { searchParams: { m
             const paid = paidMap[t.tutorId + '|' + sec.id]
             return (
               <Link key={t.tutorId} href={`/tutor/pay/${t.tutorId}?month=${month}&level=${sec.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                <div className="panel" style={{ cursor: 'pointer' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12 }}>
-                    <div>
-                      <h4 style={{ margin: 0 }}>{t.name}</h4>
-                      <div className="meta" style={{ marginBottom: 0 }}>{t.sessions} paid session{t.sessions === 1 ? '' : 's'} · {t.students} student{t.students === 1 ? '' : 's'}</div>
-                    </div>
-                    <div style={{ fontSize: '1.2rem', fontWeight: 700, whiteSpace: 'nowrap' }}>{money(t.total)} ›</div>
-                  </div>
-                  <div style={{ marginTop: 8 }}>
+                <div className="panel pay-row">
+                  <Avatar name={t.name} size={44} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <h4 style={{ margin: 0 }}>{t.name}</h4>
+                    <div className="meta" style={{ margin: '0 0 6px' }}>{t.sessions} paid session{t.sessions === 1 ? '' : 's'} · {t.students} student{t.students === 1 ? '' : 's'}</div>
                     {paid
-                      ? <span className="status confirmed">Paid {new Date(paid.paid_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' })} ✓</span>
-                      : <span className="status pending">Not paid yet</span>}
+                      ? <span className="ss-pill mint">Paid {new Date(paid.paid_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' })} ✓</span>
+                      : <span className="ss-pill warn">Not paid yet</span>}
                   </div>
+                  <div className="pay-amt">{money(t.total)} &rsaquo;</div>
                 </div>
               </Link>
             )
