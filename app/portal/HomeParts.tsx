@@ -155,7 +155,7 @@ export function StatTrio({ attendance, marks, tests }: { attendance: any[]; mark
 }
 
 // A small reminder for the next session. Tapping it opens the Room tab.
-export function ReminderBar({ bookings, subs, scheduled, onOpen }: { bookings: any[]; subs: any[]; scheduled: any[]; onOpen: () => void }) {
+export function ReminderBar({ bookings, subs, scheduled, onOpen, art }: { bookings: any[]; subs: any[]; scheduled: any[]; onOpen: () => void; art?: string }) {
   const [now, setNow] = useState<Date | null>(null)
   useEffect(() => { setNow(new Date()); const t = setInterval(() => setNow(new Date()), 30000); return () => clearInterval(t) }, [])
   if (!now) return null
@@ -174,12 +174,13 @@ export function ReminderBar({ bookings, subs, scheduled, onOpen }: { bookings: a
   const title = mins <= 0 ? `${next.subject} is on now` : mins < 90 ? `${next.subject} starts in ${mins} min` : dayDiff === 0 ? `${next.subject} today at ${time}` : dayDiff === 1 ? `${next.subject} tomorrow at ${time}` : `${next.subject} on ${next.at.toLocaleDateString('en-ZA', { weekday: 'long', day: 'numeric', month: 'short' })}`
   return (
     <div className="remind" onClick={onOpen} role="button">
-      <CapBuddy size={46} />
       <div style={{ flex: 1, minWidth: 0 }}>
+        <div className="remind-k">NEXT SESSION</div>
         <div className="remind-t">{title}</div>
-        <div className="meta" style={{ margin: 0 }}>{mins < 90 ? `At ${time} · open Room to join` : 'Open Room for details'}</div>
+        <div className="meta" style={{ margin: '0 0 10px' }}>{mins < 90 ? `At ${time}` : 'Open Room for details'}</div>
+        <span className="remind-btn">Join in Room</span>
       </div>
-      <ChevronRight size={20} color="#7A5FD0" />
+      {art ? <div className="remind-art" dangerouslySetInnerHTML={{ __html: art }} /> : <CapBuddy size={46} />}
     </div>
   )
 }
@@ -372,7 +373,7 @@ export function QuoteCloud({ quotes }: { quotes?: string[] }) {
   )
 }
 
-function greeting() {
+export function greeting() {
   const h = new Date(Date.now() + 2 * 60 * 60 * 1000).getUTCHours()
   return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening'
 }
@@ -413,6 +414,40 @@ export function XpCard({ attendance, marks, onOpen }: { attendance: any[]; marks
         <div className="meta" style={{ margin: '4px 0 0', color: '#7A5FD0', fontWeight: 700 }}>See my badges</div>
       </div>
       <ChevronRight size={20} color="#7A5FD0" />
+    </div>
+  )
+}
+
+// The week at a glance, like the demo: day pill, subject, and Done / Today / Booked.
+export function ThisWeek({ bookings, subs, scheduled }: { bookings: any[]; subs: any[]; scheduled: any[] }) {
+  const [now, setNow] = useState<Date | null>(null)
+  useEffect(() => { setNow(new Date()) }, [])
+  if (!now) return null
+  const ends = (subs || []).filter(s => s.status === 'confirmed' && s.end_date).map(s => String(s.end_date)).sort()
+  const windowEnd = ends.length ? ends[ends.length - 1] : null
+  const items: { subject: string; at: Date }[] = []
+  ;(bookings || []).filter(b => b.status === 'confirmed' && b.day && b.time).forEach(b => items.push({ subject: b.subject, at: new Date(`${b.day}T${b.time}`) }))
+  ;(scheduled || []).filter(r => !windowEnd || r.session_date <= windowEnd).forEach(r => items.push({ subject: r.subject, at: new Date(`${r.session_date}T${String(r.session_time).slice(0, 5)}`) }))
+  const startOf = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime()
+  const today = startOf(now)
+  const dow = (now.getDay() + 6) % 7
+  const weekStart = today - dow * 86400000
+  const week = items.filter(x => !isNaN(x.at.getTime()) && startOf(x.at) >= weekStart && startOf(x.at) < weekStart + 7 * 86400000).sort((a, b) => a.at.getTime() - b.at.getTime())
+  if (week.length === 0) return null
+  return (
+    <div className="panel">
+      <div className="week-h"><b>This week</b><span className="pill-n">{week.length} booked</span></div>
+      {week.map((w, i) => {
+        const d = startOf(w.at)
+        const st = d < today ? 'Done' : d === today ? 'Today' : 'Booked'
+        return (
+          <div key={i} className="week-row">
+            <span className="week-day">{w.at.toLocaleDateString('en-ZA', { weekday: 'short' })}</span>
+            <span className="week-sub">{w.subject}</span>
+            <span className="week-st">{st}</span>
+          </div>
+        )
+      })}
     </div>
   )
 }

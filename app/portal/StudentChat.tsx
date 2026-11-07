@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { ChatBubble, ReplyBar, Composer, useHidden } from '../ChatParts'
+import Avatar from '../Avatar'
 
 type Contact = { id: string; name: string; kind: string }
 
@@ -30,9 +31,12 @@ export default function StudentChat({ messages, sendMessage, getChatContacts, my
         {[...owners, ...tutors].map(c => {
           const last = msgsFor(c.id).slice(-1)[0]
           return (
-            <div key={c.id} className="panel" style={{ cursor: 'pointer' }} onClick={() => setWithId(c.id)}>
-              <h4>{c.name}{c.kind === 'tutor' ? ' (tutor)' : ''}</h4>
-              <div className="meta" style={{ marginBottom: 0 }}>{last ? (last.body.length > 60 ? last.body.slice(0, 60) + '…' : last.body) : sub(c)}</div>
+            <div key={c.id} className="srow-chat" onClick={() => setWithId(c.id)}>
+              <Avatar name={c.name} size={44} />
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <b>{c.name}{c.kind === 'tutor' ? ' (tutor)' : ''}</b>
+                <span>{last ? (last.body.length > 50 ? last.body.slice(0, 50) + '…' : last.body) : sub(c)}</span>
+              </div>
             </div>
           )
         })}
@@ -59,8 +63,11 @@ export default function StudentChat({ messages, sendMessage, getChatContacts, my
 
   return (
     <div>
-      <div className="meta" style={{ cursor: 'pointer', marginBottom: 12, color: 'var(--purple-dark)', fontWeight: 600 }} onClick={() => { setWithId(null); setReplyTo(null) }}>&larr; All messages</div>
-      <h3 style={{ marginTop: 0 }}>{who.name}</h3>
+      <div className="chat-top" onClick={() => { setWithId(null); setReplyTo(null) }}>
+        <span className="chat-back">&larr;</span>
+        <Avatar name={who.name} size={34} />
+        <b>{who.name}</b>
+      </div>
       <div className="chat-pane">
         {list.length === 0 && <p className="meta">No messages yet. Say hello.</p>}
         {list.map((m: any) => (

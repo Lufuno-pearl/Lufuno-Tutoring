@@ -555,3 +555,47 @@ nav .brand,.brand{color:#5B3FC4 !important;font-family:'Nunito',sans-serif !impo
 .t-mint-bg{background:#DDF3EA}.t-lav-bg{background:#EDE6FF}.t-butter-bg{background:#FFF1D2}
 .pay-row{display:flex;align-items:center;gap:12px;cursor:pointer}
 .pay-amt{font-weight:800;font-size:1.05rem;white-space:nowrap;color:#241B3F}
+
+/* ===== DEMO EXACT (keep this block last): no colours, slim header, small chat ===== */
+.screen-head{display:flex;align-items:center;gap:12px;margin:2px 0 14px}
+.screen-head .sh-ava{display:block;flex:none;cursor:pointer;border-radius:50%}
+.screen-head .sh-t{flex:1;min-width:0;display:flex;flex-direction:column}
+.screen-head .sh-t b{font-family:'Nunito',sans-serif;font-size:1.2rem;font-weight:800;line-height:1.15}
+.screen-head .sh-t span{font-size:.8rem;color:#6E6890}
+.owner-link{font-size:.74rem;font-weight:800;color:#6E4FD0;background:#EDE6FF;border-radius:999px;padding:5px 11px;text-decoration:none}
+/* tiles: white card, one plain icon square, no colour at all */
+.card-grid .tile,.card-grid .tile:nth-child(n){background:var(--card) !important;border:1px solid #E7E0F5 !important;border-radius:18px !important;box-shadow:none !important;min-height:0 !important;padding:12px 4px 10px !important;gap:7px !important;align-items:center !important;justify-content:flex-start !important;overflow:visible !important}
+.card-grid .tile:nth-child(n) .tile-art,.card-grid .tile .tile-art{background:none !important;height:auto !important;margin:0 !important;padding:0 !important;border-radius:0 !important;width:auto !important;justify-content:center !important}
+.card-grid .tile:nth-child(n) .tile-art svg,.card-grid .tile .tile-art svg{width:42px !important;height:42px !important;padding:10px !important;border-radius:13px !important;background:rgba(117,86,219,.10) !important;color:#6E4FD0 !important;stroke:#6E4FD0 !important;filter:none !important}
+.card-grid .tile .tile-body{padding:0 4px !important}
+.card-grid .tile .tile-body .name{color:var(--ink) !important;font-size:.74rem !important;font-weight:800 !important;text-align:center}
+.circle-card + .btn,.circle-card + button.btn{background:#7556DB !important;color:#fff !important;border-radius:14px !important}
+/* next session card: art on the right + join pill */
+.remind{align-items:center;overflow:hidden}
+.remind-k{font-size:.7rem;font-weight:800;letter-spacing:.06em;color:rgba(255,255,255,.85);margin-bottom:2px}
+.remind-btn{display:inline-block;background:#1b1530;color:#fff;border-radius:12px;padding:8px 14px;font-weight:800;font-size:.84rem}
+.remind-art{flex:none;width:104px;height:104px;border-radius:18px;overflow:hidden;background:rgba(255,255,255,.18)}
+.remind-art svg{width:100%;height:100%;display:block}
+.week-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.week-h b{font-size:1.02rem;font-weight:800}
+.pill-n{background:#EDE6FF;color:#6E4FD0;border-radius:999px;padding:3px 9px;font-size:.72rem;font-weight:800}
+.week-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid #EFE9FA}
+.week-day{background:#EDE6FF;color:#6E4FD0;border-radius:999px;padding:3px 10px;font-size:.74rem;font-weight:800;min-width:44px;text-align:center}
+.week-sub{flex:1;min-width:0;font-weight:700;font-size:.9rem}
+.week-st{font-size:.8rem;color:#6E6890}
+/* messages: small bubbles, no big white box */
+.chat-pane{background:transparent !important;box-shadow:none !important;padding:4px 0 !important;border-radius:0 !important}
+.cb{width:100%}
+.cb-line{width:100%}
+.cb-me .cb-line{justify-content:flex-end}
+.cb-bubble{font-size:.86rem !important;padding:8px 12px !important;border-radius:16px !important;line-height:1.35 !important;min-width:0;width:fit-content;max-width:80% !important}
+.cb-me .cb-line .cb-bubble,.cb-line .cb-bubble{max-width:80% !important}
+.cb-time{font-size:.62rem !important}
+.chat-top{display:flex;align-items:center;gap:10px;margin:0 0 10px;cursor:pointer}
+.chat-top b{font-size:1rem;font-weight:800}
+.chat-back{font-size:1.2rem;color:#6E4FD0;font-weight:800}
+.srow-chat{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid #E7E0F5;border-radius:18px;padding:10px 12px;margin-bottom:8px;cursor:pointer}
+.srow-chat > div{display:flex;flex-direction:column}
+.srow-chat b{font-size:.92rem}
+.srow-chat span{font-size:.78rem;color:#6E6890;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.composer{box-shadow:none !important;border:1px solid #E7E0F5}
