@@ -1,4 +1,5 @@
 'use client'
+import ClassFeelings from '../character/ClassFeelings'
 import { PageTitle, NavRow } from '../ui'
 import FilesManager from '../tutor/FilesManager'
 import { useState, useEffect, useLayoutEffect, ReactNode } from 'react'
@@ -21,6 +22,7 @@ type Props = {
   name: string
   avatarPath?: string | null
   me?: any
+  feelingItems?: any[]
   streakRows?: any[]
   monthSessions?: number
   today: TodaySession[]
@@ -56,7 +58,7 @@ function tabOf(section: Section): Tab | null {
 const SECTIONS: Section[] = ['menu', 'schedule', 'availability', 'open', 'requests', 'students', 'videos', 'areas', 'tests', 'files']
 const TABS: Tab[] = ['home', 'students', 'requests', 'room', 'manage']
 
-export default function PartnerHome({ avatarPath, me, streakRows, monthSessions, markedToday, markAttendance, name, today, openCount, requestCount, studentCount, testCount, tests, availability, open, requests, students, videos, areas }: Props) {
+export default function PartnerHome({ avatarPath, me, feelingItems, streakRows, monthSessions, markedToday, markAttendance, name, today, openCount, requestCount, studentCount, testCount, tests, availability, open, requests, students, videos, areas }: Props) {
   const [section, setSection] = useState<Section>('menu')
   const [tab, setTab] = useState<Tab>('home')
   const [ready, setReady] = useState(false)
@@ -126,7 +128,7 @@ export default function PartnerHome({ avatarPath, me, streakRows, monthSessions,
     body = (
       <div>
         <PageTitle title="Room" />
-        <p className="meta">Pick a subject group, paste ONE link for the whole subject, and start. Only those students see Join.</p>
+        <p className="meta">Choose the subject, then Group, One-on-one or Physical. Only those students see Join.</p>
         <RoomPanel />
       </div>
     )
@@ -155,6 +157,7 @@ export default function PartnerHome({ avatarPath, me, streakRows, monthSessions,
         <Hero name={name} avatarPath={avatarPath} me={me} />
         <StreakCard attendance={streakRows || []} mode="tutor" />
         <InstallButton hideWhenInstalled />
+        <ClassFeelings items={feelingItems || []} onOpen={() => setSection('students')} />
         <div className="fstats">
           <div className="fstat f1"><div className="fic"><UsersIcon size={22} color="#fff" /></div><div><small>My students</small><div className="n">{studentCount}</div></div></div>
           <div className="fstat f2"><div className="fic"><Check size={22} color="#fff" /></div><div><small>Sessions this month</small><div className="n">{monthSessions || 0}</div></div></div>
