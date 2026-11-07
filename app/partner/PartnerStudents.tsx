@@ -6,6 +6,7 @@ import { NavRow } from '../ui'
 import AttendanceButtons from '../AttendanceButtons'
 import MarksView from '../MarksView'
 import { ChatBubble, ReplyBar, Composer, useHidden } from '../ChatParts'
+import { hsSessions, toSessionType } from '../../lib/pricing'
 import ScheduleManager, { studentFormat, studentAlternate, classmatesOf, isGroupStudent } from '../ScheduleManager'
 
 function subjectLabel(choice?: string) {
@@ -83,11 +84,26 @@ export default function PartnerStudents({ allSubs, scheduleByStudent, marksByStu
           <div className="meta">{b.subject} — {b.day} {b.time} · {b.format === 'physical' ? 'Physical' : 'Online'}</div>
         </div>
       ))}
-      {subsHere.map((s: any) => (
-        <div key={s.id} style={{ marginBottom: 8 }}>
-          <div className="meta">{s.month} — {subjectLabel(s.subject_choice)}{s.extra_subject ? ` + ${s.extra_subject}` : ''}{s.grade ? ` · Gr ${s.grade}` : ''} · {s.format === 'physical' ? 'Physical' : 'Online'}</div>
-        </div>
-      ))}
+      {subsHere.map((s: any) => {
+        // paid sessions are the ones marked present or absent inside this plan's dates, up to what the plan includes
+        const included = hsSessions(s.subject_choice, toSessionType(s.session_type))
+        const used = s.start_date && s.end_date
+          ? (attendanceByStudent[sid] || []).filter((a: any) => (a.status === 'present' || a.status === 'absent') && a.student_response !== 'no' && a.session_date >= s.start_date && a.session_date <= s.end_date).length
+          : 0
+        const full = used >= included
+        return (
+          <div key={s.id} style={{ marginBottom: 8 }}>
+            <div className="meta" style={{ marginBottom: 4 }}>{s.month} — {subjectLabel(s.subject_choice)}{s.extra_subject ? ` + ${s.extra_subject}` : ''}{s.grade ? ` · Gr ${s.grade}` : ''} · {s.format === 'physical' ? 'Physical' : 'Online'}</div>
+            {s.start_date && s.end_date && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span className={`ss-pill ${full ? 'warn' : 'lav'}`}>{Math.min(used, included)} of {included} paid sessions used</span>
+                {used > included && <span className="meta" style={{ margin: 0 }}>{used - included} over the limit, not paid</span>}
+                {full && used <= included && <span className="meta" style={{ margin: 0 }}>Plan is full</span>}
+              </div>
+            )}
+          </div>
+        )
+      })}
       <div className="chat-pane">
         {(thread.msgs || []).length === 0 && <p className="meta">No messages yet.</p>}
         {(thread.msgs || []).filter((m: any) => !hidden.includes(m.id)).map((m: any) => (
