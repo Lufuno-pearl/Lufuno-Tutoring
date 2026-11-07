@@ -7,13 +7,14 @@ import AttendanceButtons from '../AttendanceButtons'
 import MarksView from '../MarksView'
 import { ChatBubble, ReplyBar, Composer, useHidden } from '../ChatParts'
 import { hsSessions, toSessionType } from '../../lib/pricing'
+import { FuniArt } from '../avatarArt'
 import ScheduleManager, { studentFormat, studentAlternate, classmatesOf, isGroupStudent } from '../ScheduleManager'
 
 function subjectLabel(choice?: string) {
   return choice === 'maths' ? 'Mathematics' : choice === 'physics' ? 'Physical Sciences' : 'Maths & Physical Sciences'
 }
 
-export default function PartnerStudents({ allSubs, scheduleByStudent, marksByStudent, myStudentIds, threads, bookingsByStudent, subsByStudent, attendanceByStudent, actions }: any) {
+export default function PartnerStudents({ feelingsByStudent, allSubs, scheduleByStudent, marksByStudent, myStudentIds, threads, bookingsByStudent, subsByStudent, attendanceByStudent, actions }: any) {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [text, setText] = useState('')
@@ -79,6 +80,20 @@ export default function PartnerStudents({ allSubs, scheduleByStudent, marksByStu
     <div>
       <div className="meta" style={{ cursor: 'pointer', marginBottom: 16, color: 'var(--purple-dark)', fontWeight: 600 }} onClick={() => setSelectedId(null)}>&larr; Back to students</div>
       <h3>{thread.name}</h3>
+      {(feelingsByStudent?.[sid] || []).length > 0 && (
+        <div style={{ margin: '4px 0 12px' }}>
+          <div className="meta" style={{ margin: '0 0 6px', fontWeight: 700 }}>How they have felt lately</div>
+          <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 4 }}>
+            {(feelingsByStudent[sid] || []).slice(0, 10).map((f: any, i: number) => (
+              <div key={i} style={{ textAlign: 'center', flex: '0 0 auto', width: 54 }}>
+                <span className="art-box" style={{ width: 38, height: 38, display: 'block', margin: '0 auto' }} dangerouslySetInnerHTML={{ __html: FuniArt.feelingSVG(f.feeling) }} />
+                <div style={{ fontSize: '.62rem', fontWeight: 700, lineHeight: 1.2 }}>{f.feeling}</div>
+                <div className="meta" style={{ fontSize: '.6rem', margin: 0 }}>{new Date(f.created_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' })}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       {bookingsHere.map((b: any) => (
         <div key={b.id} style={{ marginBottom: 8 }}>
           <div className="meta">{b.subject} — {b.day} {b.time} · {b.format === 'physical' ? 'Physical' : 'Online'}</div>

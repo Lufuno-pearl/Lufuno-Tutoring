@@ -105,6 +105,12 @@ async function PartnerDashboardInner() {
     })
     await attachLooks(supabase, threads)
   }
+  // how each student has felt lately (feeling-log.sql); empty before that SQL is run
+  const feelingsByStudent: Record<string, { feeling: string; created_at: string }[]> = {}
+  if (myStudentIds.length > 0) {
+    const { data: fl } = await supabase.from('feeling_log').select('student_id, feeling, created_at').in('student_id', myStudentIds).gte('created_at', new Date(Date.now() - 30 * 86400000).toISOString()).order('created_at', { ascending: false }).limit(600)
+    ;(fl || []).forEach((r: any) => { (feelingsByStudent[r.student_id] = feelingsByStudent[r.student_id] || []).push(r) })
+  }
 
   const bookingsByStudent: Record<string, any[]> = {}
   ;(myBookings || []).forEach(b => {
@@ -183,6 +189,7 @@ async function PartnerDashboardInner() {
             scheduleByStudent={scheduleByStudent}
             myStudentIds={myStudentIds}
             threads={threads}
+            feelingsByStudent={feelingsByStudent}
             bookingsByStudent={bookingsByStudent}
             subsByStudent={subsByStudent}
             attendanceByStudent={attendanceByStudent}

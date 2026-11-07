@@ -496,3 +496,62 @@ html:is([data-bg="black"],[data-bg="white"],[data-bg="ocean"],[data-bg="forest"]
 .cb-me .cb-line .cb-bubble{max-width:100%}
 .attach-row{display:flex;align-items:center;gap:10px;background:var(--t-lav,#EDE6FF);color:#6E4FD0;border-radius:14px;padding:12px;font-weight:700;cursor:pointer;margin:0}
 .attach-row.has{background:#DDF3EA;color:#2E8A66}
+
+/* ===== FINAL: match the approved Funi-style demo (keep this block last) ===== */
+body,button,input,select,textarea{font-family:'Nunito','Inter',system-ui,sans-serif;}
+h1,h2,h3,h4,.hero-hi{font-family:'Nunito','Inter',system-ui,sans-serif;font-weight:800;}
+/* top bar: light, no purple slab */
+nav{background:transparent !important;box-shadow:none !important;padding:10px 0 !important;}
+nav .brand,.brand{color:#5B3FC4 !important;font-family:'Nunito',sans-serif !important;font-weight:800;}
+/* greeting row instead of the big peach card */
+.hero{background:none !important;box-shadow:none !important;border-radius:0 !important;padding:2px 2px 6px !important;color:inherit !important;margin-bottom:10px !important;}
+.hero > svg{display:none !important;}
+.hero-hi{font-size:1.25rem !important;color:var(--ink) !important;}
+.hero-sub{color:#6E6890 !important;font-size:.82rem !important;}
+.hero-slogan{display:none !important;}
+/* next session reminder = the purple card */
+.remind{background:#7556DB !important;border:0 !important;border-radius:24px !important;box-shadow:0 8px 22px rgba(117,86,219,.28) !important;padding:16px !important;}
+.remind-t{color:#fff !important;font-size:1.05rem !important;}
+.remind .meta{color:rgba(255,255,255,.85) !important;}
+.remind svg:last-child{color:#fff;stroke:#fff;}
+/* three small tinted numbers */
+.fstats{grid-template-columns:repeat(3,1fr) !important;gap:8px !important;}
+.fstat{flex-direction:column;gap:2px !important;padding:10px !important;border-radius:16px !important;box-shadow:none !important;}
+.fstat .fic{display:none !important;}
+.fstat small{font-size:.68rem !important;order:2;opacity:.85;}
+.fstat .n{font-size:1.3rem !important;order:1;}
+.fstat .s{display:none;}
+.fstat > div{display:flex;flex-direction:column;}
+/* panels and cards: white, soft border */
+.panel{background:var(--card);border:1px solid #E7E0F5 !important;border-radius:22px !important;box-shadow:0 6px 22px rgba(117,86,219,.10) !important;}
+/* tiles: white card, pastel icon square, label under it */
+.card-grid{grid-template-columns:repeat(3,1fr) !important;gap:9px !important;margin-bottom:14px !important;}
+.card-grid .tile{background:var(--card) !important;border:1px solid #E7E0F5 !important;border-radius:18px !important;box-shadow:0 6px 22px rgba(117,86,219,.12) !important;min-height:0 !important;align-items:center !important;justify-content:flex-start !important;padding:12px 4px 10px !important;gap:7px;--tb:#EDE6FF;--tf:#6E4FD0;}
+.card-grid .tile:nth-child(6n+2){--tb:#FFE7DD;--tf:#C2573A;}
+.card-grid .tile:nth-child(6n+3){--tb:#DDF3EA;--tf:#2E8A66;}
+.card-grid .tile:nth-child(6n+4){--tb:#FFE2EE;--tf:#B8416F;}
+.card-grid .tile:nth-child(6n+5){--tb:#FFF1D2;--tf:#A87A12;}
+.card-grid .tile:nth-child(6n+6){--tb:#E2E8FF;--tf:#4659BC;}
+.card-grid .tile-art{padding:0 !important;margin:0 !important;width:auto !important;height:auto !important;justify-content:center !important;background:none !important;}
+.card-grid .tile-art svg{width:42px !important;height:42px !important;padding:10px !important;border-radius:13px !important;background:var(--tb) !important;color:var(--tf) !important;stroke:var(--tf) !important;}
+.card-grid .tile-art span{width:42px;height:42px;border-radius:13px;background:var(--tb);display:flex;align-items:center;justify-content:center;font-size:1.3rem !important;filter:none !important;}
+.card-grid .tile-body{padding:0 4px !important;text-align:center;}
+.card-grid .tile-body .name{font-size:.74rem !important;line-height:1.2;color:var(--ink) !important;font-weight:800;}
+.card-grid .tile-body .meta{font-size:.62rem !important;}
+/* tab bar: white with a lilac pill on the active tab */
+.tabbar{background:#fff !important;}
+.tabbar button.active{background:transparent !important;color:#6E4FD0 !important;}
+.tabbar button.active svg{stroke:#6E4FD0;}
+.sec-title{font-family:'Nunito',sans-serif;}
+/* tutor pay (demo style) */
+.pay-month{display:flex;align-items:center;justify-content:center;gap:18px;margin:6px 0 14px}
+.pay-month a{width:38px;height:38px;border-radius:50%;background:#fff;border:1px solid #E7E0F5;display:grid;place-items:center;font-size:1.4rem;color:#6E4FD0;text-decoration:none}
+.pay-hero{background:#7556DB;color:#fff;border-radius:24px;padding:16px;margin-bottom:14px;box-shadow:0 8px 22px rgba(117,86,219,.28)}
+.pay-hero small{opacity:.85;font-weight:700;font-size:.74rem;letter-spacing:.05em;text-transform:uppercase}
+.pay-big{font-size:2rem;font-weight:800;line-height:1.1;margin:2px 0 12px}
+.pay-minis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.pay-minis div{border-radius:14px;padding:8px 10px;display:flex;flex-direction:column;color:#241B3F}
+.pay-minis b{font-size:.98rem;line-height:1.15}.pay-minis span{font-size:.68rem;font-weight:700;opacity:.8}
+.t-mint-bg{background:#DDF3EA}.t-lav-bg{background:#EDE6FF}.t-butter-bg{background:#FFF1D2}
+.pay-row{display:flex;align-items:center;gap:12px;cursor:pointer}
+.pay-amt{font-weight:800;font-size:1.05rem;white-space:nowrap;color:#241B3F}

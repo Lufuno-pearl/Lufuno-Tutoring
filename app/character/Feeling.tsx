@@ -20,7 +20,12 @@ export default function FeelingCard({ name, look, sex, feeling, onChange }: { na
     if (data.user) {
       const { error } = await supabase.from('profiles').update({ feeling: f, feeling_at: new Date().toISOString() }).eq('id', data.user.id)
       if (error) setNote('Could not save that. Please try again.')
-      else { onChange(f); setNote(f === 'Need help' || f === 'Confused' ? 'Your tutor can see this before class.' : 'Saved.') }
+      else {
+        // history for tutors; ignored if feeling-log.sql has not been run yet
+        await supabase.from('feeling_log').insert({ student_id: data.user.id, feeling: f })
+        onChange(f)
+        setNote(f === 'Need help' || f === 'Confused' ? 'Your tutor can see this before class.' : 'Saved.')
+      }
     }
     setBusy(false)
   }
