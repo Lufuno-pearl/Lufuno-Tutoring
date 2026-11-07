@@ -1,7 +1,8 @@
 'use client'
 import { PageTitle } from '../ui'
 import { useState, useEffect } from 'react'
-import { getAreas, getModuleCatalogue, addModule, requestModuleTutoring } from './actions'
+import AreaSelect from '../AreaSelect'
+import { getAreas, getAreaList, getModuleCatalogue, addModule, requestModuleTutoring } from './actions'
 import { UNI_PRICE, GROUP_MAX, SessionType } from '../../lib/pricing'
 
 type Mod = { id: string; university: string; year: number; field: string; name: string; code: string | null }
@@ -38,6 +39,7 @@ function statusText(status: string) {
 export default function ModuleFinder({ moduleRequests }: { moduleRequests: any[] }) {
   const [mods, setMods] = useState<Mod[]>([])
   const [areas, setAreas] = useState<string[]>([])
+  const [areaList, setAreaList] = useState<{ name: string; province: string | null }[]>([])
   const [uniSel, setUniSel] = useState('')
   const [uniText, setUniText] = useState('')
   const [year, setYear] = useState('')
@@ -63,6 +65,7 @@ export default function ModuleFinder({ moduleRequests }: { moduleRequests: any[]
   useEffect(() => {
     loadMods()
     getAreas().then(a => setAreas(a)).catch(() => {})
+    getAreaList().then(a => setAreaList(a)).catch(() => {})
   }, [])
 
   const uni = uniSel === OTHER ? uniText.trim() : uniSel
@@ -224,11 +227,7 @@ export default function ModuleFinder({ moduleRequests }: { moduleRequests: any[]
           {format === 'physical' && areas.length > 0 && (
             <div className="field">
               <label>Which area are you in?</label>
-              <select value={area} onChange={e => setArea(e.target.value)}>
-                <option value="">Select your area</option>
-                {areas.map(a => <option key={a} value={a}>{a}</option>)}
-                <option value={NONE}>My area is not listed</option>
-              </select>
+              <AreaSelect list={areaList.length ? areaList : areas.map(n => ({ name: n }))} value={area} onChange={setArea} notListedValue={NONE} fieldName="__unused" />
               {area === NONE && (
                 <div className="panel" style={{ background: '#F3E6C7', marginTop: 8 }}>
                   <p style={{ margin: 0, fontWeight: 600 }}>We don't have a tutor in your area yet.</p>

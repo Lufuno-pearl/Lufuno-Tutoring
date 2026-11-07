@@ -49,7 +49,13 @@ async function checkArea(supabase: any, area: string): Promise<{ ok: boolean; ar
 export async function getAreas(): Promise<string[]> {
   const supabase = createClient()
   const { data } = await supabase.rpc('areas_with_tutors')
-  return (data || []).map((a: any) => a.name as string)
+  return (data || []).map((a: any) => a.name as string).sort((a: string, b: string) => a.localeCompare(b))
+}
+
+export async function getAreaList(): Promise<{ name: string; province: string | null }[]> {
+  const supabase = createClient()
+  const { data } = await supabase.rpc('areas_with_tutors')
+  return (data || []).map((a: any) => ({ name: a.name as string, province: (a.province as string) || null }))
 }
 
 export async function getModuleCatalogue(): Promise<{ id: string; university: string; year: number; field: string; name: string; code: string | null }[]> {
