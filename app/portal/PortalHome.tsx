@@ -725,7 +725,7 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
             {tile('Refer & earn', '🎁', 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('referral'), 'referral')}
           </div>
           {!locked && <ReportMissed reportMissedSession={reportMissedSession} />}
-          <ReferBanner subscribed={!!canTestPrep} onOpen={() => setSection('referral')} />
+          <ReferBanner subscribed={!!canTestPrep} onOpen={() => setSection('referral')} me={me} name={name || ''} />
         </div>
       )
     }
@@ -821,7 +821,6 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
             <div style={{ fontWeight: 800, fontSize: '0.8rem', color: '#F2C14E' }}>🚀 LAUNCHING IN DECEMBER</div>
             <h3 style={{ margin: '6px 0', color: '#fff' }}>Welcome to Aid &amp; Ace{name ? `, ${name.trim().split(' ')[0]}` : ''}!</h3>
             <div style={{ fontSize: '0.9rem', opacity: 0.9 }}>Tutoring, videos and more are coming. Online for every student, wherever you are.</div>
-            <img src="/mascot.svg" alt="" style={{ position: 'absolute', right: -6, bottom: -4, width: 108 }} />
           </div>
           <div className="panel" style={{ background: 'linear-gradient(135deg, #F9D6E6, #FFE4A8)', border: '3px dashed #fff' }}>
             <h4 style={{ margin: 0, color: '#E0457B' }}>📚 Exam Special is open now!</h4>
@@ -848,7 +847,7 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
           <GetStarted hasRequested={hasRequested} hasTutor={false} onRequest={() => setSection('book')} />
           <WhatYouGet tier={tier} />
           <PriceStrip tier={tier} onRequest={() => setSection('book')} />
-          <ReferBanner subscribed={!!canTestPrep} onOpen={() => setSection('referral')} />
+          <ReferBanner subscribed={!!canTestPrep} onOpen={() => setSection('referral')} me={me} name={name || ''} />
           <QuoteCloud />
           <HelpButton />
         </div>
@@ -870,7 +869,7 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
         <StreakCard attendance={attendance || []} />
         <PlanCard subs={subs || []} attendance={attendance || []} />
         <ExtraSessions subs={subs || []} attendance={attendance || []} extras={extras || []} buy={buyExtraSessions} markAwaiting={markAwaiting} />
-        <ReferBanner subscribed={!!canTestPrep} onOpen={() => setSection('referral')} />
+        <ReferBanner subscribed={!!canTestPrep} onOpen={() => setSection('referral')} me={me} name={name || ''} />
         <QuoteCloud />
       </div>
     )

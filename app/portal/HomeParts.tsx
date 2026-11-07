@@ -6,6 +6,7 @@ import { computeXp } from '../../lib/xp'
 import { HS_PRICE, UNI_PRICE, hsSessions, toSessionType } from '../../lib/pricing'
 import { daysUntil } from '../TestList'
 import Avatar from '../Avatar'
+import { FuniArt } from '../avatarArt'
 
 const WHATSAPP = '27673812727'
 
@@ -282,13 +283,15 @@ export function PriceStrip({ tier, onRequest }: { tier: string; onRequest: () =>
   )
 }
 
-export function ReferBanner({ onOpen, subscribed }: { onOpen: () => void; subscribed: boolean }) {
+export function ReferBanner({ onOpen, subscribed, me, name }: { onOpen: () => void; subscribed: boolean; me?: any; name?: string }) {
+  const A = FuniArt.lookFor(me?.look || null, name || 'aid-and-ace', me?.sex || null)
+  const B = FuniArt.lookFor(null, 'friend-' + (name || 'x'), me?.sex === 'male' ? 'female' : 'male')
   return (
-    <div className="panel refer" onClick={onOpen} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12 }}>
-      <Gift size={26} color="#8a6410" />
-      <div>
-        <div style={{ fontWeight: 700 }}>Bring a friend, earn rewards</div>
-        <div className="meta" style={{ marginBottom: 0 }}>{subscribed ? 'Share your code with friends. Tap to see how.' : 'Get R50 off when you subscribe and friends join. Tap to see how.'}</div>
+    <div className="banner-friends" onClick={onOpen} role="button">
+      <div className="bf-art" dangerouslySetInnerHTML={{ __html: FuniArt.friendsScene(A, B, 'bfa' + (name || ''), 'bfb' + (name || '')) }} />
+      <div className="bf-text">
+        <b>Learn together. Do better.</b>
+        <span>{subscribed ? 'Invite a friend and you both earn' : 'Get R50 off when you subscribe and friends join'}</span>
       </div>
     </div>
   )
