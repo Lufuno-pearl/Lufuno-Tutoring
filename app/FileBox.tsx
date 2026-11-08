@@ -3,15 +3,19 @@ import { useEffect, useState } from 'react'
 import { createClient } from '../lib/supabase/client'
 import ConfirmFile from './ConfirmFile'
 
+const fileCache = new Map<string, { name: string }[]>()
+
 export default function FileBox({ folderPath, uploadLabel, allowUpload = true }: { folderPath: string; uploadLabel?: string; allowUpload?: boolean }) {
-  const [files, setFiles] = useState<{ name: string }[]>([])
+  const [files, setFiles] = useState<{ name: string }[]>(fileCache.get(folderPath) || [])
+  const [loaded, setLoaded] = useState(fileCache.has(folderPath))
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
   const supabase = createClient()
 
   async function loadFiles() {
     const { data, error } = await supabase.storage.from('homework').list(folderPath)
-    if (!error && data) setFiles(data.filter(f => f.name !== '.emptyFolderPlaceholder'))
+    if (!error && data) { const list = data.filter(f => f.name !== '.emptyFolderPlaceholder'); fileCache.set(folderPath, list); setFiles(list) }
+    setLoaded(true)
   }
 
   useEffect(() => { loadFiles() }, [folderPath])
@@ -46,7 +50,8 @@ export default function FileBox({ folderPath, uploadLabel, allowUpload = true }:
 
   return (
     <div style={{ marginTop: 6 }}>
-      {files.length === 0 && !allowUpload && <p className="meta" style={{ marginBottom: 4 }}>Nothing uploaded yet.</p>}
+      {!loaded && <div className="skel" style={{ height: 34, margin: '6px 0' }} />}
+      {loaded && files.length === 0 && !allowUpload && <p className="meta" style={{ marginBottom: 4 }}>Nothing uploaded yet.</p>}
       {files.map(f => (
         <div key={f.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: '1px solid var(--line)' }}>
           <span style={{ fontSize: '0.85rem' }}>{f.name}</span>
