@@ -55,6 +55,7 @@ export default function AppearancePage() {
   const [photoBusy, setPhotoBusy] = useState(false)
   const [photoMsg, setPhotoMsg] = useState('')
   const [bump, setBump] = useState(0)
+  const [ready, setReady] = useState(false)
 
   useEffect(() => {
     setMode(document.documentElement.dataset.mode || 'light')
@@ -68,6 +69,7 @@ export default function AppearancePage() {
       setName(p?.full_name || u.email || '')
       const { data: a } = await supabase.from('profiles').select('avatar_path').eq('id', u.id).single()
       setPath((a as any)?.avatar_path || null)
+      setReady(true)
     })
   }, [])
 
@@ -147,9 +149,9 @@ export default function AppearancePage() {
       <h2 style={{ marginTop: 0 }}>My character &amp; appearance</h2>
       <p className="meta">Pick how the app looks on this phone. The look is free and saved on this device.</p>
 
-      {uid && <CharacterPicker uid={uid} name={name} onSaved={() => setBump(b => b + 1)} />}
+      {uid && ready && <CharacterPicker uid={uid} name={name} onSaved={() => setBump(b => b + 1)} />}
 
-      {uid && (
+      {uid && ready && (
         <div className="panel" style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           <Avatar path={path} name={name} size={72} refreshKey={bump} />
           <div style={{ flex: 1 }}>
