@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ChevronRight, Users } from 'lucide-react'
 import { LevelBrowser, Seg } from '../ui'
 import Avatar from '../Avatar'
@@ -42,6 +42,11 @@ export default function PartnerStudents({ feelingsByStudent, allSubs, scheduleBy
     }
     setSending(false)
   }
+
+  useEffect(() => {
+    document.body.classList.toggle('in-chat', !!selectedId)
+    return () => document.body.classList.remove('in-chat')
+  }, [selectedId])
 
   if (myStudentIds.length === 0) return <p className="meta">You haven't claimed any students yet. Open "Open Requests" to claim one.</p>
 

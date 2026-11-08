@@ -194,6 +194,10 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
       if (sid) { sessionStorage.removeItem('tutorOpenStudent'); setSelectedStudentId(sid) }
     } catch (e) {}
   }, [])
+  useEffect(() => {
+    document.body.classList.toggle('in-chat', !!selectedStudentId)
+    return () => document.body.classList.remove('in-chat')
+  }, [selectedStudentId])
   const [chatSearch, setChatSearch] = useState('')
   const [myStudentId, setMyStudentId] = useState<string | null>(null)
   const [myView, setMyView] = useState<'menu' | 'availability' | 'areas' | 'students' | 'open' | 'marks'>('menu')

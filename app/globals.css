@@ -611,3 +611,11 @@ nav .brand,.brand{color:#5B3FC4 !important;font-family:'Nunito',sans-serif !impo
 .banner-friends b{color:#5B3FC4;font-size:1.02rem;line-height:1.2}
 .banner-friends span{color:#5B3FC4;font-size:.8rem}
 .wl-scene svg{width:100%;display:block}
+
+/* ===== chat: name bar fixed at the very top, nothing shows through ===== */
+.chat-top{background:var(--paper,#F7F4FF) !important;z-index:30 !important;margin:0 -20px 8px !important;padding:12px 20px !important;border-bottom:1px solid #E7E0F5}
+.in-chat nav{display:none !important}
+.in-chat > .wrap,body.in-chat:has(.tabbar) > .wrap{padding-top:0 !important}
+.in-chat .chat-top{margin-top:0 !important}
+.cb{z-index:1}
+@media (min-width:900px){.chat-top{margin:0 -40px 8px !important;padding:12px 40px !important}}
