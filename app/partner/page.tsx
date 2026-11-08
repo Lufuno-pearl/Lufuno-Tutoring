@@ -12,6 +12,7 @@ import { allowedVideoSubjects } from '../../lib/matching'
 import PartnerRequests from './PartnerRequests'
 import AvailabilityBoard from '../AvailabilityBoard'
 import PartnerHome from './PartnerHome'
+import { stillActiveSub, stillActiveBooking } from '../../lib/activeStudent'
 import TutorAreas from '../TutorAreas'
 import TestList, { daysUntil } from '../TestList'
 
@@ -60,7 +61,9 @@ async function PartnerDashboardInner() {
   const saMonth = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString().slice(0, 7)
   const monthSessions = streakRows.filter((a: any) => String(a.session_date || '').slice(0, 7) === saMonth).length
 
-  const myStudentIds = Array.from(new Set([...(myBookings || []).map(b => b.student_id), ...(mySubs || []).map(s => s.student_id)]))
+  // students whose plan has ended and who have not renewed are no longer this tutor's students
+  const todayKeep = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString().slice(0, 10)
+  const myStudentIds = Array.from(new Set([...(myBookings || []).filter(b => stillActiveBooking(b)).map(b => b.student_id), ...(mySubs || []).filter(s => stillActiveSub(s, todayKeep)).map(s => s.student_id)]))
   // a tutor only sees homework and video requests from their own students
   const myHomework = homework.filter((h: any) => myStudentIds.includes(h.student_id))
   const myVideos = videos.filter((v: any) => myStudentIds.includes(v.student_id))
