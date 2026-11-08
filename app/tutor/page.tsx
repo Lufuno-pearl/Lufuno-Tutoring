@@ -1,3 +1,4 @@
+import { stillActiveSub, stillActiveBooking } from '../../lib/activeStudent'
 import { attachLooks } from '../../lib/studentLooks'
 import Link from 'next/link'
 import { createClient } from '../../lib/supabase/server'
@@ -101,22 +102,26 @@ export default async function TutorDashboard() {
   const openSubs = (subs || []).filter((s: any) => !s.tutor_id)
 
   const threadsByStudent: Record<string, { name: string; email: string; tier: string; msgs: any[]; grade?: number | null; subject?: string }> = {}
-  ;(bookings || []).forEach((b: any) => {
+  // only students whose plan is still running (or who wrote recently) are listed; ended plans drop off
+  const activeBookings = (bookings || []).filter((b: any) => stillActiveBooking(b))
+  const activeSubs = (subs || []).filter((s: any) => stillActiveSub(s, todayISO))
+  const recentCut = Date.now() - 14 * 86400000
+  activeBookings.forEach((b: any) => {
     const sid = b.student_id
     if (!threadsByStudent[sid]) threadsByStudent[sid] = { name: b.profiles?.full_name || 'Student', email: b.profiles?.email || '', tier: b.profiles?.tier || 'university', msgs: [] }
   })
-  ;(subs || []).forEach((s: any) => {
+  activeSubs.forEach((s: any) => {
     const sid = s.student_id
     if (!threadsByStudent[sid]) threadsByStudent[sid] = { name: s.profiles?.full_name || 'Student', email: s.profiles?.email || '', tier: s.profiles?.tier || 'highschool', msgs: [] }
   })
-  ;(orders || []).forEach((o: any) => {
+  ;(orders || []).filter((o: any) => ['pending', 'awaiting'].includes(o.status) || new Date(o.created_at).getTime() >= recentCut).forEach((o: any) => {
     const sid = o.student_id
     if (!threadsByStudent[sid]) threadsByStudent[sid] = { name: o.profiles?.full_name || 'Student', email: o.profiles?.email || '', tier: o.profiles?.tier || 'university', msgs: [] }
   })
   ;(messages || []).forEach((m: any) => {
     const sid = m.student_id
-    if (!threadsByStudent[sid]) threadsByStudent[sid] = { name: m.profiles?.full_name || 'Student', email: m.profiles?.email || '', tier: m.profiles?.tier || 'university', msgs: [] }
-    threadsByStudent[sid].msgs.push(m)
+    if (!threadsByStudent[sid] && new Date(m.created_at).getTime() >= recentCut) threadsByStudent[sid] = { name: m.profiles?.full_name || 'Student', email: m.profiles?.email || '', tier: m.profiles?.tier || 'university', msgs: [] }
+    if (threadsByStudent[sid]) threadsByStudent[sid].msgs.push(m)
   })
 
   ;(subs || []).forEach((s: any) => { const t = threadsByStudent[s.student_id]; if (t && t.grade == null) { t.grade = s.grade || null; t.subject = s.subject_choice } })
