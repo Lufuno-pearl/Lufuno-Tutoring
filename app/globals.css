@@ -619,3 +619,7 @@ nav .brand,.brand{color:#5B3FC4 !important;font-family:'Nunito',sans-serif !impo
 .in-chat .chat-top{margin-top:0 !important}
 .cb{z-index:1}
 @media (min-width:900px){.chat-top{margin:0 -40px 8px !important;padding:12px 40px !important}}
+
+/* loading placeholder so screens do not pop in */
+.skel{border-radius:14px;background:linear-gradient(90deg,rgba(117,86,219,.08),rgba(117,86,219,.16),rgba(117,86,219,.08));background-size:200% 100%;animation:skel 1.1s ease-in-out infinite}
+@keyframes skel{0%{background-position:200% 0}100%{background-position:-200% 0}}

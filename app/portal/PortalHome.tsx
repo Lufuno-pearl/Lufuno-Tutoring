@@ -42,7 +42,8 @@ import { hsPrice, hsSessions, toSessionType, EXTRA_PRICE, EXTRA_MAX, UNI_PRICE, 
 type Section = 'menu' | 'badges' | 'book' | 'packs' | 'chat' | 'history' | 'video' | 'guide' | 'homework' | 'referral' | 'testprep' | 'qotd' | 'marks' | 'school' | 'files'
 type Tab = 'home' | 'hub' | 'tutoring' | 'room' | 'chat' | 'learn' | 'more'
 
-function AreaPicker({ areas, list, value, onChange, notListedHelp, onChooseOnline }: { areas: string[]; list: { name: string; province: string | null }[]; value: string; onChange: (v: string) => void; notListedHelp: string; onChooseOnline?: () => void }) {
+function AreaPicker({ ready = true, areas, list, value, onChange, notListedHelp, onChooseOnline }: { areas: string[]; list: { name: string; province: string | null }[]; value: string; onChange: (v: string) => void; notListedHelp: string; onChooseOnline?: () => void; ready?: boolean }) {
+  if (!ready) return <div className="skel" style={{ height: 46, marginBottom: 12 }} />
   if (areas.length === 0) return null
   const notListed = value === '__none__'
   return (
@@ -65,14 +66,16 @@ function ExtraSubjectPicker() {
   const [subjects, setSubjects] = useState<string[]>([])
   const [picked, setPicked] = useState<string[]>([])
   const [other, setOther] = useState('')
+  const [loadedS, setLoadedS] = useState(false)
   useEffect(() => {
-    createClient().rpc('tutor_subjects').then(({ data }: any) => setSubjects(Array.isArray(data) ? data : []), () => {})
+    createClient().rpc('tutor_subjects').then(({ data }: any) => { setSubjects(Array.isArray(data) ? data : []); setLoadedS(true) }, () => setLoadedS(true))
   }, [])
   const toggle = (x: string) => setPicked(p => p.includes(x) ? p.filter(y => y !== x) : [...p, x])
   const value = [...picked, ...(other.trim() ? [other.trim()] : [])].join(', ').slice(0, 60)
   return (
     <div className="field">
       <label>Another subject you need help with? (optional)</label>
+      {!loadedS && <div className="skel" style={{ height: 38, marginBottom: 8 }} />}
       {subjects.length > 0 && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
           {subjects.map(x => <button type="button" key={x} onClick={() => toggle(x)} className={`chip${picked.includes(x) ? ' on' : ''}`}>{x}</button>)}
@@ -637,6 +640,7 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
   const [answered, setAnswered] = useState<string[]>([])
   const [areas, setAreas] = useState<string[]>([])
   const [areaList, setAreaList] = useState<{ name: string; province: string | null }[]>([])
+  const [areasReady, setAreasReady] = useState(false)
   const [formError, setFormError] = useState('')
   const [hsType, setHsType] = useState<SessionType>('group')
   const [hsChoice, setHsChoice] = useState('both')
@@ -647,7 +651,7 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
   useEffect(() => {
     if (section === 'book' && areas.length === 0) {
       getAreas().then(a => setAreas(a)).catch(() => {})
-      getAreaList().then(a => setAreaList(a)).catch(() => {})
+      getAreaList().then(a => { setAreaList(a); setAreasReady(true) }).catch(() => setAreasReady(true))
     }
   }, [section])
   const { createBooking, createHsSub, buyPack, markAwaiting, sendMessage, getChatContacts, requestCustomPack, requestVideoAccess, submitHomework, requestVideoTopic, respondToSession, reportMissedSession, buyExtraSessions } = actions
@@ -999,7 +1003,7 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
               <input type="hidden" name="format" value={hsFormat} />
               <p className="meta" style={{ marginTop: 6 }}>Online and in person cost the same. In-person sessions happen in your area with a tutor who lives nearby. Choose Both and your tutor alternates some sessions in person and some online. On any day you can't come, your tutor can switch that one session to online.</p>
               {(hsFormat === 'physical' || hsFormat === 'both') && (
-                <AreaPicker areas={areas} list={areaList} value={hsArea} onChange={setHsArea} notListedHelp="Online sessions work just as well, so we suggest choosing Online." onChooseOnline={() => { setHsFormat('online'); setHsArea('') }} />
+                <AreaPicker ready={areasReady} areas={areas} list={areaList} value={hsArea} onChange={setHsArea} notListedHelp="Online sessions work just as well, so we suggest choosing Online." onChooseOnline={() => { setHsFormat('online'); setHsArea('') }} />
               )}
 
               {(() => {
