@@ -12,9 +12,14 @@ export default function HeaderTools({ forRole, bare }: { forRole: 'student' | 's
   const [path, setPath] = useState<string | null>(null)
   const [name, setName] = useState('')
   const [me, setMe] = useState<{ look: any; sex: string | null }>({ look: null, sex: null })
+  const [ready, setReady] = useState(false)
 
   useEffect(() => {
     setMode(document.documentElement.dataset.mode === 'dark' ? 'dark' : 'light')
+    try {
+      const c = JSON.parse(localStorage.getItem('aa-me') || 'null')
+      if (c) { setName(c.name || ''); setPath(c.path || null); setMe({ look: c.look || null, sex: c.sex || null }); setReady(true) }
+    } catch (e) {}
     const supabase = createClient()
     supabase.auth.getUser().then(async ({ data }) => {
       const u = data.user
@@ -24,6 +29,8 @@ export default function HeaderTools({ forRole, bare }: { forRole: 'student' | 's
       setPath((a as any)?.avatar_path || null)
       const { data: l } = await supabase.from('profiles').select('avatar_look, sex').eq('id', u.id).single()
       setMe({ look: (l as any)?.avatar_look || null, sex: (l as any)?.sex || null })
+      setReady(true)
+      try { localStorage.setItem('aa-me', JSON.stringify({ name: (u.user_metadata as any)?.full_name || u.email || '', path: (a as any)?.avatar_path || null, look: (l as any)?.avatar_look || null, sex: (l as any)?.sex || null })) } catch (e) {}
     })
   }, [])
 
@@ -43,7 +50,7 @@ export default function HeaderTools({ forRole, bare }: { forRole: 'student' | 's
       <NotificationBell forRole={forRole} />
       {!bare && (
         <Link href="/appearance" aria-label="Profile picture and appearance" style={{ display: 'flex' }}>
-          <Avatar path={path} name={name} size={34} look={me.look} sex={me.sex} />
+          <Avatar path={path} name={name} size={34} look={me.look} sex={me.sex} loading={!ready} />
         </Link>
       )}
     </div>
