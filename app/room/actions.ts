@@ -26,7 +26,7 @@ export async function getRoomState(): Promise<RoomState | null> {
   const [{ data: rooms }, { data: subs }, { data: books }, { data: att }] = await Promise.all([
     supabase.from('session_rooms').select('*').eq('tutor_id', user.id).eq('room_date', today).order('opened_at', { ascending: false }),
     supabase.from('hs_subscriptions').select('student_id, subject_choice, session_type, grade, format, meeting_link').eq('tutor_id', user.id).eq('status', 'confirmed').gte('end_date', today).order('created_at', { ascending: false }),
-    supabase.from('bookings').select('student_id, subject, session_type, format, meeting_link').eq('tutor_id', user.id).eq('status', 'confirmed').gte('created_at', new Date(Date.now() - 35 * 86400000).toISOString()).order('created_at', { ascending: false }),
+    supabase.from('bookings').select('student_id, subject, session_type, format, meeting_link').eq('tutor_id', user.id).eq('status', 'confirmed').gte('created_at', new Date(Date.now() - 31 * 86400000).toISOString()).order('created_at', { ascending: false }),
     supabase.from('attendance').select('student_id, joined_at, source, status, created_at').eq('marked_by', user.id).eq('session_date', today),
   ])
   const ids = Array.from(new Set([...(subs || []), ...(books || [])].map((x: any) => x.student_id)))
