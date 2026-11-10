@@ -26,7 +26,7 @@ import Avatar from '../Avatar'
 import HeaderTools from '../HeaderTools'
 import FeelingCard from '../character/Feeling'
 import { FuniArt } from '../avatarArt'
-import { ChevronRight, LayoutGrid, Paperclip } from 'lucide-react'
+import { ChevronRight, ChevronLeft, LayoutGrid, Paperclip } from 'lucide-react'
 import TestPrep from './TestPrep'
 import QuestionOfDay from './QuestionOfDay'
 import { StreakCard, CountdownCard, PlanCard, GetStarted, WhatYouGet, PriceStrip, ReferBanner, HelpButton, Hero, QuoteCloud, StatTrio, ReminderBar, XpCard, xpFor, ThisWeek, greeting } from './HomeParts'
@@ -878,7 +878,7 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
       </div>
     )
   }
-  const Back = () => section === 'chat' ? null : <div className="meta" style={{ cursor: 'pointer', marginBottom: 16, color: 'var(--purple-dark)', fontWeight: 600 }} onClick={() => setSection('menu')}>&larr; Back</div>
+  const Back = () => section === 'chat' ? null : <div className="backbar" role="button" onClick={() => setSection('menu')}><ChevronLeft size={22} /><span>Back</span></div>
 
   if (section === 'book') {
     async function handleBookingSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -1038,7 +1038,7 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
      if (section === 'video') {
   return (
     <div>
-      <button className="btn" onClick={() => setSection('menu')}>← Back</button>
+      <Back />
       <PageTitle title="Video lessons" sub="Watch, pause, repeat" />
       <VideoLessons hasLessons={(myVideoSubjects || []).length > 0} lessons={<MyVideos subjects={myVideoSubjects || []} />} isHS={tier === 'highschool'} requests={videoTopicRequests || []}
         requestBox={tier === 'highschool' ? (hasActiveSub ? <VideoTopicBox subjectOptions={allowedSubjects} requestVideoTopic={requestVideoTopic} myRequests={[]} /> : (
@@ -1061,7 +1061,7 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
   if (section === 'guide') {
   return (
     <div>
-      <button className="btn" onClick={() => setSection('menu')}>← Back</button>
+      <Back />
       <PageTitle title="How it works" />
       <div className="panel">
         <h4>1. Choose what you need</h4>
@@ -1375,17 +1375,22 @@ export default function PortalHome(props: any) {
     more: ['More', 'Settings and help'],
   }
   const head = heads[current] || heads.home
-  const showHead = section === 'menu' || section === 'chat'
-
+  const rootTab = current === 'home' || current === 'hub'
   return (
     <div style={{ visibility: ready ? 'visible' : 'hidden' }}>
-      {showHead && (
+      {section === 'menu' && rootTab && (
         <div className="screen-head">
           <a className="sh-ava" onClick={() => go('more')} role="button" aria-label="More">
             <Avatar path={props.avatarPath} name={props.name} size={46} look={props.me?.look} sex={props.me?.sex} feeling={props.me?.feeling} />
           </a>
           <div className="sh-t"><b>{head[0]}</b><span>{head[1]}</span></div>
           <HeaderTools forRole="student" bare />
+        </div>
+      )}
+      {(section === 'chat' || (section === 'menu' && !rootTab)) && (
+        <div className="title-bar">
+          {current !== 'chat' && <a className="tb-back" role="button" aria-label="Back" onClick={() => go('home')}><ChevronLeft size={24} /></a>}
+          <b>{head[0]}</b>
         </div>
       )}
       <PortalInner {...props} section={section} setSection={setSection} tab={tab} setTab={setTab} />

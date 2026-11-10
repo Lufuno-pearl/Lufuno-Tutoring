@@ -147,10 +147,9 @@ export function StatTrio({ attendance, marks, tests }: { attendance: any[]; mark
   )
   return (
     <div className="fstats">
-      {card('f1', <Check size={22} color="#fff" />, 'Sessions done', String(sessions), 'this month')}
-      {card('f2', <TrendingUp size={22} color="#fff" />, 'Average mark', avg === null ? '–' : `${avg}%`, avg === null ? 'add your marks' : avg < 50 ? 'let’s lift it' : 'keep it up')}
-      {card('f3', <Target size={22} color="#fff" />, 'Next test', days === null ? '–' : `${days} ${days === 1 ? 'day' : 'days'}`, days === null ? 'none yet' : next.subject)}
-      {card('f4', <Flame size={22} color="#fff" />, 'Streak', `${streak} ${streak === 1 ? 'wk' : 'wks'}`, streak > 0 ? 'keep it going' : 'start this week')}
+      {card('f1', <Check size={22} color="currentColor" />, 'Sessions', String(sessions), 'this month')}
+      {card('f2', <TrendingUp size={22} color="currentColor" />, 'Average', avg === null ? '–' : `${avg}%`, avg === null ? 'add your marks' : avg < 50 ? 'let’s lift it' : 'keep it up')}
+      {card('f4', <Flame size={22} color="currentColor" />, 'Streak', `${streak} ${streak === 1 ? 'wk' : 'wks'}`, streak > 0 ? 'keep it going' : 'start this week')}
     </div>
   )
 }
@@ -440,6 +439,18 @@ export function ThisWeek({ bookings, subs, scheduled }: { bookings: any[]; subs:
   return (
     <div className="panel">
       <div className="week-h"><b>This week</b><span className="pill-n">{week.length} booked</span></div>
+      <div className="week-strip">
+        {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => {
+          const day = weekStart + i * 86400000
+          const has = week.some(w => startOf(w.at) === day)
+          return (
+            <div key={i} className={`wk-d${day === today ? ' today' : ''}`}>
+              <span>{d}</span>
+              <i className={has ? 'on' : ''} />
+            </div>
+          )
+        })}
+      </div>
       {week.map((w, i) => {
         const d = startOf(w.at)
         const st = d < today ? 'Done' : d === today ? 'Today' : 'Booked'

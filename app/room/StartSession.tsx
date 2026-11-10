@@ -100,7 +100,7 @@ export default function StartSession({ options, people, busy, hasOpen, onStart, 
   if (!sub) {
     return (
       <div className="panel">
-        {head(hasOpen ? 'Start another session' : 'Start a session', 'Step 1: choose the subject', false)}
+        {head(hasOpen ? 'Start another session' : 'Start a session', undefined, false)}
         {subjects.map(s => {
           const ids = Array.from(new Set(s.items.flatMap(i => i.studentIds)))
           const need = ids.filter(id => rank(people[id]) <= 1).length
@@ -115,7 +115,7 @@ export default function StartSession({ options, people, busy, hasOpen, onStart, 
     const nGroupStudents = Array.from(new Set(groupItems.flatMap(g => g.studentIds))).length
     return (
       <div className="panel">
-        {head(sub.label, 'Step 2: how are you teaching?', subjects.length > 1)}
+        {head(sub.label, undefined, subjects.length > 1)}
         {opt(<Users size={22} />, 'lav', 'Group', groupItems.length ? `Online class. ${nGroupStudents} student${nGroupStudents === 1 ? '' : 's'} see a Join button.` : 'No group students for this subject.', () => setType('group'), groupItems.length === 0)}
         {opt(<User size={22} />, 'mint', 'One-on-one', singleItems.length ? 'Pick one student and start. Search by name.' : 'No one-on-one students for this subject.', () => setType('one'), singleItems.length === 0)}
         {opt(<MapPin size={22} />, 'peach', 'Physical', groupItems.length ? 'Meet in person. Groups are made for you.' : 'No group students for this subject.', () => setType('physical'), groupItems.length === 0)}
@@ -127,7 +127,7 @@ export default function StartSession({ options, people, busy, hasOpen, onStart, 
   if ((type === 'group' || type === 'physical') && !group) {
     return (
       <div className="panel">
-        {head(sub.label, 'Which class?')}
+        {head(sub.label)}
         {groupItems.map(g => opt(<Users size={22} />, 'lav', g.label, `${g.studentIds.length} student${g.studentIds.length === 1 ? '' : 's'}`, () => setGkey(g.key)))}
       </div>
     )
@@ -155,7 +155,7 @@ export default function StartSession({ options, people, busy, hasOpen, onStart, 
     const chosen = singleItems.find(s => s.key === sel) || null
     return (
       <div className="panel">
-        {head('One-on-one', `${sub.label} · who are you teaching?`)}
+        {head('One-on-one', sub.label)}
         <label className="ss-search"><Search size={18} /><input value={q} onChange={e => setQ(e.target.value)} placeholder="Search students" /></label>
         {list.length === 0 && <p className="meta" style={{ textAlign: 'center' }}>No student with that name.</p>}
         {list.map(s => <PersonRow key={s.key} id={s.studentId || ''} people={people} selected={sel === s.key} onClick={() => setSel(sel === s.key ? null : s.key)} />)}

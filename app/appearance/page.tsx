@@ -2,53 +2,38 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '../../lib/supabase/client'
+import { ChevronLeft } from 'lucide-react'
 import Avatar from '../Avatar'
 import CharacterPicker from '../character/CharacterPicker'
 
-const BACKGROUNDS = [
-  { id: 'lilac', name: 'Lilac glow', swatch: 'linear-gradient(135deg,#E8DEF5,#8A6FC4)' },
-  { id: 'peach', name: 'Peach cream', swatch: 'linear-gradient(135deg,#FDEFE7,#F6B79C)' },
-  { id: 'blush', name: 'Blush pink', swatch: 'linear-gradient(135deg,#FDE9F0,#F08DB0)' },
-  { id: 'mint', name: 'Fresh mint', swatch: 'linear-gradient(135deg,#E4F6EF,#5FBF9F)' },
-  { id: 'sky', name: 'Sky blue', swatch: 'linear-gradient(135deg,#E4F1FC,#5FA3D9)' },
-  { id: 'plain', name: 'Plain', swatch: '#F1ECFB' },
-  { id: 'white', name: 'Pure white', swatch: '#FFFFFF' },
-  { id: 'black', name: 'Midnight black', swatch: '#000000' },
-  { id: 'ocean', name: 'Ocean blue', swatch: 'linear-gradient(135deg,#0B1A2B,#2F8CFF)' },
-  { id: 'forest', name: 'Forest green', swatch: 'linear-gradient(135deg,#0F1F18,#3FBF7F)' },
-  { id: 'steel', name: 'Steel & orange', swatch: 'linear-gradient(135deg,#1A1C20,#FF8A3D)' },
-  { id: 'navy', name: 'Navy & gold', swatch: 'linear-gradient(135deg,#0E1330,#F2C14E)' },
-  { id: 'sand', name: 'Sand & green', swatch: 'linear-gradient(135deg,#F3EFE6,#2F6B4F)' },
+const THEMES = [
+  { id: 'royal', name: 'Royal Purple', cols: ['#2E1A72', '#6B4FD8', '#EFE9FF'] },
+  { id: 'midnight', name: 'Midnight Blue', cols: ['#10244B', '#2F6BE0', '#E6EEFC'] },
+  { id: 'ember', name: 'Ember', cols: ['#4A1426', '#D6452F', '#FCEBE6'] },
+  { id: 'graphite', name: 'Graphite', cols: ['#1C2030', '#4A5570', '#ECEEF3'] },
+]
+const CHAT_BGS = [
+  { id: 'doodles', name: 'Study doodles' },
+  { id: 'stars', name: 'Stars' },
+  { id: 'waves', name: 'Waves' },
+  { id: 'dots', name: 'Dots' },
+  { id: 'plain', name: 'Plain' },
+  { id: 'none', name: 'None' },
 ]
 
-const DARK_ONLY = ['black', 'ocean', 'forest', 'steel', 'navy', 'photo']
-const LIGHT_ONLY = ['white', 'sand']
-
-function apply(mode: string, bg: string) {
-  const root = document.documentElement
-  root.dataset.mode = mode
-  root.dataset.bg = bg
-  if (bg !== 'photo') root.style.removeProperty('--bg-art')
-  try { localStorage.setItem('aa-mode', mode); localStorage.setItem('aa-bg', bg) } catch (e) {}
+function setTheme(id: string) {
+  document.documentElement.dataset.theme = id
+  try { localStorage.setItem('aa-theme', id) } catch (e) {}
 }
-
-// The photo stays on this phone only (never uploaded), shrunk to a small picture first.
-function showPhoto(dataUrl: string) {
-  document.documentElement.style.setProperty('--bg-art', `linear-gradient(rgba(0,0,0,.55),rgba(0,0,0,.55)),url(${dataUrl})`)
-}
-async function smallPhoto(file: File): Promise<string> {
-  const bmp = await createImageBitmap(file)
-  const k = Math.min(1, 900 / Math.max(bmp.width, bmp.height))
-  const c = document.createElement('canvas')
-  c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k)
-  c.getContext('2d')!.drawImage(bmp, 0, 0, c.width, c.height)
-  return c.toDataURL('image/jpeg', 0.7)
+function setChatBg(id: string) {
+  document.documentElement.dataset.chatbg = id
+  try { localStorage.setItem('aa-chatbg', id) } catch (e) {}
 }
 
 export default function AppearancePage() {
   const router = useRouter()
-  const [mode, setMode] = useState('light')
-  const [bg, setBg] = useState('lilac')
+  const [theme, setThemeState] = useState('royal')
+  const [chatBg, setChatBgState] = useState('doodles')
   const [uid, setUid] = useState<string | null>(null)
   const [name, setName] = useState('')
   const [path, setPath] = useState<string | null>(null)
@@ -58,8 +43,8 @@ export default function AppearancePage() {
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
-    setMode(document.documentElement.dataset.mode || 'light')
-    setBg(document.documentElement.dataset.bg || 'lilac')
+    setThemeState(document.documentElement.dataset.theme || 'royal')
+    setChatBgState(document.documentElement.dataset.chatbg || 'doodles')
     const supabase = createClient()
     supabase.auth.getUser().then(async ({ data }) => {
       const u = data.user
@@ -110,44 +95,11 @@ export default function AppearancePage() {
     setPath(null); setPhotoBusy(false)
   }
 
-  const [bgPhoto, setBgPhoto] = useState(false)
-  useEffect(() => { try { setBgPhoto(!!localStorage.getItem('aa-photo')) } catch (e) {} }, [])
-
-  const choose = (m: string, b: string) => {
-    if (DARK_ONLY.includes(b)) m = 'dark'
-    else if (LIGHT_ONLY.includes(b)) m = 'light'
-    else if (m === 'light' && DARK_ONLY.includes(bg)) b = 'plain'
-    if (b === 'photo') { try { const d = localStorage.getItem('aa-photo'); if (d) showPhoto(d) } catch (e) {} }
-    setMode(m); setBg(b); apply(m, b)
-  }
-
-  // Light/Dark buttons: a dark-only look flips to its light partner and the other way round
-  const chooseMode = (m: string) => {
-    let b = bg
-    if (m === 'light' && DARK_ONLY.includes(bg)) b = 'plain'
-    if (m === 'dark' && LIGHT_ONLY.includes(bg)) b = 'black'
-    choose(m, b)
-  }
-
-  async function onBgPhoto(file: File | null) {
-    if (!file) return
-    try {
-      const d = await smallPhoto(file)
-      localStorage.setItem('aa-photo', d)
-      showPhoto(d); setBgPhoto(true); choose('dark', 'photo')
-    } catch (e) { setPhotoMsg('Could not use that picture. Please try a different one.') }
-  }
-  function removeBgPhoto() {
-    try { localStorage.removeItem('aa-photo') } catch (e) {}
-    setBgPhoto(false)
-    if (bg === 'photo') choose('light', 'lilac')
-  }
-
   return (
     <div>
-      <div className="meta" style={{ cursor: 'pointer', marginBottom: 16, color: 'var(--purple-dark)', fontWeight: 600 }} onClick={() => router.back()}>&larr; Back</div>
-      <h2 style={{ marginTop: 0 }}>My character &amp; appearance</h2>
-      <p className="meta">Pick how the app looks on this phone. The look is free and saved on this device.</p>
+      <div className="backbar" role="button" onClick={() => router.back()}><ChevronLeft size={22} /><span>Back</span></div>
+      <h2 style={{ marginTop: 0 }}>Look and feel</h2>
+      <p className="meta">Choose your character, theme and chat background. Saved on this phone.</p>
 
       {uid && ready && <CharacterPicker uid={uid} name={name} onSaved={() => setBump(b => b + 1)} />}
 
@@ -168,32 +120,26 @@ export default function AppearancePage() {
       )}
 
       <div className="panel">
-        <h4 style={{ marginTop: 0 }}>Light or dark</h4>
-        <div style={{ display: 'flex', gap: 10 }}>
-          {[['light', '☀️ Light'], ['dark', '🌙 Dark']].map(([id, label]) => (
-            <button key={id} className={mode === id ? 'btn btn-primary' : 'btn'} style={mode !== id ? { background: 'none', border: '1px solid var(--line)', color: 'var(--ink)' } : {}} onClick={() => chooseMode(id)}>{label}</button>
+        <h4 style={{ marginTop: 0 }}>Theme</h4>
+        <div className="swatch-row">
+          {THEMES.map(t => (
+            <div key={t.id} className={`theme-card${theme === t.id ? ' on' : ''}`} onClick={() => { setThemeState(t.id); setTheme(t.id) }} role="button">
+              <div className="tc-top">{t.cols.map(c => <i key={c} style={{ background: c }} />)}</div>
+              <b>{t.name}</b>
+            </div>
           ))}
         </div>
       </div>
 
       <div className="panel">
-        <h4 style={{ marginTop: 0 }}>Background</h4>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
-          {BACKGROUNDS.map(b => (
-            <div key={b.id} onClick={() => choose(mode, b.id)} style={{ cursor: 'pointer', textAlign: 'center' }}>
-              <div style={{ height: 78, borderRadius: 16, background: b.swatch, border: bg === b.id ? '3px solid var(--purple-dark)' : '3px solid transparent', boxShadow: '0 3px 10px rgba(43,23,102,.15)' }} />
-              <div className="meta" style={{ marginTop: 6, marginBottom: 0, fontWeight: bg === b.id ? 700 : 400 }}>{b.name}</div>
+        <h4 style={{ marginTop: 0 }}>Chat background</h4>
+        <div className="bgpick">
+          {CHAT_BGS.map(b => (
+            <div key={b.id} onClick={() => { setChatBgState(b.id); setChatBg(b.id) }} role="button" style={{ cursor: 'pointer' }}>
+              <div className={`bg-sw${chatBg === b.id ? ' on' : ''}`} data-sample={b.id} style={b.id === 'none' ? { background: '#fff' } : undefined} />
+              <div className="lb">{b.name}</div>
             </div>
           ))}
-        </div>
-        <div style={{ marginTop: 14, borderTop: '1px solid var(--line)', paddingTop: 12 }}>
-          <h4 style={{ margin: '0 0 4px' }}>Your own photo as background</h4>
-          <div className="meta" style={{ marginBottom: 8 }}>Stays on this phone only. It is not uploaded.</div>
-          <label className="btn btn-primary" style={{ padding: '7px 16px', fontSize: '0.82rem' }}>
-            {bgPhoto ? 'Change background photo' : 'Choose a photo'}
-            <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { onBgPhoto(e.target.files?.[0] || null); e.target.value = '' }} />
-          </label>
-          {bgPhoto && <button className="btn" style={{ background: 'none', border: '1px solid var(--line)', color: 'var(--ink)', padding: '7px 14px', fontSize: '0.82rem', marginLeft: 8 }} onClick={removeBgPhoto}>Remove</button>}
         </div>
       </div>
     </div>

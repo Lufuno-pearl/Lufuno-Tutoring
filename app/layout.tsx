@@ -10,13 +10,13 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" data-mode="light" data-bg="lilac" suppressHydrationWarning>
+    <html lang="en" data-mode="light" data-bg="plain" data-theme="royal" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=Nunito:wght@500;600;700;800&display=swap" />
-        <meta name="theme-color" content="#2B1766" />
-        <script dangerouslySetInnerHTML={{ __html: "try{var d=document.documentElement,m=localStorage.getItem('aa-mode'),b=localStorage.getItem('aa-bg');d.dataset.mode=m==='dark'?'dark':'light';d.dataset.bg=b||'lilac';if(b==='photo'){var p=localStorage.getItem('aa-photo');if(p){d.style.setProperty('--bg-art','linear-gradient(rgba(0,0,0,.55),rgba(0,0,0,.55)),url('+p+')')}else{d.dataset.bg='lilac'}}}catch(e){}" }} />
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=Nunito:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" />
+        <meta name="theme-color" content="#2E1A72" />
+        <script dangerouslySetInnerHTML={{ __html: "try{var d=document.documentElement,t=localStorage.getItem('aa-theme'),c=localStorage.getItem('aa-chatbg');d.dataset.mode='light';d.dataset.bg='plain';d.dataset.theme=(t==='midnight'||t==='ember'||t==='graphite')?t:'royal';d.dataset.chatbg=c||'doodles'}catch(e){}" }} />
       </head>
       <body>
         <nav>
