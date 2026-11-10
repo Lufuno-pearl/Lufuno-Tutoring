@@ -4,7 +4,7 @@ import { PageTitle, Row, Pill, Tone, NavRow, LevelBrowser, Seg } from '../ui'
 import Avatar from '../Avatar'
 import { useState, useEffect, useLayoutEffect } from 'react'
 import GroupSchedule from '../GroupSchedule'
-import RoomPanel from '../room/RoomPanel'
+import RoomPanel, { prefetchRoom } from '../room/RoomPanel'
 import TabBarPortal, { scrollPageToTop } from '../TabBarPortal'
 import Link from 'next/link'
 import { Home, Inbox, Users, MoreHorizontal, Clock, UserCog, BookOpen, ClipboardList, MessageCircle, ChevronRight, ChevronLeft, Check, X, Star, Video, Film, Gift, Calendar, GraduationCap, Target, Plus } from 'lucide-react'
@@ -889,6 +889,7 @@ function TutorInner({ goTab, openReports, owedThisMonth, videoOnly, section, set
 export default function TutorHome(props: any) {
   const [section, setSection] = useState<Section>('menu')
   const [tab, setTab] = useState<Tab>('home')
+  useEffect(() => { const t = setTimeout(() => { prefetchRoom() }, 500); return () => clearTimeout(t) }, [])
   const [ready, setReady] = useState(false)
   useLayoutEffect(() => {
     try {

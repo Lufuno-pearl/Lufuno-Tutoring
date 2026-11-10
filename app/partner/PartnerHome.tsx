@@ -4,7 +4,7 @@ import { PageTitle, NavRow } from '../ui'
 import FilesManager from '../tutor/FilesManager'
 import { useState, useEffect, useLayoutEffect, ReactNode } from 'react'
 import GroupSchedule from '../GroupSchedule'
-import RoomPanel from '../room/RoomPanel'
+import RoomPanel, { prefetchRoom } from '../room/RoomPanel'
 import TodayAttendance from '../TodayAttendance'
 import TabBarPortal, { scrollPageToTop } from '../TabBarPortal'
 import { useRouter } from 'next/navigation'
@@ -61,6 +61,7 @@ const TABS: Tab[] = ['home', 'students', 'requests', 'room', 'manage']
 export default function PartnerHome({ avatarPath, me, feelingItems, streakRows, monthSessions, markedToday, markAttendance, name, today, openCount, requestCount, studentCount, testCount, tests, availability, open, requests, students, videos, areas }: Props) {
   const [section, setSection] = useState<Section>('menu')
   const [tab, setTab] = useState<Tab>('home')
+  useEffect(() => { const t = setTimeout(() => { prefetchRoom() }, 500); return () => clearTimeout(t) }, [])
   const [ready, setReady] = useState(false)
   const router = useRouter()
 

@@ -30,14 +30,19 @@ export async function getRoomState(): Promise<RoomState | null> {
     supabase.from('attendance').select('student_id, joined_at, source, status, created_at').eq('marked_by', user.id).eq('session_date', today),
   ])
   const ids = Array.from(new Set([...(subs || []), ...(books || [])].map((x: any) => x.student_id)))
-  const { data: people } = ids.length ? await supabase.from('profiles').select('id, full_name').in('id', ids) : { data: [] as any[] }
+  // one query for names, feeling, character and boy/girl; falls back to names only before funi-style.sql is run
+  let prof: any[] = []
+  if (ids.length) {
+    const full = await supabase.from('profiles').select('id, full_name, feeling, avatar_look, sex').in('id', ids)
+    if (full.error) { const basic = await supabase.from('profiles').select('id, full_name').in('id', ids); prof = basic.data || [] } else prof = full.data || []
+  }
   const nameOf: Record<string, string> = {}
-  ;(people || []).forEach((p: any) => { nameOf[p.id] = p.full_name || 'Student' })
-  // feeling, character and boy/girl (funi-style.sql); a separate query so this works before that SQL is run
-  const { data: extra } = ids.length ? await supabase.from('profiles').select('id, feeling, avatar_look, sex').in('id', ids) : { data: [] as any[] }
   const peopleMap: Record<string, Person> = {}
-  ids.forEach((id: any) => { peopleMap[id] = { name: nameOf[id] || 'Student', feeling: null, look: null, sex: null } })
-  ;(extra || []).forEach((p: any) => { if (peopleMap[p.id]) peopleMap[p.id] = { ...peopleMap[p.id], feeling: p.feeling || null, look: p.avatar_look || null, sex: p.sex || null } })
+  ids.forEach((id: any) => { peopleMap[id] = { name: 'Student', feeling: null, look: null, sex: null } })
+  prof.forEach((p: any) => {
+    nameOf[p.id] = p.full_name || 'Student'
+    peopleMap[p.id] = { name: p.full_name || 'Student', feeling: p.feeling || null, look: p.avatar_look || null, sex: p.sex || null }
+  })
 
   // build what can be started
   const groups = new Map<string, Startable>()

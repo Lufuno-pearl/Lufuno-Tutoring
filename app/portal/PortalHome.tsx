@@ -24,6 +24,7 @@ import FilesView from './FilesView'
 import FlatIcon from '../FlatIcon'
 import Avatar from '../Avatar'
 import HeaderTools from '../HeaderTools'
+import { prefetchJoin } from './JoinCard'
 import FeelingCard from '../character/Feeling'
 import { FuniArt } from '../avatarArt'
 import { ChevronRight, ChevronLeft, LayoutGrid, Paperclip } from 'lucide-react'
@@ -1315,6 +1316,7 @@ export default function PortalHome(props: any) {
   const [section, setSection] = useState<Section>('menu')
   const [tab, setTab] = useState<Tab>('home')
   const [ready, setReady] = useState(false)
+  useEffect(() => { const t = setTimeout(() => { prefetchJoin() }, 500); return () => clearTimeout(t) }, [])
 
   useLayoutEffect(() => {
     try {

@@ -132,9 +132,12 @@ function SessionComplete({ done, onClose }: { done: Done; onClose: () => void })
   )
 }
 
+let roomsCache: Room[] | null = null
+export async function prefetchJoin() { try { const { data } = await createClient().rpc('my_open_rooms'); roomsCache = (data as Room[]) || [] } catch { /* ignore */ } }
+
 export default function JoinCard({ showEmpty = false }: { showEmpty?: boolean }) {
-  const [rooms, setRooms] = useState<Room[]>([])
-  const [loaded, setLoaded] = useState(false)
+  const [rooms, setRooms] = useState<Room[]>(roomsCache || [])
+  const [loaded, setLoaded] = useState(roomsCache !== null)
   const [done, setDone] = useState<Done | null>(null)
 
 
@@ -142,6 +145,7 @@ export default function JoinCard({ showEmpty = false }: { showEmpty?: boolean })
     try {
       const { data } = await createClient().rpc('my_open_rooms')
       const next = (data as Room[]) || []
+      roomsCache = next
       setRooms(cur => {
         // a session this student joined has closed: show the complete screen
         const gone = cur.find(r => r.joined && !next.some(n => n.room_id === r.room_id))

@@ -12,13 +12,17 @@ function clock(iso: string | null) {
 
 const chip = (on: boolean): React.CSSProperties => ({ border: 0, borderRadius: 100, padding: '7px 13px', fontSize: '.8rem', fontWeight: 800, cursor: 'pointer', background: on ? '#7555DC' : '#F1ECFB', color: on ? '#fff' : '#6b6490' })
 
+// Remembers the last answer so the Room opens at once; fresh data replaces it a moment later.
+let roomCache: RoomState | null = null
+export async function prefetchRoom() { try { const r = await getRoomState(); if (r) roomCache = r } catch { /* ignore */ } }
+
 // The tutor starts a session for one group or one student. Only those students see Join. Names tick as they join.
 export default function RoomPanel() {
-  const [st, setSt] = useState<RoomState | null>(null)
+  const [st, setSt] = useState<RoomState | null>(roomCache)
   const [busy, setBusy] = useState(false)
   const [warn, setWarn] = useState('')
   const [scanning, setScanning] = useState(false)
-  async function load() { try { setSt(await getRoomState()) } catch { /* keep what we have */ } }
+  async function load() { try { const r = await getRoomState(); if (r) roomCache = r; setSt(r) } catch { /* keep what we have */ } }
   useEffect(() => {
     load()
     const t = setInterval(load, 15000)
