@@ -7,7 +7,7 @@ import GroupSchedule from '../GroupSchedule'
 import RoomPanel from '../room/RoomPanel'
 import TabBarPortal, { scrollPageToTop } from '../TabBarPortal'
 import Link from 'next/link'
-import { Home, Inbox, Users, MoreHorizontal, Clock, UserCog, BookOpen, ClipboardList, MessageCircle, ChevronRight, Check, X, Star, Video, Film, Gift, Calendar, GraduationCap, Target, Plus } from 'lucide-react'
+import { Home, Inbox, Users, MoreHorizontal, Clock, UserCog, BookOpen, ClipboardList, MessageCircle, ChevronRight, ChevronLeft, Check, X, Star, Video, Film, Gift, Calendar, GraduationCap, Target, Plus } from 'lucide-react'
 import InstallButton from '../InstallButton'
 import FlatIcon from '../FlatIcon'
 import { Owl } from '../Owl'
@@ -185,7 +185,7 @@ function MonthSummary({ subs, schoolByStudent }: { subs: any[]; schoolByStudent:
   )
 }
 
-function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection, tab, bookings, subs, orders, partners, threadsByStudent, attendanceRows, myAvailable, openBookings, openSubs, myClaimedBookings, myClaimedSubs, videoRequests, extras, customPackRequests, homeworkRequests, videoTopicRequests, moduleRequests, testPreps, marksByStudent, scheduleByStudent, schoolByStudent, pendingApps, ratings, actions }: any) {
+function TutorInner({ goTab, openReports, owedThisMonth, videoOnly, section, setSection, tab, bookings, subs, orders, partners, threadsByStudent, attendanceRows, myAvailable, openBookings, openSubs, myClaimedBookings, myClaimedSubs, videoRequests, extras, customPackRequests, homeworkRequests, videoTopicRequests, moduleRequests, testPreps, marksByStudent, scheduleByStudent, schoolByStudent, pendingApps, ratings, actions }: any) {
   const router = useRouter()
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null)
   useEffect(() => {
@@ -242,8 +242,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
     if (tab === 'room') {
       return (
         <div>
-          <PageTitle title="Room" />
-          <p className="meta">Pick a subject group, paste ONE link for the whole subject, and start. Only those students see Join.</p>
+          <div className="title-bar"><a className="tb-back" role="button" aria-label="Back" onClick={() => goTab && goTab('home')}><ChevronLeft size={24} /></a><b>Room</b></div>
           <RoomPanel />
         </div>
       )
@@ -370,7 +369,7 @@ function TutorInner({ openReports, owedThisMonth, videoOnly, section, setSection
     )
   }
 
-  const Back = ({ onClick }: { onClick?: () => void }) => <div className="meta" style={{ cursor: 'pointer', marginBottom: 16, color: 'var(--purple-dark)', fontWeight: 600 }} onClick={onClick || (() => setSection('menu'))}>&larr; Back</div>
+  const Back = ({ onClick }: { onClick?: () => void }) => <div className="backbar" role="button" onClick={onClick || (() => setSection('menu'))}><ChevronLeft size={22} /><span>Back</span></div>
 
   if (section === 'pending') {
     return (
@@ -922,7 +921,7 @@ export default function TutorHome(props: any) {
   ]
   return (
     <div style={{ visibility: ready ? 'visible' : 'hidden' }}>
-      <TutorInner {...props} section={section} setSection={setSection} tab={tab} />
+      <TutorInner {...props} section={section} setSection={setSection} tab={tab} goTab={go} />
       <TabBarPortal>
         {items.map(i => (
           <button key={i.id} className={tab === i.id ? 'active' : ''} onClick={() => go(i.id)}>

@@ -10,7 +10,7 @@ import TabBarPortal, { scrollPageToTop } from '../TabBarPortal'
 import { useRouter } from 'next/navigation'
 import InstallButton from '../InstallButton'
 import { Hero, QuoteCloud, StreakCard, TUTOR_QUOTES } from '../portal/HomeParts'
-import { Check, Users as UsersIcon, CalendarDays, Wallet } from 'lucide-react'
+import { Check, ChevronLeft, Users as UsersIcon, CalendarDays, Wallet } from 'lucide-react'
 import { FolderOpen, Pencil, UserPlus, Calendar, Inbox, Film, Users, Video, MapPin, ScrollText, Target, Home, Settings, CalendarClock } from 'lucide-react'
 
 type Section = 'menu' | 'schedule' | 'availability' | 'open' | 'requests' | 'students' | 'videos' | 'areas' | 'tests' | 'files'
@@ -100,7 +100,7 @@ export default function PartnerHome({ avatarPath, me, feelingItems, streakRows, 
   )
 
   const Back = () => (
-    <div className="meta" style={{ cursor: 'pointer', marginBottom: 16, color: 'var(--purple-dark)', fontWeight: 600 }} onClick={() => setSection('menu')}>&larr; Back</div>
+    <div className="backbar" role="button" onClick={() => setSection('menu')}><ChevronLeft size={22} /><span>Back</span></div>
   )
 
   let body: ReactNode = null
@@ -127,8 +127,7 @@ export default function PartnerHome({ avatarPath, me, feelingItems, streakRows, 
   } else if (tab === 'room') {
     body = (
       <div>
-        <PageTitle title="Room" />
-        <p className="meta">Choose the subject, then Group, One-on-one or Physical. Only those students see Join.</p>
+        <div className="title-bar"><a className="tb-back" role="button" aria-label="Back" onClick={() => go('home')}><ChevronLeft size={24} /></a><b>Room</b></div>
         <RoomPanel />
       </div>
     )
