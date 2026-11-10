@@ -2,6 +2,7 @@ import './globals.css'
 import BottomNav from './BottomNav'
 import InstallCapture from './InstallCapture'
 import ViewSwitcher from './ViewSwitcher'
+import AutoRefresh from './AutoRefresh'
 
 export const metadata = {
   title: 'Aid & Ace Tutoring',
@@ -28,6 +29,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           {children}
         </div>
         <InstallCapture />
+        <AutoRefresh />
         <ViewSwitcher />
         <BottomNav />
       </body>
