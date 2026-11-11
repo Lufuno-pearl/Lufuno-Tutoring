@@ -363,13 +363,9 @@ export function QuoteCloud({ quotes }: { quotes?: string[] }) {
   const [quote, setQuote] = useState('')
   useEffect(() => { setQuote(todaysQuote(quotes || QUOTES)) }, [quotes])
   return (
-    <div className="bubble-card">
-      <Sparkle x={10} y={8} size={12} /><Sparkle x="64%" y={10} size={16} color="#B6A3F0" /><Sparkle x="93%" y="55%" size={10} /><Sparkle x={74} y="82%" size={10} color="#F3A4B7" />
-      <Owl size={66} />
-      <div className="bubble-text">
-        <b>You&apos;re doing great!</b>
-        {quote && <span>&ldquo;{quote}&rdquo;</span>}
-      </div>
+    <div className="quote-card">
+      <div className="quote-k">Today</div>
+      {quote && <div className="quote-t">&ldquo;{quote}&rdquo;</div>}
     </div>
   )
 }

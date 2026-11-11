@@ -730,3 +730,14 @@ html[data-chatbg="none"] .chat-pane{background:transparent !important}
 .bg-sw[data-sample="dots"]{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20'%3E%3Ccircle cx='10' cy='10' r='2.200' fill='%23BBAEEF' fill-opacity='.5'/%3E%3C/svg%3E") !important}
 .bg-sw[data-sample="waves"]{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='24'%3E%3Cpath d='M0 12c5-8 10-8 20 0s15 8 20 0' fill='none' stroke='%23BBAEEF' stroke-opacity='.45' stroke-width='3'/%3E%3C/svg%3E") !important}
 .bg-sw[data-sample="stars"]{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44'%3E%3Cpath d='M10 6l2 5 5 .5-4 3.500 1.200 5L10 17.500 5.800 20l1.200-5L3 11.500 8 11z' fill='%23BBAEEF' fill-opacity='.45'/%3E%3Ccircle cx='34' cy='30' r='2.500' fill='%23BBAEEF' fill-opacity='.45'/%3E%3C/svg%3E") !important}
+
+/* ROUND 3b: tutor and owner Home */
+.quote-card{background:var(--tint);border-radius:18px;padding:16px 18px;margin:6px 0 16px}
+.quote-k{font-size:.7rem;font-weight:800;letter-spacing:.1em;color:var(--brand);text-transform:uppercase;margin-bottom:4px}
+.quote-t{font-family:'Fraunces',Georgia,serif;font-size:1.05rem;line-height:1.35;color:var(--ink)}
+.next-card{border-left:0 !important;box-shadow:none !important;border:1px solid var(--line) !important;background:#fff !important}
+.next-label{color:var(--brand) !important}
+.ftile{background:var(--tint) !important;color:var(--brand) !important}
+.ftile svg{color:var(--brand) !important;stroke:var(--brand) !important}
+.frow-s,.frow-t{color:var(--ink)}
+.panel[style*="FDF1F3"]{background:#fff !important}

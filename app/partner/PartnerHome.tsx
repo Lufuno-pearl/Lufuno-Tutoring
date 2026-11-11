@@ -9,7 +9,8 @@ import TodayAttendance from '../TodayAttendance'
 import TabBarPortal, { scrollPageToTop } from '../TabBarPortal'
 import { useRouter } from 'next/navigation'
 import InstallButton from '../InstallButton'
-import { Hero, QuoteCloud, StreakCard, TUTOR_QUOTES } from '../portal/HomeParts'
+import { heroScene } from '../portal/scenes'
+import { QuoteCloud, StreakCard, TUTOR_QUOTES } from '../portal/HomeParts'
 import { Check, ChevronLeft, Users as UsersIcon, CalendarDays, Wallet } from 'lucide-react'
 import { FolderOpen, Pencil, UserPlus, Calendar, Inbox, Film, Users, Video, MapPin, ScrollText, Target, Home, Settings, CalendarClock } from 'lucide-react'
 
@@ -154,7 +155,17 @@ export default function PartnerHome({ avatarPath, me, feelingItems, streakRows, 
     const attention = openCount + requestCount + testCount
     body = (
       <div>
-        <Hero name={name} avatarPath={avatarPath} me={me} />
+        <div className="remind" style={{ cursor: 'default' }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="remind-k">{firstName ? `HELLO, ${firstName.toUpperCase()}` : 'WELCOME'}</div>
+            <div className="remind-t">{today.length === 0 ? 'No sessions today' : `${today.length} session${today.length === 1 ? '' : 's'} today`}</div>
+            {today.map(t => (
+              <div key={t.id} className="meta" style={{ margin: '4px 0 0' }}>{String(t.time).slice(0, 5)} · {t.subject} · {t.studentName} · {t.format === 'physical' ? `In person${t.area ? ` (${t.area})` : ''}` : 'Online'}</div>
+            ))}
+            <div className="meta" style={{ margin: '8px 0 0' }}>{attention === 0 ? "You're all caught up." : `${attention} thing${attention === 1 ? '' : 's'} need your attention.`}</div>
+          </div>
+          <div className="remind-art" dangerouslySetInnerHTML={{ __html: heroScene(me?.sex) }} />
+        </div>
         <StreakCard attendance={streakRows || []} mode="tutor" />
         <InstallButton hideWhenInstalled />
         <ClassFeelings items={feelingItems || []} onOpen={() => setSection('students')} />
@@ -164,23 +175,6 @@ export default function PartnerHome({ avatarPath, me, feelingItems, streakRows, 
           <div className="fstat f3"><div className="fic"><CalendarDays size={22} color="#fff" /></div><div><small>Today</small><div className="n">{today.length}</div></div></div>
         </div>
 
-        <div className="next-card">
-          <div className="next-label"><CalendarClock size={16} /> Today</div>
-          {today.length === 0 && (
-            <>
-              <div className="next-title">No sessions today</div>
-              <div className="next-when">Enjoy the free time, or check your requests.</div>
-            </>
-          )}
-          {today.map(t => (
-            <div key={t.id} style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--line)' }}>
-              <div className="next-title" style={{ marginTop: 0, fontSize: '1.05rem' }}>{t.subject} · {t.studentName}</div>
-              <div className="next-when">{String(t.time).slice(0, 5)} · {t.format === 'physical' ? `In person${t.area ? ` (${t.area})` : ''}` : 'Online'}</div>
-            </div>
-          ))}
-        </div>
-
-        {attention === 0 && <p className="meta">You're all caught up.</p>}
         {openCount > 0 && (
           <NavRow icon={<UserPlus size={20} />} tone="gold" title={<>{openCount} request{openCount === 1 ? '' : 's'} need a tutor</>} sub="Tap to claim a student." onClick={() => setSection('open')} />
         )}
