@@ -1,11 +1,12 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { createClient } from '../../lib/supabase/client'
 
 import { UNI_SUBJECTS, HS_SUBJECTS } from '../../lib/videoSubjects'
 
 function SubjectVideos({ subject }: { subject: string }) {
-  const [open, setOpen] = useState(false)
+  const open = true
   const [videos, setVideos] = useState<any[]>([])
   const [title, setTitle] = useState('')
   const [file, setFile] = useState<File | null>(null)
@@ -46,13 +47,10 @@ function SubjectVideos({ subject }: { subject: string }) {
     loadVideos()
   }
 
-  if (!open) {
-    return <button className="btn" style={{ background: 'none', border: '1px solid var(--line)', marginRight: 8, marginBottom: 8 }} onClick={() => setOpen(true)}>{subject}</button>
-  }
-
   return (
-    <div className="panel">
-      <h4>{subject}</h4>
+    <div>
+      <div className="panel">
+      <h4 style={{ margin: '0 0 4px' }}>Videos</h4>
       {videos.length === 0 && <p className="meta">No videos uploaded yet.</p>}
       {videos.map(v => (
         <div key={v.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: '1px solid var(--line)' }}>
@@ -77,23 +75,57 @@ function SubjectVideos({ subject }: { subject: string }) {
       </div>
       <button className="btn btn-primary" onClick={handleUpload} disabled={uploading || !file || !title.trim()}>{uploading ? 'Uploading...' : 'Yes, upload this video'}</button>
       {error && <p style={{ color: '#A6443A', fontSize: '0.85rem' }}>{error}</p>}
-      <div className="meta" style={{ cursor: 'pointer', marginTop: 10 }} onClick={() => setOpen(false)}>Collapse</div>
+      </div>
     </div>
   )
 }
 
 
+function Crumb({ label, onClick }: { label: string; onClick: () => void }) {
+  return <button type="button" onClick={onClick} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'var(--tint)', color: 'var(--brand)', border: 0, borderRadius: 99, padding: '6px 12px 6px 8px', fontWeight: 700, fontSize: '0.82rem', marginBottom: 12, cursor: 'pointer' }}><ChevronLeft size={16} />{label}</button>
+}
+function PickRow({ title, sub, onClick }: { title: string; sub?: string; onClick: () => void }) {
+  return (
+    <div className="panel" onClick={onClick} role="button" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px' }}>
+      <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontWeight: 700 }}>{title}</div>{sub && <div className="meta" style={{ margin: 0 }}>{sub}</div>}</div>
+      <ChevronRight size={20} style={{ color: 'var(--brand)' }} />
+    </div>
+  )
+}
+
+// University or High School first, then the module, then that module's own screen with its videos and the upload box.
 // `only` limits the list to the subjects a tutor teaches. Leave it out to show everything (owners).
 export default function VideoManager({ only }: { only?: { uni: string[]; hs: string[] } | null }) {
   const uni = only ? only.uni : UNI_SUBJECTS
   const hs = only ? only.hs : HS_SUBJECTS
+  const [level, setLevel] = useState<'uni' | 'hs' | null>(null)
+  const [subject, setSubject] = useState<string | null>(null)
+  const list = level === 'uni' ? uni : hs
+  const levelName = level === 'uni' ? 'University' : 'High School'
+
+  if (level && subject) {
+    return (
+      <div>
+        <Crumb label={levelName} onClick={() => setSubject(null)} />
+        <h3 style={{ margin: '0 0 10px' }}>{subject}</h3>
+        <SubjectVideos key={subject} subject={subject} />
+      </div>
+    )
+  }
+  if (level) {
+    return (
+      <div>
+        <Crumb label="Back" onClick={() => setLevel(null)} />
+        <h3 style={{ margin: '0 0 10px' }}>{levelName}</h3>
+        {list.map(s => <PickRow key={s} title={s} onClick={() => setSubject(s)} />)}
+      </div>
+    )
+  }
   return (
     <div>
       {only && uni.length === 0 && hs.length === 0 && <p className="meta">You can manage videos for the subjects you teach. None are saved on your profile yet, so please ask Aid &amp; Ace to update them.</p>}
-      {uni.length > 0 && <h4 style={{ marginBottom: 8 }}>University</h4>}
-      {uni.map(s => <SubjectVideos key={s} subject={s} />)}
-      {hs.length > 0 && <h4 style={{ marginTop: 20, marginBottom: 8 }}>High School</h4>}
-      {hs.map(s => <SubjectVideos key={s} subject={s} />)}
+      {uni.length > 0 && <PickRow title="University" sub={`${uni.length} module${uni.length === 1 ? '' : 's'}`} onClick={() => setLevel('uni')} />}
+      {hs.length > 0 && <PickRow title="High School" sub={`${hs.length} subject${hs.length === 1 ? '' : 's'}`} onClick={() => setLevel('hs')} />}
     </div>
   )
 }
