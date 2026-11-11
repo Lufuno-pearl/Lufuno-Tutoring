@@ -200,6 +200,21 @@ async function PartnerDashboardInner() {
             actions={{ setMeetingLink, sendPartnerMessage, markAttendance }}
           />
         }
+        messages={
+          <PartnerStudents
+            mode="messages"
+            allSubs={mySubs || []}
+            marksByStudent={marksByStudent}
+            scheduleByStudent={scheduleByStudent}
+            myStudentIds={myStudentIds}
+            threads={threads}
+            feelingsByStudent={feelingsByStudent}
+            bookingsByStudent={bookingsByStudent}
+            subsByStudent={subsByStudent}
+            attendanceByStudent={attendanceByStudent}
+            actions={{ setMeetingLink, sendPartnerMessage, markAttendance }}
+          />
+        }
         videos={<VideoManager only={videoOnly} />}
         areas={<TutorAreas />}
       />

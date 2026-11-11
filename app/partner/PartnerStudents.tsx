@@ -15,7 +15,7 @@ function subjectLabel(choice?: string) {
   return choice === 'maths' ? 'Mathematics' : choice === 'physics' ? 'Physical Sciences' : 'Maths & Physical Sciences'
 }
 
-export default function PartnerStudents({ feelingsByStudent, allSubs, scheduleByStudent, marksByStudent, myStudentIds, threads, bookingsByStudent, subsByStudent, attendanceByStudent, actions }: any) {
+export default function PartnerStudents({ mode, feelingsByStudent, allSubs, scheduleByStudent, marksByStudent, myStudentIds, threads, bookingsByStudent, subsByStudent, attendanceByStudent, actions }: any) {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [view, setView] = useState('chat')
   const [search, setSearch] = useState('')
@@ -48,7 +48,7 @@ export default function PartnerStudents({ feelingsByStudent, allSubs, scheduleBy
     return () => document.body.classList.remove('in-chat')
   }, [selectedId])
 
-  if (myStudentIds.length === 0) return <p className="meta">You haven't claimed any students yet. Open "Open Requests" to claim one.</p>
+  if (myStudentIds.length === 0) return <p className="meta">{mode === 'messages' ? 'No students to message yet. Once you claim a student, you can chat with them here.' : 'You haven\'t claimed any students yet. Open "Open Requests" to claim one.'}</p>
 
   if (!selectedId) {
     const q = search.trim().toLowerCase()
@@ -64,6 +64,16 @@ export default function PartnerStudents({ feelingsByStudent, allSubs, scheduleBy
       )
     }
 
+    if (mode === 'messages') {
+      const lastAt = (sid: string) => { const m = (threads[sid]?.msgs || []); return m.length ? String(m[m.length - 1].created_at || '') : '' }
+      const ordered = myStudentIds.filter((sid: string) => matches(sid)).sort((a: string, b: string) => (lastAt(a) < lastAt(b) ? 1 : -1))
+      return (
+        <div>
+          {myStudentIds.length > 6 && <div className="field"><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search students..." /></div>}
+          {ordered.map((sid: string) => renderRow(sid))}
+        </div>
+      )
+    }
     return (
       <div>
         <div className="field">

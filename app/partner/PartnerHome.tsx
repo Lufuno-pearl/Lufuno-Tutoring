@@ -12,10 +12,10 @@ import InstallButton from '../InstallButton'
 import { heroScene } from '../portal/scenes'
 import { QuoteCloud, StreakCard, TUTOR_QUOTES } from '../portal/HomeParts'
 import { Check, ChevronLeft, Users as UsersIcon, CalendarDays, Wallet } from 'lucide-react'
-import { FolderOpen, Pencil, UserPlus, Calendar, Inbox, Film, Users, Video, MapPin, ScrollText, Target, Home, Settings, CalendarClock } from 'lucide-react'
+import { FolderOpen, Pencil, UserPlus, Calendar, Inbox, Film, Users, Video, MapPin, ScrollText, Target, Home, Settings, CalendarClock, MessageCircle } from 'lucide-react'
 
 type Section = 'menu' | 'schedule' | 'availability' | 'open' | 'requests' | 'students' | 'videos' | 'areas' | 'tests' | 'files'
-type Tab = 'home' | 'students' | 'requests' | 'room' | 'manage'
+type Tab = 'home' | 'students' | 'messages' | 'requests' | 'room' | 'manage'
 
 type TodaySession = { id: string; studentId?: string; subject: string; time: string; format: string; area?: string | null; meeting_link?: string | null; studentName: string }
 
@@ -38,6 +38,7 @@ type Props = {
   open: ReactNode
   requests: ReactNode
   students: ReactNode
+  messages: ReactNode
   videos: ReactNode
   areas: ReactNode
 }
@@ -57,9 +58,9 @@ function tabOf(section: Section): Tab | null {
 }
 
 const SECTIONS: Section[] = ['menu', 'schedule', 'availability', 'open', 'requests', 'students', 'videos', 'areas', 'tests', 'files']
-const TABS: Tab[] = ['home', 'students', 'requests', 'room', 'manage']
+const TABS: Tab[] = ['home', 'students', 'messages', 'requests', 'room', 'manage']
 
-export default function PartnerHome({ avatarPath, me, feelingItems, streakRows, monthSessions, markedToday, markAttendance, name, today, openCount, requestCount, studentCount, testCount, tests, availability, open, requests, students, videos, areas }: Props) {
+export default function PartnerHome({ avatarPath, me, feelingItems, streakRows, monthSessions, markedToday, markAttendance, name, today, openCount, requestCount, studentCount, testCount, tests, availability, open, requests, students, messages, videos, areas }: Props) {
   const [section, setSection] = useState<Section>('menu')
   const [tab, setTab] = useState<Tab>('home')
   useEffect(() => { const t = setTimeout(() => { prefetchRoom() }, 500); return () => clearTimeout(t) }, [])
@@ -124,6 +125,13 @@ export default function PartnerHome({ avatarPath, me, feelingItems, streakRows, 
           {tile('Homework & Video Requests', <Film size={36} color="#fff" />, 'linear-gradient(135deg, #E0956F, #C46B3E)', () => setSection('requests'), requestCount)}
           {tile('Upcoming Tests', <Target size={36} color="#fff" />, 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('tests'), testCount)}
         </div>
+      </div>
+    )
+  } else if (tab === 'messages') {
+    body = (
+      <div>
+        <div className="title-bar"><a className="tb-back" role="button" aria-label="Back" onClick={() => go('home')}><ChevronLeft size={24} /></a><b>Messages</b></div>
+        {messages}
       </div>
     )
   } else if (tab === 'room') {
@@ -192,6 +200,7 @@ export default function PartnerHome({ avatarPath, me, feelingItems, streakRows, 
   const items: { id: Tab; label: string; icon: ReactNode }[] = [
     { id: 'home', label: 'Home', icon: <Home size={20} /> },
     { id: 'students', label: 'Students', icon: <Users size={20} /> },
+    { id: 'messages', label: 'Messages', icon: <MessageCircle size={20} /> },
     { id: 'requests', label: 'Requests', icon: <Inbox size={20} /> },
     { id: 'room', label: 'Room', icon: <Video size={20} /> },
     { id: 'manage', label: 'Manage', icon: <Settings size={20} /> },
