@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { Video, CheckCircle2, XCircle, Clock, Package } from 'lucide-react'
+import { Video, CheckCircle2, XCircle, Clock, Package, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Row, Pill, Seg, Tone } from '../ui'
 
 const subjectOf = (s: any) => s.subject_choice === 'maths' ? 'Mathematics' : s.subject_choice === 'physics' ? 'Physical Sciences' : 'Maths + Physical Sciences'
@@ -13,6 +13,7 @@ function monthLabel(iso: string) {
 // Bookings, split into what is coming up and what is behind you (attendance by month, past plans, pack orders).
 export default function BookingsView({ bookings, subs, orders, attendance, scheduled, onPay }: { bookings: any[]; subs: any[]; orders: any[]; attendance: any[]; scheduled: any[]; onPay: () => void }) {
   const [tab, setTab] = useState('upcoming')
+  const [openMonth, setOpenMonth] = useState<string | null>(null)
   const today = new Date(Date.now() + 2 * 3600000).toISOString().slice(0, 10)
   const live = (x: any) => x.status !== 'cancelled' && x.status !== 'rejected'
   const planActive = (s: any) => !s.end_date || s.end_date >= today
@@ -67,16 +68,27 @@ export default function BookingsView({ bookings, subs, orders, attendance, sched
       {tab === 'history' && (
         <>
           {Object.keys(byMonth).length === 0 && <div className="panel"><p className="meta" style={{ margin: 0 }}>No sessions logged yet. Attendance is marked automatically when you join or scan.</p></div>}
-          {Object.entries(byMonth).map(([month, rows]) => (
-            <div key={month} className="panel">
-              <h4>{month}</h4>
-              {rows.map((a: any) => {
-                const p = attPill(a.status)
-                return <Row key={a.id} icon={a.status === 'present' ? <CheckCircle2 size={22} /> : <XCircle size={22} />} tone={p.tone} title={new Date(a.session_date + 'T12:00:00Z').toLocaleDateString('en-ZA', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' })} sub={a.subject || ''} right={<Pill tone={p.tone}>{p.t}</Pill>} />
-              })}
+          {openMonth && byMonth[openMonth] ? (
+            <>
+              <button type="button" onClick={() => setOpenMonth(null)} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'var(--tint)', color: 'var(--brand)', border: 0, borderRadius: 99, padding: '6px 12px 6px 8px', fontWeight: 700, fontSize: '0.82rem', margin: '12px 0', cursor: 'pointer' }}><ChevronLeft size={16} />All months</button>
+              <div className="panel">
+                <h4>{openMonth}</h4>
+                {byMonth[openMonth].map((a: any) => {
+                  const p = attPill(a.status)
+                  return <Row key={a.id} icon={a.status === 'present' ? <CheckCircle2 size={22} /> : <XCircle size={22} />} tone={p.tone} title={new Date(a.session_date + 'T12:00:00Z').toLocaleDateString('en-ZA', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' })} sub={a.subject || ''} right={<Pill tone={p.tone}>{p.t}</Pill>} />
+                })}
+              </div>
+            </>
+          ) : Object.entries(byMonth).map(([month, rows]) => (
+            <div key={month} className="panel" role="button" onClick={() => setOpenMonth(month)} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px' }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 700 }}>{month}</div>
+                <div className="meta" style={{ margin: 0 }}>{rows.length} session{rows.length === 1 ? '' : 's'} · {rows.filter((a: any) => a.status === 'present').length} present</div>
+              </div>
+              <ChevronRight size={20} style={{ color: 'var(--brand)' }} />
             </div>
           ))}
-          {pastPlans.length > 0 && (
+          {!openMonth && pastPlans.length > 0 && (
             <>
               <div className="fsec">PAST PLANS</div>
               <div className="panel">
@@ -84,7 +96,7 @@ export default function BookingsView({ bookings, subs, orders, attendance, sched
               </div>
             </>
           )}
-          {(orders || []).length > 0 && (
+          {!openMonth && (orders || []).length > 0 && (
             <>
               <div className="fsec">STUDY PACK ORDERS</div>
               <div className="panel">
