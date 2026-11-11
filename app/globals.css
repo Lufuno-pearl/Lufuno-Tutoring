@@ -741,3 +741,22 @@ html[data-chatbg="none"] .chat-pane{background:transparent !important}
 .ftile svg{color:var(--brand) !important;stroke:var(--brand) !important}
 .frow-s,.frow-t{color:var(--ink)}
 .panel[style*="FDF1F3"]{background:#fff !important}
+
+/* ROUND 3c: stronger contrast so nothing looks faded */
+html:root{--mute:#4F4878;--muted:#4F4878}
+html[data-theme="midnight"]{--mute:#445270;--muted:#445270}
+html[data-theme="ember"]{--mute:#6A524F;--muted:#6A524F}
+html[data-theme="graphite"]{--mute:#4B5366;--muted:#4B5366}
+.meta,.frow-s,.fstat small{color:var(--mute) !important}
+.fstat small{font-size:.78rem !important;font-weight:700 !important}
+.fstat .fic svg,.fstat .fic svg *{color:var(--brand) !important;stroke:var(--brand) !important}
+.fstat{background:color-mix(in srgb,var(--brand) 12%,#fff) !important}
+.quote-card{background:color-mix(in srgb,var(--brand) 12%,#fff)}
+.fstat .n,.quote-t{color:var(--ink) !important}
+.wd span{background:color-mix(in srgb,var(--brand) 18%,#fff)}
+.wd.on span{background:var(--brand)}
+.wd.today span{box-shadow:0 0 0 3px color-mix(in srgb,var(--brand) 40%,transparent)}
+.wd small{color:var(--ink)}
+.remind .meta{color:#fff !important;opacity:.92}
+.remind-k{color:#fff !important;opacity:.85}
+.sec-title,.panel h4{color:var(--ink)}
