@@ -12,6 +12,7 @@ import InstallButton from '../InstallButton'
 import FlatIcon from '../FlatIcon'
 import { Owl } from '../Owl'
 import { QuoteCloud, TUTOR_QUOTES } from '../portal/HomeParts'
+import { heroScene } from '../portal/scenes'
 import PacksAdmin from './PacksAdmin'
 import SessionsLog from './SessionsLog'
 import FilesManager from './FilesManager'
@@ -343,24 +344,18 @@ function TutorInner({ goTab, openReports, owedThisMonth, videoOnly, section, set
     }
     return (
       <div>
-        <div className="hero">
-          <div>
-            <div className="hero-hi">Owner dashboard</div>
-            <div className="hero-sub">{needsAttention === 0 ? "You're all caught up." : `${needsAttention} thing${needsAttention === 1 ? '' : 's'} need your attention.`}</div>
+        <div className="remind" style={{ cursor: 'default' }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="remind-k">OWNER DASHBOARD</div>
+            <div className="remind-t">{todaySessions.length === 0 ? 'No sessions today' : `${todaySessions.length} session${todaySessions.length === 1 ? '' : 's'} today`}</div>
+            {todaySessions.map((t: any) => (
+              <div key={t.id} className="meta" style={{ margin: '4px 0 0' }}>{String(t.session_time).slice(0, 5)} · {t.subject} · {t.name} · {t.format === 'physical' ? 'In person' : 'Online'}</div>
+            ))}
+            <div className="meta" style={{ margin: '8px 0 0' }}>{needsAttention === 0 ? "You're all caught up." : `${needsAttention} thing${needsAttention === 1 ? '' : 's'} need your attention.`}</div>
           </div>
-          <Owl size={64} />
+          <div className="remind-art" dangerouslySetInnerHTML={{ __html: heroScene(null) }} />
         </div>
         <InstallButton hideWhenInstalled />
-        <div className="next-card">
-          <div className="next-label">Today</div>
-          {todaySessions.length === 0 && <div className="next-title">No sessions today</div>}
-          {todaySessions.map((t: any) => (
-            <div key={t.id} style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--line)' }}>
-              <div className="next-title" style={{ marginTop: 0, fontSize: '1.05rem' }}>{t.subject} · {t.name}</div>
-              <div className="next-when">{String(t.session_time).slice(0, 5)} · {t.format === 'physical' ? 'In person' : 'Online'}</div>
-            </div>
-          ))}
-        </div>
         <ClassFeelings items={Object.entries(threadsByStudent || {}).map(([id, t]: any) => ({ id, name: t.name, look: t.look, sex: t.sex, feeling: t.feeling }))} />
         <OwnerOverview stats={overviewStats} week={weekCounts} items={attentionItems} />
         <DataDraw />

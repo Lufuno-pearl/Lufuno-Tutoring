@@ -1,4 +1,5 @@
 'use client'
+import { heroScene, friendsPair } from './scenes'
 import { useState, useEffect } from 'react'
 import { Check, Flame, MessageCircle, Gift, TrendingUp, Target, CalendarDays, ChevronRight } from 'lucide-react'
 import { Owl, CapBuddy, Sparkle } from '../Owl'
@@ -155,7 +156,7 @@ export function StatTrio({ attendance, marks, tests }: { attendance: any[]; mark
 }
 
 // A small reminder for the next session. Tapping it opens the Room tab.
-export function ReminderBar({ bookings, subs, scheduled, onOpen, art }: { bookings: any[]; subs: any[]; scheduled: any[]; onOpen: () => void; art?: string }) {
+export function ReminderBar({ bookings, subs, scheduled, onOpen, sex }: { bookings: any[]; subs: any[]; scheduled: any[]; onOpen: () => void; art?: string; sex?: string | null }) {
   const [now, setNow] = useState<Date | null>(null)
   useEffect(() => { setNow(new Date()); const t = setInterval(() => setNow(new Date()), 30000); return () => clearInterval(t) }, [])
   if (!now) return null
@@ -180,7 +181,7 @@ export function ReminderBar({ bookings, subs, scheduled, onOpen, art }: { bookin
         <div className="meta" style={{ margin: '0 0 10px' }}>{mins < 90 ? `At ${time}` : 'Open Room for details'}</div>
         <span className="remind-btn">Join in Room</span>
       </div>
-      {art ? <div className="remind-art" dangerouslySetInnerHTML={{ __html: art }} /> : <CapBuddy size={46} />}
+      <div className="remind-art" dangerouslySetInnerHTML={{ __html: heroScene(sex) }} />
     </div>
   )
 }
@@ -283,15 +284,13 @@ export function PriceStrip({ tier, onRequest }: { tier: string; onRequest: () =>
 }
 
 export function ReferBanner({ onOpen, subscribed, me, name }: { onOpen: () => void; subscribed: boolean; me?: any; name?: string }) {
-  const A = FuniArt.lookFor(me?.look || null, name || 'aid-and-ace', me?.sex || null)
-  const B = FuniArt.lookFor(null, 'friend-' + (name || 'x'), me?.sex === 'male' ? 'female' : 'male')
   return (
     <div className="banner-friends" onClick={onOpen} role="button">
-      <div className="bf-art" dangerouslySetInnerHTML={{ __html: FuniArt.friendsScene(A, B, 'bfa' + (name || ''), 'bfb' + (name || '')) }} />
       <div className="bf-text">
-        <b>Learn together. Do better.</b>
+        <b>Learn together.<br />Do better.</b>
         <span>{subscribed ? 'Invite a friend and you both earn' : 'Get R50 off when you subscribe and friends join'}</span>
       </div>
+      <div className="bf-art" dangerouslySetInnerHTML={{ __html: friendsPair(me?.sex) }} />
     </div>
   )
 }
@@ -409,13 +408,13 @@ export function XpCard({ attendance, marks, onOpen }: { attendance: any[]; marks
   const x = xpFor(attendance, marks)
   return (
     <div className="panel xpcard" onClick={onOpen} role="button" style={{ cursor: 'pointer' }}>
-      <div className="xp-ring" style={{ background: `conic-gradient(#7555DC 0 ${x.pct}%, #E4DBFB 0)` }}><i>Lv {x.level.lv}<small>{x.level.name}</small></i></div>
+      <div className="xp-ring" style={{ background: `conic-gradient(var(--brand) 0 ${x.pct}%, var(--line) 0)` }}><i>Lv {x.level.lv}<small>{x.level.name}</small></i></div>
       <div style={{ flex: 1 }}>
         <b style={{ fontSize: '1rem' }}>{x.xp} XP</b>
         <div className="meta" style={{ margin: 0 }}>{x.next ? `${x.toNext} XP to Level ${x.next.lv} · ${x.next.name}` : 'You reached the top level!'}</div>
-        <div className="meta" style={{ margin: '4px 0 0', color: '#7A5FD0', fontWeight: 700 }}>See my badges</div>
+        <div className="meta" style={{ margin: '4px 0 0', color: 'var(--brand)', fontWeight: 700 }}>See my badges</div>
       </div>
-      <ChevronRight size={20} color="#7A5FD0" />
+      <ChevronRight size={20} color="currentColor" style={{ color: 'var(--brand)' }} />
     </div>
   )
 }
