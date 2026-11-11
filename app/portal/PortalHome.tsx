@@ -861,7 +861,7 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
 
     return (
       <div>
-                <ReminderBar bookings={bookings || []} subs={subs || []} scheduled={scheduled || []} onOpen={() => { setTab('room'); setSection('menu'); scrollPageToTop() }} art={FuniArt.studyScene(FuniArt.lookFor(me?.look || null, name || 'aid-and-ace', me?.sex || null), me?.feeling || 'Happy', 'rem' + (name || ''))} />
+                <ReminderBar bookings={bookings || []} subs={subs || []} scheduled={scheduled || []} onOpen={() => { setTab('room'); setSection('menu'); scrollPageToTop() }} sex={me?.sex} />
         <StatTrio attendance={attendance || []} marks={marks || []} tests={testPreps || []} />
         <ThisWeek bookings={bookings || []} subs={subs || []} scheduled={scheduled || []} />
         <FeelingCard name={name || ''} look={me?.look} sex={me?.sex} feeling={me?.feeling} onChange={f => setMe((m: any) => ({ ...m, feeling: f }))} />
