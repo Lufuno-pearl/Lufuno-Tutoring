@@ -760,3 +760,38 @@ html[data-theme="graphite"]{--mute:#4B5366;--muted:#4B5366}
 .remind .meta{color:#fff !important;opacity:.92}
 .remind-k{color:#fff !important;opacity:.85}
 .sec-title,.panel h4{color:var(--ink)}
+
+/* ROUND 4: prize giving and certificates */
+.cert-award b{color:var(--cc)}
+.cert-wrap{padding-bottom:30px}
+.cert-title{margin:0 0 12px}
+.prize-card{background:var(--deep) !important;border-radius:22px;padding:20px;display:flex;gap:12px;align-items:center;cursor:pointer;margin-bottom:14px;color:#fff}
+.prize-card .pk{font-size:.7rem;font-weight:800;letter-spacing:.14em;color:var(--lt)}
+.prize-card .pt{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:1.4rem;line-height:1.12;margin-top:4px}
+.prize-card .ps{font-size:.84rem;color:var(--pale);margin-top:6px}
+.prize-card .pb{display:inline-block;background:#fff;color:var(--deep);font-weight:800;font-size:.86rem;padding:9px 15px;border-radius:12px;margin-top:12px}
+.prize-card .pa{flex:none;width:96px;height:96px;border-radius:18px;background:var(--deep2);display:flex;align-items:center;justify-content:center}
+.pz-row{display:flex;gap:12px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:16px;padding:12px 14px;margin-bottom:10px}
+.pz-row.mine{background:var(--tint)}
+.pz-ic{flex:none;width:44px;height:44px;border-radius:12px;background:var(--tint);color:var(--brand);display:flex;align-items:center;justify-content:center}
+.pz-k{font-size:.66rem;font-weight:800;letter-spacing:.1em;color:var(--brand);text-transform:uppercase}
+.pz-n{font-weight:800;font-size:1rem}
+.pz-s{font-size:.8rem;color:var(--mute);font-weight:600}
+.pz-you{background:var(--brand);color:#fff;font-size:.68rem;font-weight:800;padding:2px 8px;border-radius:99px;margin-left:6px}
+.cert-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cert-tile{background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;cursor:pointer}
+.cert-tile .ct-top{height:92px;display:flex;align-items:center;justify-content:center;position:relative}
+.cert-tile .ct-seal{width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.cert-tile .ct-body{padding:10px 12px 12px}
+.cert-tile .ct-t{font-weight:800;font-size:.88rem;line-height:1.2}
+.cert-tile .ct-s{font-size:.74rem;font-weight:600;color:var(--mute);margin-top:2px}
+.cert-tile .ct-new{position:absolute;top:8px;right:8px;background:#fff;font-size:.62rem;font-weight:800;padding:2px 8px;border-radius:99px}
+@media print{
+  @page{size:A4 landscape;margin:0}
+  body{background:#fff !important}
+  nav,.tabbar,.cert-back,.cert-title,.cert-actions,.cert-note,.backbar,.title-bar,.fab,[class*="shuffle"]{display:none !important}
+  .cert-wrap{padding:0 !important;margin:0 !important}
+  .wrap{padding:0 !important;max-width:none !important}
+  .cert-fit{width:1123px !important;height:794px !important;box-shadow:none !important;border-radius:0 !important}
+  .cert-page{transform:none !important}
+}
