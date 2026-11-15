@@ -18,6 +18,7 @@ import SessionsLog from './SessionsLog'
 import FilesManager from './FilesManager'
 import OwnerOverview, { AttentionItem } from './OwnerOverview'
 import DataDraw from './DataDraw'
+import PrizeGiving from './PrizeGiving'
 import { useRouter } from 'next/navigation'
 import ScopeFiles from './ScopeFiles'
 import VideoManager from './VideoManager'
@@ -39,7 +40,7 @@ import HomeworkSection from './HomeworkSection'
 import TestList, { daysUntil } from '../TestList'
 
 type Tab = 'home' | 'requests' | 'students' | 'room' | 'chat' | 'more'
-type Section = 'menu' | 'schedule' | 'pending' | 'assign' | 'packs' | 'sessions' | 'chat' | 'mytutoring' | 'homework' | 'videos' | 'videoreq' | 'referrals' | 'availability' | 'modules' | 'tests' | 'ratings' | 'files'
+type Section = 'menu' | 'schedule' | 'pending' | 'assign' | 'packs' | 'sessions' | 'chat' | 'mytutoring' | 'homework' | 'videos' | 'videoreq' | 'referrals' | 'availability' | 'modules' | 'tests' | 'ratings' | 'files' | 'prizes'
 
 function subjectLabel(choice?: string) {
   return choice === 'maths' ? 'Mathematics' : choice === 'physics' ? 'Physical Sciences' : 'Maths & Physical Sciences'
@@ -287,6 +288,7 @@ function TutorInner({ goTab, openReports, owedThisMonth, videoOnly, section, set
           <PageTitle title="More" />
           <div className="panel">
             {mrow('Files for students', '📁', '', () => setSection('files'))}
+            {mrow('Prize giving', '🏆', '', () => setSection('prizes'))}
             {mrow('Study Packs', '📚', 'linear-gradient(135deg, #C89B3C, #A87D24)', () => setSection('packs'))}
             {mrow('Videos', '🎬', 'linear-gradient(135deg, #1FB6A3, #17897B)', () => setSection('videos'))}
             {mrow('Tutor Availability', '📅', 'linear-gradient(135deg, #6E4FC7, #4B2FA0)', () => setSection('availability'))}
@@ -579,6 +581,16 @@ function TutorInner({ goTab, openReports, owedThisMonth, videoOnly, section, set
           </div>
         ))}
         </>} />
+      </div>
+    )
+  }
+
+  if (section === 'prizes') {
+    return (
+      <div>
+        <Back />
+        <PageTitle title="Prize giving" />
+        <PrizeGiving />
       </div>
     )
   }

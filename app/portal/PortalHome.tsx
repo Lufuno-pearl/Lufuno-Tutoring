@@ -35,12 +35,13 @@ import { daysUntil, whenLabel } from '../TestList'
 import { getAreas, getAreaList } from './actions'
 import AreaSelect from '../AreaSelect'
 import StudentChat from './StudentChat'
+import PrizesView, { PrizeCard } from './PrizesView'
 import { BADGES, earnedBadges } from '../../lib/xp'
 import { Check, Flame, Star, TrendingUp as TrendIcon, Award, Trophy } from 'lucide-react'
 import { hsPrice, hsSessions, toSessionType, EXTRA_PRICE, EXTRA_MAX, UNI_PRICE, GROUP_MAX, SessionType } from '../../lib/pricing'
 
 
-type Section = 'menu' | 'badges' | 'book' | 'packs' | 'chat' | 'history' | 'video' | 'guide' | 'homework' | 'referral' | 'testprep' | 'qotd' | 'marks' | 'school' | 'files'
+type Section = 'menu' | 'badges' | 'book' | 'packs' | 'chat' | 'history' | 'video' | 'guide' | 'homework' | 'referral' | 'testprep' | 'qotd' | 'marks' | 'school' | 'files' | 'prizes'
 type Tab = 'home' | 'hub' | 'tutoring' | 'room' | 'chat' | 'learn' | 'more'
 
 function AreaPicker({ ready = true, areas, list, value, onChange, notListedHelp, onChooseOnline }: { areas: string[]; list: { name: string; province: string | null }[]; value: string; onChange: (v: string) => void; notListedHelp: string; onChooseOnline?: () => void; ready?: boolean }) {
@@ -620,7 +621,7 @@ function ReportMissed({ reportMissedSession }: { reportMissedSession: any }) {
   )
 }
 
-function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects, visiblePacks, bookings, subs, orders, messages, attendance, videoRequests, myVideoSubjects, homeworkRequests, videoTopicRequests, moduleRequests, testPreps, canTestPrep, marks, scheduled, extras, ratingDue, hasSchool, mySchool, myProvince, avatarPath, me: meProp, locked, actions }: any) {
+function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects, visiblePacks, bookings, subs, orders, messages, attendance, videoRequests, myVideoSubjects, homeworkRequests, videoTopicRequests, moduleRequests, testPreps, canTestPrep, marks, scheduled, extras, ratingDue, awards, winners, hasSchool, mySchool, myProvince, avatarPath, me: meProp, locked, actions }: any) {
   const router = useRouter()
   const [me, setMe] = useState<any>(meProp || { look: null, sex: null, feeling: null })
   const [lockNote, setLockNote] = useState(false)
@@ -726,6 +727,7 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
             {tile('Question of the day', '💡', 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('qotd'), 'qotd')}
             {tier === 'highschool' && tile('Homework help', '📝', 'linear-gradient(135deg, #E0956F, #C46B3E)', () => setSection('homework'), 'homework')}
             {tier === 'highschool' && tile('My school', '🏫', 'linear-gradient(135deg, #8B6FD9, #6E4FC7)', () => setSection('school'), 'school')}
+            {((awards || []).length > 0 || (winners || []).length > 0) && tile('Prizes', '🏆', 'linear-gradient(135deg, #8B6FD9, #6E4FC7)', () => setSection('prizes'), 'prizes')}
             {tile('Badges & level', '🏅', 'linear-gradient(135deg, #C89B3C, #A87D24)', () => setSection('badges'), 'badges')}
             {tile('Refer & earn', '🎁', 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('referral'), 'referral')}
           </div>
@@ -849,6 +851,7 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
           {payWaiting}
           <RateTutor due={ratingDue || []} submit={actions.submitRating} />
           <SessionConfirm rows={toConfirm} respondToSession={respondToSession} onAnswered={(id: string) => setAnswered(a => [...a, id])} />
+          {((awards || []).length > 0 || (winners || []).length > 0) && <PrizeCard term={(winners || [])[0]?.term || (awards || [])[0]?.term || ''} mine={(awards || []).length} onOpen={() => { setSection('prizes'); scrollPageToTop() }} />}
           <GetStarted hasRequested={hasRequested} hasTutor={false} onRequest={() => setSection('book')} />
           <WhatYouGet tier={tier} />
           <PriceStrip tier={tier} onRequest={() => setSection('book')} />
@@ -862,6 +865,7 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
     return (
       <div>
                 <ReminderBar bookings={bookings || []} subs={subs || []} scheduled={scheduled || []} onOpen={() => { setTab('room'); setSection('menu'); scrollPageToTop() }} sex={me?.sex} />
+        {((awards || []).length > 0 || (winners || []).length > 0) && <PrizeCard term={(winners || [])[0]?.term || (awards || [])[0]?.term || ''} mine={(awards || []).length} onOpen={() => { setSection('prizes'); scrollPageToTop() }} />}
         <StatTrio attendance={attendance || []} marks={marks || []} tests={testPreps || []} />
         <ThisWeek bookings={bookings || []} subs={subs || []} scheduled={scheduled || []} />
         <FeelingCard name={name || ''} look={me?.look} sex={me?.sex} feeling={me?.feeling} onChange={f => setMe((m: any) => ({ ...m, feeling: f }))} />
@@ -1174,6 +1178,16 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
     )
   }
 
+  if (section === 'prizes') {
+    return (
+      <div>
+        <Back />
+        <PageTitle title="Prizes" sub="Winners and your certificates" />
+        <PrizesView awards={awards || []} winners={winners || []} />
+      </div>
+    )
+  }
+
   if (section === 'badges') {
     const x = xpFor(attendance || [], marks || [])
     const got = earnedBadges(x.sessions, x.streak, marks || [], x.level.lv)
@@ -1322,7 +1336,7 @@ export default function PortalHome(props: any) {
     try {
       const saved = sessionStorage.getItem('portalSection') as Section | null
       const savedTab = sessionStorage.getItem('portalTab') as Tab | null
-      const sections: Section[] = ['menu', 'badges', 'book', 'packs', 'chat', 'history', 'video', 'guide', 'homework', 'referral', 'testprep', 'qotd', 'marks', 'school', 'files']
+      const sections: Section[] = ['menu', 'badges', 'book', 'packs', 'chat', 'history', 'video', 'guide', 'homework', 'referral', 'testprep', 'qotd', 'marks', 'school', 'files', 'prizes']
       const tabs: Tab[] = ['home', 'hub', 'tutoring', 'room', 'chat', 'learn', 'more']
       if (saved && sections.includes(saved)) setSection(saved)
       if (savedTab && tabs.includes(savedTab)) setTab(savedTab)

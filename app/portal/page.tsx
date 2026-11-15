@@ -53,6 +53,9 @@ export default async function Portal({ searchParams }: { searchParams?: { view?:
 
   // empty until extras-and-subject.sql has been run
   const { data: extrasRows } = await supabase.from('session_extras').select('*').eq('student_id', user.id).order('created_at', { ascending: false })
+  // prize giving: empty until prizes.sql has been run
+  const { data: myAwards } = await supabase.from('awards').select('*').eq('student_id', user.id).eq('published', true).order('published_at', { ascending: false })
+  const { data: prizeWinners } = await supabase.rpc('prize_winners')
   const { data: ratingDueRows } = await supabase.rpc('rating_due') // empty until tutor-ratings.sql has been run
 
   // school is read separately so the portal still loads if the school columns are not set up yet
@@ -124,6 +127,8 @@ export default async function Portal({ searchParams }: { searchParams?: { view?:
         scheduled={scheduled || []}
         extras={extrasRows || []}
         ratingDue={(ratingDueRows as any) || []}
+        awards={(myAwards as any) || []}
+        winners={(prizeWinners as any) || []}
         avatarPath={avatarPath}
         me={me}
         locked={locked}
