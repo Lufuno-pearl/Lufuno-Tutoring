@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
-import { getPrizeAdmin, saveSignature, createAward, deleteAward, announceAwards } from './prizeActions'
+import { getPrizeAdmin, saveSignature, createAward, deleteAward, announceAwards, setNominations, acceptNomination, removeNomination } from './prizeActions'
 import { UNI_SUBJECTS, HS_SUBJECTS } from '../../lib/videoSubjects'
 import { KIND_LABEL, awardTitle } from '../../lib/prizes'
 
@@ -72,6 +72,15 @@ export default function PrizeGiving() {
     if (!r.ok) { setNote(r.message || 'Could not save.'); return }
     setF({ ...f, studentId: '', markPct: '', fromPct: '', note: '' }); load()
   }
+  async function toggleNoms(open: boolean) {
+    setBusy(true); setNote('')
+    const r: any = await setNominations(open, f.term)
+    setBusy(false)
+    if (!r.ok) setNote(r.message || 'Could not save.')
+    load()
+  }
+  async function accept(id: string) { setBusy(true); const r: any = await acceptNomination(id); setBusy(false); if (!r.ok) setNote(r.message || 'Could not add.'); load() }
+  async function dismiss(id: string) { setBusy(true); await removeNomination(id); setBusy(false); load() }
   async function announce() {
     setBusy(true); setNote('')
     const r: any = await announceAwards(f.term.trim())
@@ -84,6 +93,33 @@ export default function PrizeGiving() {
     <div>
       <SignaturePad saved={data.mine} onSaved={load} />
       <p className="meta" style={{ margin: '0 0 10px' }}>Signed so far: {data.signed.length ? data.signed.join(' and ') : 'nobody yet'}. Both owners need to sign before you announce.</p>
+
+      <div className="panel">
+        <div className="week-h"><b>Tutor's Choice</b></div>
+        {!data.settings ? <p className="meta">Run the Tutor's Choice SQL once in Supabase to turn this on.</p> : (
+          <>
+            <p className="meta" style={{ marginTop: 0 }}>Near the end of a term, open nominations. Each tutor picks one student and says why. Then add their picks as prizes.</p>
+            <p className="meta">Nominations for <b>{data.settings.term}</b> are <b>{data.settings.open ? 'open' : 'closed'}</b>. The term is the one in the box below.</p>
+            <button className="btn btn-primary" disabled={busy} onClick={() => toggleNoms(!data.settings.open)}>{data.settings.open ? 'Close nominations' : `Open nominations for ${f.term.trim() || 'this term'}`}</button>
+            {(data.nominations || []).filter((n: any) => n.term === f.term.trim()).map((n: any) => (
+              <div key={n.id} className="pz-row" style={{ marginTop: 10 }}>
+                <div style={{ flex: 1 }}>
+                  <b>{n.student_name}</b>
+                  <div className="meta" style={{ margin: 0 }}>Chosen by {n.tutor_name}</div>
+                  <div className="meta" style={{ margin: '2px 0 0' }}>&ldquo;{n.reason}&rdquo;</div>
+                </div>
+                {n.accepted
+                  ? <span className="meta" style={{ margin: 0 }}>Added</span>
+                  : <div style={{ display: 'flex', gap: 6 }}>
+                      <button className="btn btn-primary" disabled={busy} onClick={() => accept(n.id)}>Add prize</button>
+                      <button className="btn" style={{ background: 'var(--tint)', color: 'var(--deep)' }} disabled={busy} onClick={() => dismiss(n.id)}>Remove</button>
+                    </div>}
+              </div>
+            ))}
+            {(data.nominations || []).filter((n: any) => n.term === f.term.trim()).length === 0 && <p className="meta">No picks yet for {f.term.trim() || 'this term'}.</p>}
+          </>
+        )}
+      </div>
 
       <div className="panel">
         <div className="week-h"><b>Give a prize</b></div>

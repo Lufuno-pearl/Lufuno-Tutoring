@@ -6,6 +6,7 @@ import { setMeetingLink, markAttendance, sendPartnerMessage } from './actions'
 import { signOut } from '../portal/actions'
 import HeaderTools from '../HeaderTools'
 import PartnerStudents from './PartnerStudents'
+import TutorChoice from './TutorChoice'
 import VideoManager from '../tutor/VideoManager'
 import { UNI_SUBJECTS as ALL_UNI_SUBJECTS, HS_SUBJECTS as ALL_HS_SUBJECTS } from '../../lib/videoSubjects'
 import { allowedVideoSubjects } from '../../lib/matching'
@@ -65,6 +66,11 @@ async function PartnerDashboardInner() {
   const todayKeep = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString().slice(0, 10)
   const myStudentIds = Array.from(new Set([...(myBookings || []).filter(b => stillActiveBooking(b)).map(b => b.student_id), ...(mySubs || []).filter(s => stillActiveSub(s, todayKeep)).map(s => s.student_id)]))
   // a tutor only sees homework and video requests from their own students
+  // Tutor's Choice: shows a dot on the menu while nominations are open and this tutor has not picked yet
+  const { data: prizeSet } = await supabase.from('prize_settings').select('nominations_open, term').eq('id', 1).maybeSingle()
+  const choiceOpen = !!(prizeSet as any)?.nominations_open
+  const { data: myNom } = choiceOpen ? await supabase.from('nominations').select('id').eq('tutor_id', user.id).eq('term', (prizeSet as any).term).maybeSingle() : { data: null as any }
+  const choiceDone = !!myNom
   const myHomework = homework.filter((h: any) => myStudentIds.includes(h.student_id))
   const myVideos = videos.filter((v: any) => myStudentIds.includes(v.student_id))
   // and only manages videos for the subjects they teach (owners see everything)
@@ -217,6 +223,8 @@ async function PartnerDashboardInner() {
         }
         videos={<VideoManager only={videoOnly} />}
         areas={<TutorAreas />}
+        choice={<TutorChoice students={myStudentIds.map((sid: string) => ({ id: sid, name: threads[sid]?.name || 'Student', sub: ((subsByStudent[sid] || [])[0]?.grade ? `Grade ${(subsByStudent[sid] || [])[0].grade}` : (bookingsByStudent[sid] || [])[0]?.subject) || '' }))} />}
+        choiceBadge={choiceOpen && !choiceDone ? 1 : 0}
       />
     </div>
   )

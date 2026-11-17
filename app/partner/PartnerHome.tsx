@@ -12,9 +12,9 @@ import InstallButton from '../InstallButton'
 import { heroScene } from '../portal/scenes'
 import { QuoteCloud, StreakCard, TUTOR_QUOTES } from '../portal/HomeParts'
 import { Check, ChevronLeft, Users as UsersIcon, CalendarDays, Wallet } from 'lucide-react'
-import { FolderOpen, Pencil, UserPlus, Calendar, Inbox, Film, Users, Video, MapPin, ScrollText, Target, Home, Settings, CalendarClock, MessageCircle } from 'lucide-react'
+import { FolderOpen, Pencil, UserPlus, Calendar, Inbox, Film, Users, Video, MapPin, ScrollText, Target, Home, Settings, CalendarClock, MessageCircle, Award } from 'lucide-react'
 
-type Section = 'menu' | 'schedule' | 'availability' | 'open' | 'requests' | 'students' | 'videos' | 'areas' | 'tests' | 'files'
+type Section = 'menu' | 'schedule' | 'availability' | 'open' | 'requests' | 'students' | 'videos' | 'areas' | 'tests' | 'files' | 'choice'
 type Tab = 'home' | 'students' | 'messages' | 'requests' | 'room' | 'manage'
 
 type TodaySession = { id: string; studentId?: string; subject: string; time: string; format: string; area?: string | null; meeting_link?: string | null; studentName: string }
@@ -41,6 +41,8 @@ type Props = {
   messages: ReactNode
   videos: ReactNode
   areas: ReactNode
+  choice?: ReactNode
+  choiceBadge?: number
 }
 
 function Badge({ n }: { n: number }) {
@@ -53,14 +55,14 @@ function Badge({ n }: { n: number }) {
 function tabOf(section: Section): Tab | null {
   if (section === 'students') return 'students'
   if (section === 'open' || section === 'requests' || section === 'tests') return 'requests'
-  if (section === 'availability' || section === 'videos' || section === 'areas' || section === 'schedule' || section === 'files') return 'manage'
+  if (section === 'availability' || section === 'videos' || section === 'areas' || section === 'schedule' || section === 'files' || section === 'choice') return 'manage'
   return null
 }
 
-const SECTIONS: Section[] = ['menu', 'schedule', 'availability', 'open', 'requests', 'students', 'videos', 'areas', 'tests', 'files']
+const SECTIONS: Section[] = ['menu', 'schedule', 'availability', 'open', 'requests', 'students', 'videos', 'areas', 'tests', 'files', 'choice']
 const TABS: Tab[] = ['home', 'students', 'messages', 'requests', 'room', 'manage']
 
-export default function PartnerHome({ avatarPath, me, feelingItems, streakRows, monthSessions, markedToday, markAttendance, name, today, openCount, requestCount, studentCount, testCount, tests, availability, open, requests, students, messages, videos, areas }: Props) {
+export default function PartnerHome({ avatarPath, me, feelingItems, streakRows, monthSessions, markedToday, markAttendance, name, today, openCount, requestCount, studentCount, testCount, tests, availability, open, requests, students, messages, videos, areas, choice, choiceBadge }: Props) {
   const [section, setSection] = useState<Section>('menu')
   const [tab, setTab] = useState<Tab>('home')
   useEffect(() => { const t = setTimeout(() => { prefetchRoom() }, 500); return () => clearTimeout(t) }, [])
@@ -115,6 +117,7 @@ export default function PartnerHome({ avatarPath, me, feelingItems, streakRows, 
   else if (section === 'schedule') body = <div><Back /><PageTitle title="Schedule" /><GroupSchedule /></div>
   else if (section === 'availability') body = <div><Back /><PageTitle title="My availability" />{availability}</div>
   else if (section === 'areas') body = <div><Back /><PageTitle title="My subjects and areas" />{areas}</div>
+  else if (section === 'choice') body = <div><Back /><PageTitle title="Tutor's Choice" />{choice}</div>
   else if (section === 'files') body = <div><Back /><FilesManager /></div>
   else if (section === 'videos') body = <div><Back /><PageTitle title="Manage videos" />{videos}</div>
   else if (tab === 'requests') {
@@ -150,6 +153,7 @@ export default function PartnerHome({ avatarPath, me, feelingItems, streakRows, 
           {tile('My Availability', <Calendar size={36} color="#fff" />, 'linear-gradient(135deg, #6E4FC7, #4B2FA0)', () => setSection('availability'))}
           {tile('Files for students', <FolderOpen size={36} color="#fff" />, 'linear-gradient(135deg, #8B6FD9, #6E4FC7)', () => setSection('files'))}
           {tile('Manage Videos', <Video size={36} color="#fff" />, 'linear-gradient(135deg, #1FB6A3, #17897B)', () => setSection('videos'))}
+          {tile("Tutor's Choice", <Award size={36} color="#fff" />, 'linear-gradient(135deg, #E0956F, #C46B3E)', () => setSection('choice'), choiceBadge)}
           {tile('Subjects & Areas', <MapPin size={36} color="#fff" />, 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('areas'))}
           {tile('My Earnings', <Wallet size={36} color="#fff" />, 'linear-gradient(135deg, #2E7D4F, #1F5C38)', () => router.push('/earnings'))}
           {tile('Appearance', <Settings size={36} color="#fff" />, 'linear-gradient(135deg, #D96FB5, #A8478F)', () => router.push('/appearance'))}
