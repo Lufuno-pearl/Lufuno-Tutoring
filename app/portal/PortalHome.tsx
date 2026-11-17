@@ -9,6 +9,7 @@ import ExamPacks from './ExamPacks'
 import { OPEN_SECTIONS, FEATURES_OPEN_LABEL, DELIVERY_PROMISE, PACK_PRICE, BUNDLE_SIZE, BUNDLE_PRICE } from '../../lib/examSpecial'
 import MyVideos from './MyVideos'
 import FileBox from '../FileBox'
+import SolvedFiles from './SolvedFiles'
 import { createClient } from '../../lib/supabase/client'
 import StoredVideo from '../StoredVideo'
 import ReferralBox from './ReferralBox'
@@ -299,7 +300,6 @@ function HomeworkBox({ userId, subjectOptions, submitHomework, myRequests }: { u
   const [fileKey, setFileKey] = useState(0)
   const [uploadFailed, setUploadFailed] = useState(false)
   const [hwTab, setHwTab] = useState<'request' | 'solved'>('request')
-  const [solvedSubject, setSolvedSubject] = useState('All')
 
   async function handleSubmit() {
     if (!subject || sending) return
@@ -331,26 +331,7 @@ function HomeworkBox({ userId, subjectOptions, submitHomework, myRequests }: { u
     <div>
       <PageTitle title="Homework help" sub="Send it, get the solution back here" />
       <Seg options={[{ id: 'request', label: 'Request help' }, { id: 'solved', label: `Solved (${myRequests.filter((h: any) => h.status === 'solved').length})` }]} value={hwTab} onChange={id => setHwTab(id as any)} />
-      {hwTab === 'solved' && (() => {
-        const solved = myRequests.filter((h: any) => h.status === 'solved')
-        const subs = Array.from(new Set(solved.map((h: any) => h.subject)))
-        const list = solvedSubject === 'All' ? solved : solved.filter((h: any) => h.subject === solvedSubject)
-        return (
-          <div style={{ marginTop: 12 }}>
-            {subs.length > 1 && <div style={{ marginBottom: 12 }}><Chips options={['All', ...subs]} value={[solvedSubject]} onChange={v => setSolvedSubject(v[0])} /></div>}
-            {list.length === 0 && <p className="meta">No solved homework yet. When your tutor uploads a solution, it shows here.</p>}
-            {list.map((h: any) => (
-              <div className="panel" key={h.id}>
-                <h4>{h.subject}</h4>
-                {h.description && <p className="meta">{h.description}</p>}
-                <span className="status confirmed">Solved</span>
-                <div className="meta" style={{ marginTop: 10, fontWeight: 600 }}>Solution</div>
-                <FileBox folderPath={`${userId}/${h.id}/solution`} allowUpload={false} />
-              </div>
-            ))}
-          </div>
-        )
-      })()}
+      {hwTab === 'solved' && <div style={{ marginTop: 12 }}><SolvedFiles userId={userId} solved={myRequests.filter((h: any) => h.status === 'solved')} /></div>}
       {hwTab === 'request' && <>
       <p className="meta">Tell us what you need help with and attach your document below, then send. Lufuno (or your tutor) will upload the solution back to this same request once it's ready.</p>
       {sent && (
