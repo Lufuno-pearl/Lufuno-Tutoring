@@ -5,6 +5,7 @@ export type Award = {
   number: number
   student_id: string
   kind: 'improved' | 'never_missed' | 'tutor_choice' | 'top_mark'
+  chosen_by?: string | null
   level: 'hs' | 'uni'
   subject: string | null
   grade: number | null
@@ -47,7 +48,7 @@ const esc = (t: string | null | undefined) => String(t ?? '').replace(/&/g, '&am
 
 export function wording(a0: Award): { award: string; line2: string } {
   // every owner-typed word is escaped, because the wording is shown as HTML so the key words can be bold
-  const a = { ...a0, subject: a0.subject ? esc(a0.subject) : null, term: esc(a0.term), note: a0.note ? esc(a0.note) : null } as Award
+  const a = { ...a0, subject: a0.subject ? esc(a0.subject) : null, term: esc(a0.term), note: a0.note ? esc(a0.note) : null, chosen_by: a0.chosen_by ? esc(a0.chosen_by) : null } as Award
   const where = [a.subject, a.grade ? `Grade ${a.grade}` : ''].filter(Boolean).join(', ')
   if (a.kind === 'improved') {
     const rise = a.mark_pct != null && a.from_pct != null ? Math.round((Number(a.mark_pct) - Number(a.from_pct)) * 10) / 10 : null
@@ -59,7 +60,7 @@ export function wording(a0: Award): { award: string; line2: string } {
     }
   }
   if (a.kind === 'never_missed') return { award: `for attending <b>every session</b> in ${a.term}`, line2: `a perfect attendance record.${where ? ' ' + where + '.' : ''}` }
-  if (a.kind === 'tutor_choice') return { award: `chosen by their tutor for <b>effort and attitude</b> in ${a.term}`, line2: `${a.note ? a.note + ' ' : ''}${where ? where + '.' : ''}`.trim() }
+  if (a.kind === 'tutor_choice') return { award: `chosen by ${a.chosen_by ? 'their tutor, ' + a.chosen_by + ',' : 'their tutor'} for <b>effort and attitude</b> in ${a.term}`, line2: `${a.note ? a.note.replace(/[.!]*$/, '') + '. ' : ''}${where ? where + '.' : ''}`.trim() }
   const who = a.level === 'uni' ? 'Aid &amp; Ace first and second year students' : a.grade ? `all Aid &amp; Ace Grade ${a.grade} learners` : 'all Aid &amp; Ace learners'
   return {
     award: `for achieving the <b>Top Mark in ${a.subject || 'their subject'}</b>${a.level === 'hs' && a.grade ? `, Grade ${a.grade}` : ''}${a.mark_pct != null ? `, with <b>${pct(a.mark_pct)}</b>` : ''}`,

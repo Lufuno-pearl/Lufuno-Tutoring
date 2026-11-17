@@ -40,6 +40,8 @@ export async function getPrizeAdmin() {
     supabase.from('awards').select('*').order('created_at', { ascending: false }),
     supabase.from('profiles').select('id, full_name, role, tier, email').order('full_name', { ascending: true }),
   ])
+  const { data: setRow } = await supabase.from('prize_settings').select('nominations_open, term').eq('id', 1).maybeSingle()
+  const { data: noms } = await supabase.from('nominations').select('id, tutor_id, student_id, term, reason, accepted, created_at').order('created_at', { ascending: false })
   const students = (studs || []).filter((p: any) => p.role !== 'partner' && !isAdminEmail((p as any).email))
   const nameOf = (id: string) => (studs || []).find((p: any) => p.id === id)?.full_name || 'Student'
   return {
@@ -47,6 +49,8 @@ export async function getPrizeAdmin() {
     mine: sig ? { d: sig.d, w: sig.w, h: sig.h } : null,
     signed: (sigs || []).map((s: any) => s.full_name),
     students: students.map((p: any) => ({ id: p.id, name: p.full_name || 'Student', tier: p.tier })),
+    settings: setRow ? { open: !!(setRow as any).nominations_open, term: (setRow as any).term as string } : null,
+    nominations: (noms || []).map((n: any) => ({ ...n, tutor_name: nameOf(n.tutor_id), student_name: nameOf(n.student_id) })),
     awards: (awards || []).map((a: any) => ({ ...a, student_name: nameOf(a.student_id) })),
   }
 }
@@ -96,4 +100,49 @@ export async function announceAwards(term: string) {
   void ids
   revalidatePath('/tutor'); revalidatePath('/portal')
   return { ok: true, count: drafts.length }
+}
+
+// Owners switch nominations on near the end of a term. Tutors are told by a notification.
+export async function setNominations(open: boolean, term: string) {
+  const { supabase, user } = await owner()
+  if (!user) return { ok: false, message: 'Only the owners can do this.' }
+  const t = term.trim()
+  if (!t) return { ok: false, message: 'Write the term, for example Term 1, 2027.' }
+  const { error } = await supabase.from('prize_settings').upsert({ id: 1, nominations_open: open, term: t })
+  if (error) return { ok: false, message: /does not exist|schema cache/i.test(error.message) ? 'Run the Tutor\'s Choice SQL first.' : error.message }
+  if (open) {
+    const { data: tutors } = await supabase.from('profiles').select('id').eq('role', 'partner')
+    for (const tu of (tutors || []) as any[]) await sendPushToUser(tu.id, "Tutor's Choice is open", `Pick the student who gave the most effort in ${t}. Open Manage, then Tutor's Choice.`, '/partner')
+  }
+  revalidatePath('/tutor'); revalidatePath('/partner')
+  return { ok: true }
+}
+
+// A tutor's pick becomes a waiting prize. The certificate shows their words and their name.
+export async function acceptNomination(id: string) {
+  const { supabase, user } = await owner()
+  if (!user) return { ok: false, message: 'Only the owners can do this.' }
+  const { data: n } = await supabase.from('nominations').select('*').eq('id', id).maybeSingle()
+  if (!n) return { ok: false, message: 'Not found.' }
+  const [{ data: tutor }, { data: sub }] = await Promise.all([
+    supabase.from('profiles').select('full_name').eq('id', n.tutor_id).maybeSingle(),
+    supabase.from('hs_subscriptions').select('grade, subject_choice').eq('student_id', n.student_id).order('created_at', { ascending: false }).limit(1),
+  ])
+  const hs: any = (sub || [])[0]
+  const { error } = await supabase.from('awards').insert({
+    student_id: n.student_id, kind: 'tutor_choice', level: hs ? 'hs' : 'uni', grade: hs?.grade || null, term: n.term,
+    note: n.reason, chosen_by: (tutor as any)?.full_name || null,
+  })
+  if (error) return { ok: false, message: error.message }
+  await supabase.from('nominations').update({ accepted: true }).eq('id', id)
+  revalidatePath('/tutor')
+  return { ok: true }
+}
+
+export async function removeNomination(id: string) {
+  const { supabase, user } = await owner()
+  if (!user) return { ok: false }
+  await supabase.from('nominations').delete().eq('id', id).eq('accepted', false)
+  revalidatePath('/tutor')
+  return { ok: true }
 }
