@@ -146,3 +146,111 @@ export async function removeNomination(id: string) {
   revalidatePath('/tutor')
   return { ok: true }
 }
+
+// ---- Winners found by the app ------------------------------------------------------------------
+// The app reads the marks the tutors entered and the attendance they marked, so nobody has to keep track by hand.
+// Marks the students added themselves are not used, so a prize can't be won by typing in a mark.
+export type Suggestion = { key: string; kind: 'top_mark' | 'improved' | 'never_missed'; studentId: string; name: string; level: 'hs' | 'uni'; subject: string | null; grade: number | null; markPct: number | null; fromPct: number | null; detail: string }
+
+// tutors type subjects freely (Maths, Mathematics, Physics...), so the common ones are joined before comparing
+const canon = (x: string) => { const t = x.trim().toLowerCase(); if (/^math(s|ematics)?$/.test(t)) return 'Mathematics'; if (/^phys(ics|ical sciences?)?$/.test(t)) return 'Physical Sciences'; return x.trim() }
+const r1 = (n: number) => Math.round(n * 10) / 10
+const avg = (a: number[]) => a.reduce((x, y) => x + y, 0) / a.length
+
+export async function suggestAwards(from: string, to: string, term: string) {
+  const { supabase, user } = await owner()
+  if (!user) return { ok: false as const, message: 'Only the owners can do this.' }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to) || from > to) return { ok: false as const, message: 'Pick the first and last day of the term.' }
+  const [{ data: marks }, { data: att }, { data: subs }, { data: profs }, { data: have }] = await Promise.all([
+    supabase.from('marks').select('student_id, subject, mark, out_of, taken_on').eq('source', 'tutor').gte('taken_on', from).lte('taken_on', to).order('taken_on', { ascending: true }).limit(8000),
+    supabase.from('attendance').select('student_id, status, session_date').gte('session_date', from).lte('session_date', to).limit(20000),
+    supabase.from('hs_subscriptions').select('student_id, grade, created_at').order('created_at', { ascending: false }),
+    supabase.from('profiles').select('id, full_name, role, email'),
+    supabase.from('awards').select('student_id, kind, subject').eq('term', term.trim()),
+  ])
+  const name = new Map<string, string>(); const skip = new Set<string>()
+  ;(profs || []).forEach((p: any) => { name.set(p.id, p.full_name || 'Student'); if (p.role === 'partner' || isAdminEmail(p.email)) skip.add(p.id) })
+  const grade = new Map<string, number | null>(); const hsKids = new Set<string>()
+  ;(subs || []).forEach((s: any) => { if (!grade.has(s.student_id)) grade.set(s.student_id, s.grade ? Number(s.grade) : null); hsKids.add(s.student_id) })
+  const taken = new Set((have || []).map((a: any) => `${a.student_id}|${a.kind}|${a.subject || ''}`))
+  const out: Suggestion[] = []
+
+  // marks per student, per subject
+  const per = new Map<string, { student: string; subject: string; pcts: number[] }>()
+  ;(marks || []).forEach((m: any) => {
+    if (skip.has(m.student_id) || !Number(m.out_of)) return
+    const sub = canon(String(m.subject))
+    const k = `${m.student_id}|${sub}`
+    const e = per.get(k) || { student: m.student_id, subject: sub, pcts: [] as number[] }
+    e.pcts.push((Number(m.mark) / Number(m.out_of)) * 100); per.set(k, e)
+  })
+  // top mark: best average in each subject (and each grade for high school), at least 2 marks
+  const groups = new Map<string, { student: string; subject: string; pct: number; n: number }[]>()
+  per.forEach(e => {
+    if (e.pcts.length < 2) return
+    const hs = hsKids.has(e.student); const g = hs ? grade.get(e.student) : null
+    const gk = `${hs ? 'hs' : 'uni'}|${e.subject.toLowerCase()}|${g ?? ''}`
+    ;(groups.get(gk) || groups.set(gk, []).get(gk)!).push({ student: e.student, subject: e.subject, pct: avg(e.pcts), n: e.pcts.length })
+  })
+  groups.forEach((list, gk) => {
+    const level = gk.startsWith('hs') ? 'hs' : 'uni'
+    list.sort((a, b) => b.pct - a.pct)
+    const best = list[0]
+    const g = level === 'hs' ? grade.get(best.student) ?? null : null
+    if (!taken.has(`${best.student}|top_mark|${best.subject}`)) {
+      const tie = list[1] && Math.abs(list[1].pct - best.pct) < 0.05
+      out.push({ key: `top|${gk}`, kind: 'top_mark', studentId: best.student, name: name.get(best.student) || 'Student', level, subject: best.subject, grade: g, markPct: r1(best.pct), fromPct: null, detail: `${r1(best.pct)}% average over ${best.n} marks${list.length > 1 ? `, ahead of ${list.length - 1} other${list.length === 2 ? '' : 's'}` : ''}${tie ? ' (tied with ' + (name.get(list[1].student) || 'another student') + ', check before adding)' : ''}` })
+    }
+  })
+  // most improved: biggest rise from the first half of the term's marks to the second half, at least 3 marks and a rise of 5 points
+  const ig = new Map<string, { student: string; subject: string; from: number; to: number; rise: number }[]>()
+  per.forEach(e => {
+    if (e.pcts.length < 3) return
+    const h = Math.floor(e.pcts.length / 2)
+    const from = avg(e.pcts.slice(0, h)), to = avg(e.pcts.slice(e.pcts.length - h))
+    if (to - from < 5) return
+    const hs = hsKids.has(e.student); const g = hs ? grade.get(e.student) : null
+    const gk = `${hs ? 'hs' : 'uni'}|${e.subject.toLowerCase()}|${g ?? ''}`
+    ;(ig.get(gk) || ig.set(gk, []).get(gk)!).push({ student: e.student, subject: e.subject, from, to, rise: to - from })
+  })
+  ig.forEach((list, gk) => {
+    list.sort((a, b) => b.rise - a.rise)
+    const b = list[0]
+    if (taken.has(`${b.student}|improved|${b.subject}`)) return
+    const level = gk.startsWith('hs') ? 'hs' : 'uni'
+    out.push({ key: `imp|${gk}`, kind: 'improved', studentId: b.student, name: name.get(b.student) || 'Student', level, subject: b.subject, grade: level === 'hs' ? grade.get(b.student) ?? null : null, markPct: r1(b.to), fromPct: r1(b.from), detail: `${r1(b.from)}% up to ${r1(b.to)}%, a rise of ${r1(b.rise)} points` })
+  })
+  // never missed: at least 4 sessions counted, none missed. Sessions cancelled or moved by the tutor do not count against anyone.
+  const sessions = new Map<string, { present: number; absent: number }>()
+  ;(att || []).forEach((a: any) => {
+    if (skip.has(a.student_id)) return
+    const e = sessions.get(a.student_id) || { present: 0, absent: 0 }
+    if (a.status === 'present') e.present++; else if (a.status === 'absent') e.absent++
+    sessions.set(a.student_id, e)
+  })
+  sessions.forEach((e, sid) => {
+    if (e.absent > 0 || e.present < 4) return
+    if (taken.has(`${sid}|never_missed|`)) return
+    const hs = hsKids.has(sid)
+    out.push({ key: `nm|${sid}`, kind: 'never_missed', studentId: sid, name: name.get(sid) || 'Student', level: hs ? 'hs' : 'uni', subject: null, grade: hs ? grade.get(sid) ?? null : null, markPct: null, fromPct: null, detail: `${e.present} sessions, none missed` })
+  })
+  const order = { top_mark: 0, improved: 1, never_missed: 2 } as const
+  out.sort((a, b) => order[a.kind] - order[b.kind] || a.name.localeCompare(b.name))
+  return { ok: true as const, items: out, marksUsed: (marks || []).length, sessionsUsed: (att || []).length }
+}
+
+export async function addSuggested(term: string, items: Suggestion[]) {
+  const { supabase, user } = await owner()
+  if (!user) return { ok: false, message: 'Only the owners can do this.' }
+  const t = term.trim()
+  if (!t) return { ok: false, message: 'Write the term first.' }
+  const rows = (items || []).filter(i => ['top_mark', 'improved', 'never_missed'].includes(i.kind) && i.studentId).slice(0, 200).map(i => ({
+    student_id: i.studentId, kind: i.kind, level: i.level === 'uni' ? 'uni' : 'hs', subject: i.subject ? String(i.subject).slice(0, 80) : null,
+    grade: i.grade ? Number(i.grade) : null, term: t, mark_pct: i.markPct, from_pct: i.fromPct,
+  }))
+  if (rows.length === 0) return { ok: false, message: 'Nothing selected.' }
+  const { error } = await supabase.from('awards').insert(rows)
+  if (error) return { ok: false, message: error.message }
+  revalidatePath('/tutor')
+  return { ok: true, count: rows.length }
+}
