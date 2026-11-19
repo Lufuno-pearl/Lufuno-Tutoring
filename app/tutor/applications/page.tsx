@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { createClient } from '../../../lib/supabase/server'
 import { isAdminEmail } from '../../../lib/admin'
 import ApplicationsReview from './ApplicationsReview'
+import { purgeAcceptedDocs } from './actions'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,6 +13,7 @@ export default async function ApplicationsPage() {
   if (!user) redirect('/login')
   if (!isAdminEmail(user.email)) redirect('/portal')
 
+  try { await purgeAcceptedDocs() } catch {}
   const { data: rows } = await supabase.from('tutor_applications').select('*').in('status', ['submitted', 'accepted', 'declined', 'waitlist']).order('submitted_at', { ascending: true })
   const { data: setting } = await supabase.from('app_settings').select('value').eq('key', 'accepting_tutors').maybeSingle()
   const accepting = setting?.value !== 'false'

@@ -1,9 +1,9 @@
 'use client'
 import { useState } from 'react'
-import { decideApplication, setAccepting, makeTutor } from './actions'
+import { decideApplication, setAccepting, makeTutor, reopenAgreement } from './actions'
 
-function Doc({ label, url, pdf }: { label: string; url: string | null; pdf?: boolean }) {
-  if (!url) return <div className="meta">{label}: not uploaded</div>
+function Doc({ label, url, pdf, gone }: { label: string; url: string | null; pdf?: boolean; gone?: boolean }) {
+  if (!url) return <div className="meta">{label}: {gone ? 'deleted after acceptance, for their safety' : 'not uploaded'}</div>
   return (
     <div style={{ marginBottom: 10 }}>
       <div className="meta">{label}</div>
@@ -29,6 +29,13 @@ export default function ApplicationsReview({ apps, accepting: acc }: { apps: any
   const [result, setResult] = useState<Record<string, { emailed: boolean; mailto: string; ok: boolean; message?: string; decision: string }>>({})
   const [declining, setDeclining] = useState(false)
   const [madeTutor, setMadeTutor] = useState<Record<string, string>>({})
+  const [reopened, setReopened] = useState<Record<string, string>>({})
+  async function reopen(a: any) {
+    setBusy(true)
+    const r = await reopenAgreement(a.id)
+    setBusy(false)
+    setReopened(prev => ({ ...prev, [a.id]: r.ok ? `Sent. They have until ${new Date(r.deadline || '').toLocaleDateString('en-ZA', { day: 'numeric', month: 'long' })} to sign.` : (r.message || 'Something went wrong') }))
+  }
   async function promote(a: any) {
     setBusy(true)
     const r = await makeTutor(a.id)
@@ -77,9 +84,9 @@ export default function ApplicationsReview({ apps, accepting: acc }: { apps: any
                 </div>
               ))}
             </div>
-            <Doc label="Selfie" url={a.selfie} />
-            {a.teaches_uni ? <Doc label="Proof of registration" url={a.proof} pdf={a.proofIsPdf} /> : <div className="meta" style={{ marginBottom: 10 }}>Proof of registration: not needed (high school only)</div>}
-            <Doc label="Results" url={a.results} pdf={a.resultsIsPdf} />
+            <Doc label="Selfie" url={a.selfie} gone={a.status === 'accepted'} />
+            {a.teaches_uni ? <Doc label="Proof of registration" url={a.proof} pdf={a.proofIsPdf} gone={a.status === 'accepted'} /> : <div className="meta" style={{ marginBottom: 10 }}>Proof of registration: not needed (high school only)</div>}
+            <Doc label="Results" url={a.results} pdf={a.resultsIsPdf} gone={a.status === 'accepted'} />
             {(a.status === 'submitted' || a.status === 'waitlist') && !res && (
               declining ? (
                 <div>
@@ -100,6 +107,12 @@ export default function ApplicationsReview({ apps, accepting: acc }: { apps: any
             {a.status === 'accepted' && (
               <div style={{ marginTop: 10, background: a.signedAt ? '#DCEEE0' : '#FFF6DD', borderRadius: 12, padding: '10px 14px', fontSize: '0.9rem' }}>
                 {a.signedAt ? <>✓ Agreement signed by <b>{a.signedName}</b> on {new Date(a.signedAt).toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' })}.</> : <>⏳ Agreement not signed yet{a.agreement_deadline ? <>. Deadline: <b>{new Date(a.agreement_deadline).toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' })}</b>{new Date(a.agreement_deadline) < new Date() ? ' (passed)' : ''}</> : ''}.</>}
+                {!a.signedAt && !a.isTutor && (
+                  <div style={{ marginTop: 8 }}>
+                    <button className="btn btn-gold" disabled={busy} onClick={() => reopen(a)}>{busy ? 'Sending...' : 'Let them sign again (14 more days)'}</button>
+                    <div className="meta" style={{ marginTop: 4 }}>{reopened[a.id] || 'Sends them the link by email and a notification.'}</div>
+                  </div>
+                )}
                 {a.bank && (
                   <div style={{ marginTop: 6 }}>🏦 <b>Pay to:</b> {a.bank.account_holder} · {a.bank.bank_name} · {a.bank.account_type} · acc {a.bank.account_number}{a.bank.branch_code ? ` · branch ${a.bank.branch_code}` : ''}</div>
                 )}
