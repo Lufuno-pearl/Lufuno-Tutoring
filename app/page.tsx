@@ -14,10 +14,8 @@ export default async function Home() {
     if (isAdminEmail(user.email)) redirect('/tutor')
     const { data: me } = await supabase.from('profiles').select('role, tier').eq('id', user.id).single()
     if (me?.role === 'partner') redirect('/partner')
-    if (!me?.tier) {
-      const { data: app } = await supabase.from('tutor_applications').select('id').eq('user_id', user.id).maybeSingle()
-      if (app) redirect('/apply')
-    }
+    const { data: app } = await supabase.from('tutor_applications').select('id, status').eq('user_id', user.id).maybeSingle()
+    if (app && (!me?.tier || app.status === 'accepted')) redirect('/apply')
     redirect('/portal')
   }
   return (

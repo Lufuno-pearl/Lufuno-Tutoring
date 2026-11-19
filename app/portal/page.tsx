@@ -33,6 +33,12 @@ export default async function Portal({ searchParams }: { searchParams?: { view?:
   if (!isAdmin) {
     const { data: roleRow } = await supabase.from('profiles').select('role').eq('id', user.id).single()
     if (roleRow?.role === 'partner') redirect('/partner')
+    // accepted as a tutor but not signed yet: go straight to the agreement, so it is never missed
+    const { data: tApp } = await supabase.from('tutor_applications').select('status').eq('user_id', user.id).maybeSingle()
+    if (tApp?.status === 'accepted') {
+      const { data: signedRow } = await supabase.from('tutor_agreements').select('user_id').eq('user_id', user.id).maybeSingle()
+      if (!signedRow) redirect('/apply')
+    }
   }
 
   const [{ data: profile }, { data: bookings }, { data: subs }, { data: orders }, { data: messages }, { data: attendance }, { data: videoRequests }, { data: videoTopicRequests }, { data: homeworkRequests }, { data: moduleRequests }, { data: testPreps }, { data: marks }, { data: scheduled }] = await Promise.all([

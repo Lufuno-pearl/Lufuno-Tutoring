@@ -6,6 +6,50 @@ import { sendEmail } from '../../../lib/email'
 import { sendPushToUser } from '../../../lib/push'
 import { agreementDeadline, formatDeadline } from '../../../lib/tutorAgreement'
 
+// Once someone is accepted, their selfie, proof of registration and results are no longer needed, so they are deleted.
+// The typed marks stay, because they are what matches a tutor to modules. Paths are cleared only if the files really went.
+async function deleteApplicantDocs(supabase: ReturnType<typeof createClient>, userId: string): Promise<boolean> {
+  const { data: files } = await supabase.storage.from('tutor-docs').list(userId, { limit: 100 })
+  const paths = (files || []).filter((f: any) => f.name && f.name !== '.emptyFolderPlaceholder').map((f: any) => `${userId}/${f.name}`)
+  if (paths.length > 0) {
+    const { data: removed, error } = await supabase.storage.from('tutor-docs').remove(paths)
+    if (error || !removed || removed.length < paths.length) return false
+  }
+  const { error: e2 } = await supabase.from('tutor_applications').update({ selfie_path: null, proof_path: null, results_path: null }).eq('user_id', userId)
+  return !e2
+}
+
+// Runs whenever the owners open the applications page, so anyone accepted earlier is cleaned up too.
+export async function purgeAcceptedDocs(): Promise<number> {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user || !isAdminEmail(user.email)) return 0
+  const { data: rows } = await supabase.from('tutor_applications').select('user_id').eq('status', 'accepted').or('selfie_path.not.is.null,proof_path.not.is.null,results_path.not.is.null')
+  let n = 0
+  for (const r of (rows || []) as any[]) { try { if (await deleteApplicantDocs(supabase, r.user_id)) n++ } catch {} }
+  return n
+}
+
+// The agreement was not signed in time. Give them more days and send the link again.
+export async function reopenAgreement(id: string): Promise<{ ok: boolean; message?: string; deadline?: string }> {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user || !isAdminEmail(user.email)) return { ok: false, message: 'Only the owners can do this.' }
+  const { data: app } = await supabase.from('tutor_applications').select('user_id, email, full_name, status').eq('id', id).single()
+  if (!app || app.status !== 'accepted') return { ok: false, message: 'This application is not accepted.' }
+  const { data: signed } = await supabase.from('tutor_agreements').select('user_id').eq('user_id', app.user_id).maybeSingle()
+  if (signed) return { ok: false, message: 'They already signed.' }
+  const dl = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
+  const { error } = await supabase.from('tutor_applications').update({ agreement_deadline: dl.toISOString() }).eq('id', id)
+  if (error) return { ok: false, message: error.message }
+  const first = (app.full_name || 'there').split(' ')[0]
+  await sendEmail(app.email, 'Please sign your Aid & Ace tutor agreement', `Hi ${first},\n\nYou are accepted as an Aid & Ace tutor, but we have not received your signed agreement yet. We have opened it again for you.\n\nTap this link and sign in with the email you applied with:\n\nhttps://lufuno-tutoring.vercel.app/apply\n\nRead the agreement, add your bank details, tick the box and type your full name. Please do this by ${formatDeadline(dl)}. Your tutor dashboard opens after you have signed.\n\nAid & Ace Tutoring\naidandace27@gmail.com | 067 381 2727`)
+  await supabase.from('notifications').insert({ student_id: app.user_id, for_role: 'student', message: 'Please sign your tutor agreement. Open Become a tutor.' })
+  try { await sendPushToUser(app.user_id, 'Please sign your tutor agreement', 'Tap to open it and sign.', '/apply') } catch {}
+  revalidatePath('/tutor/applications')
+  return { ok: true, deadline: dl.toISOString() }
+}
+
 export async function decideApplication(id: string, decision: 'accepted' | 'declined' | 'waitlist', note: string): Promise<{ ok: boolean; message?: string; emailed?: boolean; mailto?: string }> {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -22,6 +66,7 @@ export async function decideApplication(id: string, decision: 'accepted' | 'decl
     const dl = agreementDeadline()
     deadlineText = formatDeadline(dl)
     await supabase.from('tutor_applications').update({ agreement_deadline: dl.toISOString() }).eq('id', id) // ignored if the agreement SQL has not been run yet
+    try { await deleteApplicantDocs(supabase, app.user_id) } catch {}
   }
   const subject = decision === 'accepted' ? 'Welcome to Aid & Ace Tutoring!' : decision === 'waitlist' ? 'You are on the Aid & Ace waiting list' : 'Your Aid & Ace tutor application'
   const promoted = decision === 'accepted' && app.status === 'waitlist'
