@@ -8,7 +8,7 @@ const sections: TermsSection[] = [
     points: [
       'Your name, email address and the password you choose (passwords are kept securely and we cannot see them).',
       'Your grade or university tier, your school and province if you add them, and the plan you choose.',
-      'Your marks, if you or your tutor add them to your mark tracker.',
+      'Your marks, if you or your tutor add them to your mark tracker, and your attendance at sessions.',
       'Messages you send in the app chat, and files you upload (homework, photos, documents).',
       'Your session bookings and payment confirmations. We do not store your bank card details.',
       'If you switch on notifications, a code from your phone so we can send them to it.',
@@ -19,6 +19,7 @@ const sections: TermsSection[] = [
     points: [
       'To teach you, book your sessions, confirm payments and run the app.',
       'To send you reminders and updates about your sessions and messages.',
+      'To work out prizes and print certificates for students who improve, attend every session or are chosen by their tutor.',
       'To see which schools and subjects need groups so we can arrange them.',
     ],
   },
@@ -26,6 +27,10 @@ const sections: TermsSection[] = [
     title: 'Who can see it',
     points: [
       'The Aid & Ace owners, and the tutor assigned to you, can see your profile, school, marks, messages and files.',
+      'Winners are shown to other students by first name and last initial only, with no marks.',
+      'Tutor applicants\' documents (ID, results and similar) are seen only by the owners, and are deleted automatically once the application is accepted.',
+      'Tutor bank details are seen only by the owners and that tutor.',
+      'If you create a parent link, anyone with that link can see your first name, attendance, marks, upcoming sessions and prizes, but not your chat or files. You can stop sharing at any time and the link stops working.',
       'Other students cannot see your details. Students in the same group only see your first name where needed.',
       'We do not sell your information or share it with advertisers. We share it only where the law requires.',
       'The app is stored with trusted service providers (Supabase and Vercel) who keep it safe for us.',

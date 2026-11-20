@@ -15,7 +15,7 @@ function makeReference(name: string) {
 
 
 // Until the open date, students with nothing requested yet can only order study packs.
-const LOCKED_MESSAGE = `Tutoring and the other features open on ${FEATURES_OPEN_LABEL}. Study packs are open now!`
+const LOCKED_MESSAGE = `This opens on ${FEATURES_OPEN_LABEL}. You can book your tutoring ahead, and study packs are open now!`
 async function examBlocked(supabase: any, userId: string) {
   if (!beforeOpen()) return false
   const [b, s, v, m] = await Promise.all([
@@ -152,7 +152,7 @@ export async function createBooking(formData: FormData) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { ok: false }
-  if (await examBlocked(supabase, user.id)) return { ok: false, message: LOCKED_MESSAGE }
+  // booking ahead is allowed before the opening day
 
   const subject = formData.get('subject') as string
   const day = formData.get('day') as string
@@ -244,7 +244,7 @@ export async function createHsSub(formData: FormData) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { ok: false }
-  if (await examBlocked(supabase, user.id)) return { ok: false, message: LOCKED_MESSAGE }
+  // booking ahead is allowed before the opening day
 
   const rawFormat = formData.get('format') as string
   // "both" means in person with some sessions online: stored as physical plus an alternate flag
