@@ -3,7 +3,10 @@ import { useEffect } from 'react'
 
 // Shown instead of a blank "Application error" page, with the reason so it can be fixed quickly.
 export default function ErrorPage({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
-  useEffect(() => { console.error(error) }, [error])
+  useEffect(() => {
+    console.error(error)
+    fetch('/api/log-error', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: String(error?.message || error), stack: error?.stack, page: window.location.pathname }) }).catch(() => {})
+  }, [error])
   return (
     <div className="panel" style={{ maxWidth: 560, margin: '24px auto' }}>
       <h3 style={{ marginTop: 0 }}>Oops, something went wrong</h3>

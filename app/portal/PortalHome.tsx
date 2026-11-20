@@ -38,6 +38,8 @@ import AreaSelect from '../AreaSelect'
 import StudentChat from './StudentChat'
 import PrizesView, { PrizeCard } from './PrizesView'
 import ParentLink from './ParentLink'
+import WelcomeTour from './WelcomeTour'
+import { payfastAvailable, startPayfast } from './payActions'
 import { BADGES, earnedBadges } from '../../lib/xp'
 import { Check, Flame, Star, TrendingUp as TrendIcon, Award, Trophy } from 'lucide-react'
 import { hsPrice, hsSessions, toSessionType, EXTRA_PRICE, EXTRA_MAX, UNI_PRICE, GROUP_MAX, SessionType } from '../../lib/pricing'
@@ -192,6 +194,18 @@ function PayBlock({ kind, id, label, price, reference, markAwaiting }: { kind: '
   const ref = reference || `${kind.slice(0, 4).toUpperCase()}-${id.slice(0, 8).toUpperCase()}`
   const proofLink = `https://wa.me/${LUFUNO_WHATSAPP}?text=${encodeURIComponent(`Hi Lufuno, here is my proof of payment for ${label}. Amount: R${price}. Reference: ${ref}.`)}`
 
+  const [online, setOnline] = useState(false)
+  useEffect(() => { payfastAvailable().then(setOnline).catch(() => {}) }, [])
+  const [payErr, setPayErr] = useState('')
+  async function payOnline() {
+    setSubmitting(true); setPayErr('')
+    const r = await startPayfast(kind, id)
+    if (!r.ok || !r.fields) { setPayErr(r.message || 'Could not start the payment.'); setSubmitting(false); return }
+    const f = document.createElement('form'); f.method = 'POST'; f.action = r.action!
+    r.fields.forEach(([k, v]) => { const i = document.createElement('input'); i.type = 'hidden'; i.name = k; i.value = v; f.appendChild(i) })
+    document.body.appendChild(f); f.submit()
+  }
+
   async function handleClick() {
     if (submitting || done) return
     setSubmitting(true)
@@ -216,6 +230,13 @@ function PayBlock({ kind, id, label, price, reference, markAwaiting }: { kind: '
       <PaySteps status="pending" />
       <div className="meta">Pay for: {label}</div>
       <div className="amount">R{price}</div>
+      {online && (
+        <div style={{ marginBottom: 14 }}>
+          <button className="btn btn-primary" style={{ width: '100%', opacity: submitting ? 0.6 : 1 }} onClick={payOnline} disabled={submitting}>{submitting ? 'Opening secure payment…' : 'Pay online (card or instant EFT)'}</button>
+          {payErr && <p className="meta" style={{ color: '#A6443A' }}>{payErr}</p>}
+          <p className="meta" style={{ textAlign: 'center', margin: '8px 0 0' }}>Confirmed automatically. Or pay by bank transfer below.</p>
+        </div>
+      )}
       <div className="pay-line"><span>Bank</span><span>GoTyme Bank</span></div>
       <div className="pay-line"><span>Account number</span><span className="copy-row">51129677073 <CopyButton text="51129677073" /></span></div>
       <div className="pay-line"><span>Branch code</span><span className="copy-row">678910 <CopyButton text="678910" /></span></div>
@@ -776,6 +797,7 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
               ['How it works', '❓', 'gold', () => setSection('guide')],
               ['Appearance', '🎨', 'pink', () => router.push('/appearance')],
               ['Add to phone', '📲', 'green', () => router.push('/install')],
+              ['Help & FAQ', '❓', 'purple', () => router.push('/help')],
               ['Terms & conditions', '📜', 'purple', () => router.push('/terms')],
               ['Privacy', '🔒', 'purple', () => router.push('/privacy')],
             ] as any[]).map(([label, emoji, tone, go]) => (
@@ -1403,6 +1425,7 @@ export default function PortalHome(props: any) {
         </div>
       )}
       <PortalInner {...props} section={section} setSection={setSection} tab={tab} setTab={setTab} />
+      <WelcomeTour />
       <TabBarPortal>
         {items.map(i => (
           <button key={i.id} className={current === i.id ? 'active' : ''} onClick={() => go(i.id)}>
