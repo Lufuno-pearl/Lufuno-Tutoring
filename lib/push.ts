@@ -1,5 +1,10 @@
 import webpush from 'web-push'
-import { createClient } from './supabase/server'
+import { createClient as createServerDb } from './supabase/server'
+import { createAdminClient } from './supabase/admin'
+
+// Pushes sent from the PayFast webhook have no signed-in user, so they use the service key when it is set.
+const createClient = () => (process.env.SUPABASE_SERVICE_ROLE_KEY && !tryCookies() ? createAdminClient() : createServerDb())
+function tryCookies() { try { require('next/headers').cookies().getAll(); return true } catch { return false } }
 
 let configured = false
 function setup(): boolean {
