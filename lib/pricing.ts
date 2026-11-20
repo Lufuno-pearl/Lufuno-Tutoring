@@ -9,7 +9,7 @@ export const GROUP_MAX = 10
 
 // High school, rand per month
 export const HS_PRICE: Record<SessionType, Record<Plan, number>> = {
-  group: { one: 350, both: 600 },
+  group: { one: 350, both: 650 },
   one_on_one: { one: 450, both: 800 },
 }
 
@@ -46,4 +46,4 @@ export function hsSessions(choice: string, type: SessionType) {
 // Extra sessions: a student whose plan sessions are used up can add up to 3 more in the month, R50 each.
 export const EXTRA_PRICE = 50
 export const EXTRA_MAX = 3
-export const EXTRA_TUTOR_PAY = 45 // 90% of R50
+export const EXTRA_TUTOR_PAY = 42.5 // 85% of R50

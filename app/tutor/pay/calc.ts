@@ -37,7 +37,7 @@ export type Line = {
   days: { date: string; status: string; counted: boolean }[]
 }
 
-export const TUTOR_SHARE = 0.9
+export const TUTOR_SHARE = 0.85
 
 export function includedSessions(choice: string, sessionType?: string | null) {
   return hsSessions(choice, toSessionType(sessionType))
@@ -106,7 +106,7 @@ export function computePay(att: AttRow[], subs: SubRow[], extras: Record<string,
   return { lines: out, unmatched }
 }
 
-// Varsity: a confirmed booking is one monthly price for 5 sessions. The tutor gets 90% of it, split over the 5.
+// Varsity: a confirmed booking is one monthly price for 5 sessions. The tutor gets 85% of it, split over the 5.
 export function uniRate(b: BookingRow) {
   return Math.round(((b.price * TUTOR_SHARE) / UNI_SESSIONS) * 100) / 100
 }

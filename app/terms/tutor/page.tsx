@@ -15,8 +15,8 @@ const sections: TermsSection[] = [
   {
     title: 'Pay',
     points: [
-      'You earn 90% of what each student pays for the subject you teach them. Aid & Ace keeps 10% to run the app, find students and handle payments.',
-      'Pay per session is the 90% share divided by the sessions included in the student plan.',
+      'You earn 85% of what each student pays for the subject you teach them. Aid & Ace keeps 15% to cover its costs: running the app, finding and assigning students, payment fees and rewards.',
+      'Pay per session is the 85% share divided by the sessions included in the student plan.',
       'We pay for sessions that were held and logged, including student no-shows, up to the sessions included in the plan.',
       'We do not pay for sessions you miss, rescheduled sessions until held, sessions beyond the plan, unpaid students, or wrongly logged sessions.',
       'Payment is by EFT by the 7th of the month after the sessions.',

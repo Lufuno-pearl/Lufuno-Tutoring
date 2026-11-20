@@ -15,7 +15,7 @@ export function formatDeadline(d: Date | string): string {
 export const AGREEMENT: { title: string; text: string; bullets?: string[] }[] = [
   { title: '1. Role', text: "I am a tutor with Aid & Ace Tutoring. I teach the learners Aid & Ace assigns to me, in the subjects and areas I listed." },
   { title: '2. Students', text: 'Aid & Ace assigns my students. I do not recruit, swap or teach learners outside Aid & Ace, and I do not take learners off the platform.' },
-  { title: '3. Earnings', text: "I earn 90% of the monthly fee of each learner assigned to me whose payment Aid & Ace has confirmed. Aid & Ace keeps 10%.", bullets: ['If a learner joins during a month, even on the 25th, that month counts in full for me.', 'The next month counts only if the learner renews.', 'A learner who misses a session does not reduce my pay.'] },
+  { title: '3. Earnings', text: "I earn 85% of the monthly fee of each learner assigned to me whose payment Aid & Ace has confirmed. Aid & Ace keeps 15% to cover its costs (running the app, finding and assigning learners, payment fees and rewards).", bullets: ['If a learner joins during a month, even on the 25th, that month counts in full for me.', 'The next month counts only if the learner renews.', 'A learner who misses a session does not reduce my pay.'] },
   { title: '4. Payday', text: 'I am paid on the 7th of every month for the previous month. I can see my earnings in the app at any time.' },
   { title: '5. Sessions', text: 'I arrive on time and prepared. I confirm every session at least 24 hours before. If I cannot teach, I tell Aid & Ace as early as I can.' },
   { title: '6. Emergencies', text: 'In a real emergency, Aid & Ace assigns another tutor for that session. I understand I lose the pay for it.' },

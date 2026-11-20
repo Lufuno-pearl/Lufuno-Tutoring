@@ -112,8 +112,8 @@ export default async function TutorPayPage({ searchParams }: { searchParams: { m
       )}
 
       <p className="meta" style={{ marginTop: 16 }}>
-        High school: pay per session = 90% of what the student paid, divided by the sessions included (group: 10 for one subject, 18 for both; one-on-one: 7 for one subject, 14 for both).
-        Varsity: pay per session = 90% of the monthly booking price, divided by 5 sessions. Present and student no-show both count as paid. Tutor-missed sessions are not paid. A student's paid sessions are capped at the sessions in their plan.
+        High school: pay per session = 85% of what the student paid, divided by the sessions included (group: 10 for one subject, 18 for both; one-on-one: 7 for one subject, 14 for both).
+        Varsity: pay per session = 85% of the monthly booking price, divided by 5 sessions. Present and student no-show both count as paid. Tutor-missed sessions are not paid. A student's paid sessions are capped at the sessions in their plan.
       </p>
     </div>
   )
