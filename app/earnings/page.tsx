@@ -88,7 +88,7 @@ export default async function EarningsPage({ searchParams }: { searchParams: { m
           ? <><b>{bank!.bank_name} · {bank!.account_type} · {last4}</b><div className="meta" style={{ marginBottom: 0, marginTop: 4 }}>Paid into this account after the month ends.</div></>
           : <div className="meta" style={{ marginBottom: 0 }}>No bank details yet. Add them in your Tutor Agreement so we can pay you.</div>}
       </div>
-      <p className="meta">High school: 90% of what the student paid, divided by the sessions in their plan. Varsity: 90% of the monthly booking price, divided by 5 sessions. Sessions you missed are not paid.</p>
+      <p className="meta">High school: 85% of what the student paid, divided by the sessions in their plan. Varsity: 85% of the monthly booking price, divided by 5 sessions. Sessions you missed are not paid.</p>
     </div>
   )
 }

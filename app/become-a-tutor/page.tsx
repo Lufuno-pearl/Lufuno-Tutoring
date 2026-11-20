@@ -26,7 +26,7 @@ export default function BecomeATutor() {
       <div className="panel" style={{ textAlign: 'left' }}>
         <h4>Why tutor with us</h4>
         <ul style={{ margin: '8px 0 0', paddingLeft: 20, lineHeight: 1.8 }}>
-          <li>You keep <b>90%</b> of what students pay</li>
+          <li>You keep <b>85%</b> of what students pay</li>
           <li>We find the students for you</li>
           <li>Teach online or in person, around your timetable</li>
           <li>Finished Grade 12 with strong marks? You can teach high school, even on a gap year</li>
