@@ -1,15 +1,16 @@
 // Exam Special settings. Change the date or prices here and nowhere else.
 import { southAfricaToday } from './testPrepAccess'
 
-// Until this day (South Africa), students who are not subscribers can only use Study Packs, Chat and How It Works.
-export const FEATURES_OPEN_ON = '2026-11-23'
-export const FEATURES_OPEN_LABEL = '23 November'
+// Until this day (South Africa), students who are not subscribers can use Study Packs, Chat, How It Works and booking ahead.
+export const FEATURES_OPEN_ON = '2027-01-13'
+export const FEATURES_OPEN_LABEL = '13 January'
 export const PACK_PRICE = 60
 export const BUNDLE_SIZE = 5
 export const BUNDLE_PRICE = 200
 export const DELIVERY_PROMISE = 'within 2 hours'
 // sections a locked student may still open
-export const OPEN_SECTIONS = ['menu', 'packs', 'chat', 'guide']
+// 'book' is open so students can book ahead; their plan only starts on the opening day
+export const OPEN_SECTIONS = ['menu', 'packs', 'chat', 'guide', 'book']
 
 export function packTotal(n: number) {
   return BUNDLE_PRICE * Math.floor(n / BUNDLE_SIZE) + PACK_PRICE * (n % BUNDLE_SIZE)

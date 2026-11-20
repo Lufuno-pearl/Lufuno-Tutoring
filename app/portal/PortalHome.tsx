@@ -37,12 +37,13 @@ import { getAreas, getAreaList } from './actions'
 import AreaSelect from '../AreaSelect'
 import StudentChat from './StudentChat'
 import PrizesView, { PrizeCard } from './PrizesView'
+import ParentLink from './ParentLink'
 import { BADGES, earnedBadges } from '../../lib/xp'
 import { Check, Flame, Star, TrendingUp as TrendIcon, Award, Trophy } from 'lucide-react'
 import { hsPrice, hsSessions, toSessionType, EXTRA_PRICE, EXTRA_MAX, UNI_PRICE, GROUP_MAX, SessionType } from '../../lib/pricing'
 
 
-type Section = 'menu' | 'badges' | 'book' | 'packs' | 'chat' | 'history' | 'video' | 'guide' | 'homework' | 'referral' | 'testprep' | 'qotd' | 'marks' | 'school' | 'files' | 'prizes'
+type Section = 'menu' | 'badges' | 'book' | 'packs' | 'chat' | 'history' | 'video' | 'guide' | 'homework' | 'referral' | 'testprep' | 'qotd' | 'marks' | 'school' | 'files' | 'prizes' | 'parent'
 type Tab = 'home' | 'hub' | 'tutoring' | 'room' | 'chat' | 'learn' | 'more'
 
 function AreaPicker({ ready = true, areas, list, value, onChange, notListedHelp, onChooseOnline }: { areas: string[]; list: { name: string; province: string | null }[]; value: string; onChange: (v: string) => void; notListedHelp: string; onChooseOnline?: () => void; ready?: boolean }) {
@@ -673,8 +674,8 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
     }
     const lockBanner = locked && lockNote && (
       <div className="panel" style={{ background: '#FFF3D0', borderLeft: '5px solid #F2C14E', fontWeight: 700, marginBottom: 12 }}>
-        This opens on {FEATURES_OPEN_LABEL}. Study Packs are open now!
-        <div><button className="btn btn-primary" style={{ marginTop: 8 }} onClick={() => setSection('packs')}>Get my study packs</button></div>
+        This opens on {FEATURES_OPEN_LABEL}. You can book your tutoring ahead, and Study Packs are open now!
+        <div style={{ display: 'flex', gap: 8, marginTop: 8 }}><button className="btn btn-primary" onClick={() => setSection('book')}>Book ahead</button><button className="btn btn-gold" onClick={() => setSection('packs')}>Get my study packs</button></div>
       </div>
     )
 
@@ -709,6 +710,7 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
             {tier === 'highschool' && tile('Homework help', '📝', 'linear-gradient(135deg, #E0956F, #C46B3E)', () => setSection('homework'), 'homework')}
             {tier === 'highschool' && tile('My school', '🏫', 'linear-gradient(135deg, #8B6FD9, #6E4FC7)', () => setSection('school'), 'school')}
             {((awards || []).length > 0 || (winners || []).length > 0) && tile('Prizes', '🏆', 'linear-gradient(135deg, #8B6FD9, #6E4FC7)', () => setSection('prizes'), 'prizes')}
+            {tile('Parent link', '👨‍👩‍👧', 'linear-gradient(135deg, #1FB6A3, #17897B)', () => setSection('parent'), 'parent')}
             {tile('Badges & level', '🏅', 'linear-gradient(135deg, #C89B3C, #A87D24)', () => setSection('badges'), 'badges')}
             {tile('Refer & earn', '🎁', 'linear-gradient(135deg, #D96F8B, #B54767)', () => setSection('referral'), 'referral')}
           </div>
@@ -801,14 +803,14 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
     )
 
     if (locked) {
-      const soon = [['🙋', 'Tutoring with real tutors'], ['🎬', 'Video lessons'], ['📈', 'Marks and test prep'], ['🎁', 'Refer and earn']]
+      const soon = [['🎬', 'Video lessons'], ['📈', 'Marks and test prep'], ['🎁', 'Refer and earn']]
       return (
         <div>
                     {payWaiting}
           <div className="panel" style={{ background: 'linear-gradient(135deg, #2B1766, #4a2fa0)', color: '#fff', position: 'relative', overflow: 'hidden', paddingRight: 120 }}>
-            <div style={{ fontWeight: 800, fontSize: '0.8rem', color: '#F2C14E' }}>🚀 LAUNCHING IN DECEMBER</div>
+            <div style={{ fontWeight: 800, fontSize: '0.8rem', color: '#F2C14E' }}>🚀 STARTING {FEATURES_OPEN_LABEL.toUpperCase()}</div>
             <h3 style={{ margin: '6px 0', color: '#fff' }}>Welcome to Aid &amp; Ace{name ? `, ${name.trim().split(' ')[0]}` : ''}!</h3>
-            <div style={{ fontSize: '0.9rem', opacity: 0.9 }}>Tutoring, videos and more are coming. Online for every student, wherever you are.</div>
+            <div style={{ fontSize: '0.9rem', opacity: 0.9 }}>Book your tutoring now and start on {FEATURES_OPEN_LABEL}. Online for every student, wherever you are.</div>
           </div>
           <div className="panel" style={{ background: 'linear-gradient(135deg, #F9D6E6, #FFE4A8)', border: '3px dashed #fff' }}>
             <h4 style={{ margin: 0, color: '#E0457B' }}>📚 Exam Special is open now!</h4>
@@ -816,7 +818,7 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
             <button className="btn btn-gold" style={{ width: '100%' }} onClick={() => setSection('packs')}>Get my study packs</button>
           </div>
           <div className="panel">
-            <h4 style={{ marginTop: 0 }}>Coming on {FEATURES_OPEN_LABEL}</h4>
+            <h4 style={{ marginTop: 0 }}>Also opening on {FEATURES_OPEN_LABEL}</h4>
             {soon.map(([i, t]) => <div key={t} style={{ padding: '6px 0', opacity: 0.7 }}>{i} {t} 🔒</div>)}
           </div>
           <HelpButton />
@@ -1159,6 +1161,16 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
     )
   }
 
+  if (section === 'parent') {
+    return (
+      <div>
+        <Back />
+        <PageTitle title="Parent link" sub="Share your progress with a parent" />
+        <ParentLink userId={actions.userId} />
+      </div>
+    )
+  }
+
   if (section === 'prizes') {
     return (
       <div>
@@ -1317,7 +1329,7 @@ export default function PortalHome(props: any) {
     try {
       const saved = sessionStorage.getItem('portalSection') as Section | null
       const savedTab = sessionStorage.getItem('portalTab') as Tab | null
-      const sections: Section[] = ['menu', 'badges', 'book', 'packs', 'chat', 'history', 'video', 'guide', 'homework', 'referral', 'testprep', 'qotd', 'marks', 'school', 'files', 'prizes']
+      const sections: Section[] = ['menu', 'badges', 'book', 'packs', 'chat', 'history', 'video', 'guide', 'homework', 'referral', 'testprep', 'qotd', 'marks', 'school', 'files', 'prizes', 'parent']
       const tabs: Tab[] = ['home', 'hub', 'tutoring', 'room', 'chat', 'learn', 'more']
       if (saved && sections.includes(saved)) setSection(saved)
       if (savedTab && tabs.includes(savedTab)) setTab(savedTab)

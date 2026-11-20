@@ -1,4 +1,5 @@
 'use server'
+import { beforeOpen, FEATURES_OPEN_ON, FEATURES_OPEN_LABEL } from '../../lib/examSpecial'
 import { createClient } from '../../lib/supabase/server'
 import { checkMeetingLink } from '../../lib/meetingLink'
 import { revalidatePath } from 'next/cache'
@@ -38,7 +39,9 @@ export async function confirmPayment(table: 'bookings' | 'hs_subscriptions' | 'p
 
   const updates: any = { status: 'confirmed' }
   if (table === 'hs_subscriptions') {
-    const start = new Date()
+    // a plan paid for before the opening day starts on the opening day
+    const today = new Date()
+    const start = beforeOpen() ? new Date(`${FEATURES_OPEN_ON}T00:00:00Z`) : today
     const end = new Date(start.getTime() + 30 * 24 * 60 * 60 * 1000)
     updates.start_date = start.toISOString().slice(0, 10)
     updates.end_date = end.toISOString().slice(0, 10)
@@ -57,7 +60,7 @@ export async function confirmPayment(table: 'bookings' | 'hs_subscriptions' | 'p
   }
   if (data) {
     let message = table === 'hs_subscriptions'
-      ? 'Your subscription is confirmed — active for the next 30 days!'
+      ? (beforeOpen() ? `Your subscription is confirmed. Your sessions start on ${FEATURES_OPEN_LABEL}, and we will remind you before.` : 'Your subscription is confirmed — active for the next 30 days!')
       : 'Your payment has been confirmed!'
     if (table === 'session_extras') {
       const n = (data as any).count || 1
@@ -160,12 +163,14 @@ export async function assignTutor(table: 'bookings' | 'hs_subscriptions', id: st
   if (data && tutorId && before?.tutor_id !== tutorId) {
     const { data: stu } = await supabase.from('profiles').select('full_name').eq('id', data.student_id).single()
     const name = stu?.full_name || 'A student'
+    const { data: tu } = await supabase.from('profiles').select('full_name').eq('id', tutorId).single()
+    const tutorName = tu?.full_name || 'your tutor'
     await supabase.from('notifications').insert([
-      { student_id: data.student_id, for_role: 'student', message: 'A tutor has been assigned to your request.' },
+      { student_id: data.student_id, for_role: 'student', message: `This is your tutor: ${tutorName}. Open Chat to say hello.` },
       { student_id: tutorId, for_role: 'student', message: `${name} has been assigned to you. Open My students.` },
     ])
     try {
-      await sendPushToUser(data.student_id, 'Tutor assigned', 'A tutor has been assigned to your request.', '/portal')
+      await sendPushToUser(data.student_id, 'Meet your tutor', `This is your tutor: ${tutorName}. Open Chat to say hello.`, '/portal')
       await sendPushToUser(tutorId, 'New student', `${name} has been assigned to you.`, '/partner')
     } catch {}
   }
@@ -211,12 +216,10 @@ export async function claim(table: 'bookings' | 'hs_subscriptions', id: string) 
   if (!user) return
   const { data } = await supabase.from(table).update({ tutor_id: user.id }).eq('id', id).select('student_id').single()
   if (data) {
-    await supabase.from('notifications').insert({
-      student_id: data.student_id,
-      for_role: 'student',
-      message: 'A tutor has been assigned to your request.',
-    })
-    await sendPushToUser(data.student_id, 'Tutor assigned', 'A tutor has been assigned to your request.', '/portal')
+    const { data: me } = await supabase.from('profiles').select('full_name').eq('id', user.id).single()
+    const msg = `This is your tutor: ${me?.full_name || 'your tutor'}. Open Chat to say hello.`
+    await supabase.from('notifications').insert({ student_id: data.student_id, for_role: 'student', message: msg })
+    await sendPushToUser(data.student_id, 'Meet your tutor', msg, '/portal')
   }
   revalidatePath('/tutor')
 }

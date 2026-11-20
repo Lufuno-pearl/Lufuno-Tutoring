@@ -48,5 +48,19 @@ export async function GET(req: Request) {
     await supabase.from('hs_subscriptions').update({ renewal_reminder_sent: true }).eq('id', s.id)
   }
 
+  // Plans paid for ahead of time: remind the student 3 days and 1 day before the first day, and say who the tutor is.
+  const dayAfter = (n: number) => new Date(new Date(saToday + 'T00:00:00Z').getTime() + n * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+  const { data: starting } = await supabase
+    .from('hs_subscriptions')
+    .select('id, student_id, tutor_id, start_date')
+    .eq('status', 'confirmed')
+    .in('start_date', [dayAfter(1), dayAfter(3)])
+  for (const s of starting || []) {
+    let tutor = ''
+    if (s.tutor_id) { const { data: t } = await supabase.from('profiles').select('full_name').eq('id', s.tutor_id).single(); tutor = t?.full_name || '' }
+    const when = s.start_date === dayAfter(1) ? 'tomorrow' : 'in 3 days'
+    await sendPushToUser(s.student_id, `Your sessions start ${when}`, tutor ? `Your tutor is ${tutor}. Open the app to see your schedule.` : 'Open the app to see your schedule.', '/portal')
+  }
+
   return NextResponse.json({ ok: true, checked: (bookings || []).length })
 }
