@@ -37,6 +37,7 @@ import RejectButton from './RejectButton'
 import { ChatBubble, ReplyBar, Composer, useHidden } from '../ChatParts'
 import ScheduleManager, { studentFormat, studentAlternate, classmatesOf, isGroupStudent } from '../ScheduleManager'
 import HomeworkSection from './HomeworkSection'
+import AutoAssign from './AutoAssign'
 import TestList, { daysUntil } from '../TestList'
 
 type Tab = 'home' | 'requests' | 'students' | 'room' | 'chat' | 'more'
@@ -542,6 +543,7 @@ function TutorInner({ goTab, openReports, owedThisMonth, videoOnly, section, set
       <div>
         <Back />
         <p className="meta">Only you and Neliswa assign students. Each tutor's name shows how many students they have, and the tutor with the fewest comes first.</p>
+        <AutoAssign subs={subs || []} bookings={bookings || []} partners={partners || []} />
         <PageTitle title="University" />
         {uniItems.filter((r: any) => !r.tutor_id).length === 0 && <p className="meta">Nobody waiting for a tutor.</p>}
         {uniItems.filter((r: any) => !r.tutor_id).map(renderItem)}

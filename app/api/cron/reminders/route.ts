@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '../../../../lib/supabase/server'
 import { sendPushToUser } from '../../../../lib/push'
+import { createAdminClient } from '../../../../lib/supabase/admin'
+import { ADMIN_EMAILS } from '../../../../lib/admin'
+import { FEATURES_OPEN_ON, FEATURES_OPEN_LABEL } from '../../../../lib/examSpecial'
+import { planAssignments, shortage, groupKeyOf, type AReq } from '../../../../lib/autoAssign'
 
 export async function GET(req: Request) {
   const secret = new URL(req.url).searchParams.get('secret')
@@ -61,6 +65,61 @@ export async function GET(req: Request) {
     const when = s.start_date === dayAfter(1) ? 'tomorrow' : 'in 3 days'
     await sendPushToUser(s.student_id, `Your sessions start ${when}`, tutor ? `Your tutor is ${tutor}. Open the app to see your schedule.` : 'Open the app to see your schedule.', '/portal')
   }
+
+  // Before we open: remind people who have an account but have not subscribed, on Mondays and Thursdays.
+  try {
+    const dow = new Date(saToday + 'T00:00:00Z').getUTCDay()
+    if (saToday < FEATURES_OPEN_ON && (dow === 1 || dow === 4)) {
+      const admin = createAdminClient()
+      const [{ data: studs }, { data: hs }, { data: uni }] = await Promise.all([
+        admin.from('profiles').select('id').eq('role', 'student').limit(3000),
+        admin.from('hs_subscriptions').select('student_id').not('status', 'in', '(rejected,cancelled)'),
+        admin.from('bookings').select('student_id').not('status', 'in', '(rejected,cancelled)'),
+      ])
+      const has = new Set([...(hs || []), ...(uni || [])].map((x: any) => x.student_id))
+      const days = Math.max(0, Math.round((new Date(FEATURES_OPEN_ON + 'T00:00:00Z').getTime() - new Date(saToday + 'T00:00:00Z').getTime()) / 86400000))
+      for (const st of studs || []) {
+        if (has.has(st.id)) continue
+        await sendPushToUser(st.id, `Aid & Ace opens ${FEATURES_OPEN_LABEL}`, days <= 1 ? 'We open tomorrow. Book now and get your tutor.' : `${days} days to go. Book ahead now and your tutor will be ready.`, '/portal')
+      }
+    }
+  } catch {}
+
+  // Tell the owners when paid students are waiting and there is no tutor who can take them.
+  try {
+    const admin = createAdminClient()
+    const [{ data: tutors }, { data: tm }, { data: ta }, { data: subs }, { data: bks }] = await Promise.all([
+      admin.from('profiles').select('id, full_name, available, takes_one_on_one, teaches').eq('role', 'partner'),
+      admin.from('tutor_modules').select('tutor_id, module_name'),
+      admin.from('tutor_areas').select('tutor_id, name'),
+      admin.from('hs_subscriptions').select('id, student_id, tutor_id, status, end_date, session_type, subject_choice, grade, format, area, created_at').in('status', ['pending', 'awaiting', 'confirmed']),
+      admin.from('bookings').select('id, student_id, tutor_id, status, session_type, subject, format, area, created_at').in('status', ['pending', 'awaiting', 'confirmed']),
+    ])
+    const full = (tutors || []).map((t: any) => ({
+      ...t,
+      modules: (tm || []).filter((m: any) => m.tutor_id === t.id).map((m: any) => ({ name: m.module_name })),
+      areas: (ta || []).filter((a: any) => a.tutor_id === t.id).map((a: any) => a.name),
+    }))
+    const stillOn = (x: any) => !x.end_date || x.end_date >= todayISO
+    const mk = (x: any, kind: 'hs_subscriptions' | 'bookings'): AReq => ({ kind, id: x.id, student_id: x.student_id, created_at: x.created_at, session_type: x.session_type, subject_choice: x.subject_choice, subject: x.subject, grade: x.grade, format: x.format, area: x.area, label: '', studentName: '' })
+    const requests = [
+      ...(subs || []).filter((x: any) => !x.tutor_id && x.status === 'confirmed' && stillOn(x)).map((x: any) => mk(x, 'hs_subscriptions')),
+      ...(bks || []).filter((x: any) => !x.tutor_id && x.status === 'confirmed').map((x: any) => mk(x, 'bookings')),
+    ]
+    if (requests.length > 0) {
+      const current = [...(subs || []).map((x: any) => ({ ...x, kind: 'hs_subscriptions' })), ...(bks || []).map((x: any) => ({ ...x, kind: 'bookings' }))]
+        .filter((x: any) => x.tutor_id && stillOn(x)).map((x: any) => ({ tutor_id: x.tutor_id, student_id: x.student_id, session_type: x.session_type, groupKey: groupKeyOf(x) }))
+      const { unplaced } = planAssignments({ requests, tutors: full as any[], current, recruiter: {}, previous: {}, handedOut: {} })
+      const need = shortage(unplaced)
+      if (need.length > 0) {
+        const text = need.map(n => `${n.need}: ${n.students} student${n.students === 1 ? '' : 's'} waiting`).join('; ')
+        const { data: owners } = await admin.from('profiles').select('id').in('email', ADMIN_EMAILS)
+        for (const o of owners || []) {
+          await sendPushToUser(o.id, 'We need more tutors', `${text}. Open tutor applications.`, '/tutor')
+        }
+      }
+    }
+  } catch {}
 
   return NextResponse.json({ ok: true, checked: (bookings || []).length })
 }
