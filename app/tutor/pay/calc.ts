@@ -34,6 +34,8 @@ export type Line = {
   extraPaid: number
   paid: number
   pay: number
+  rescheduled?: number
+  reschedPaid?: number
   days: { date: string; status: string; counted: boolean }[]
 }
 
@@ -48,7 +50,7 @@ export function rateFor(sub: SubRow) {
 }
 
 // extras: confirmed extra sessions per subscription id. They are paid at EXTRA_TUTOR_PAY each, after the plan's own sessions.
-export function computePay(att: AttRow[], subs: SubRow[], extras: Record<string, number> = {}) {
+export function computePay(att: AttRow[], subs: SubRow[], extras: Record<string, number> = {}, today: string = new Date().toISOString().slice(0, 10)) {
   const sorted = [...att].sort((a, b) => (a.session_date < b.session_date ? -1 : a.session_date > b.session_date ? 1 : 0))
   const lines = new Map<string, Line>()
   const used = new Map<string, number>()
@@ -56,7 +58,7 @@ export function computePay(att: AttRow[], subs: SubRow[], extras: Record<string,
 
   for (const r of sorted) {
     if (r.student_response === 'no') continue // disputed by the student: held back until an owner settles it
-    if (r.status !== 'present' && r.status !== 'absent' && r.status !== 'tutor_missed') continue
+    if (r.status !== 'present' && r.status !== 'absent' && r.status !== 'tutor_missed' && r.status !== 'rescheduled') continue
 
     const candidates = subs.filter(
       s => s.student_id === r.student_id && s.start_date && s.end_date && s.start_date <= r.session_date && r.session_date <= s.end_date
@@ -82,6 +84,12 @@ export function computePay(att: AttRow[], subs: SubRow[], extras: Record<string,
       lines.set(key, line)
     }
 
+    if (r.status === 'rescheduled') {
+      // one-on-one only: the student moved the session. It is not paid itself; the new session is. See below.
+      if (line.sessionType === 'one_on_one') line.rescheduled = (line.rescheduled || 0) + 1
+      line.days.push({ date: r.session_date, status: r.status, counted: false })
+      continue
+    }
     if (r.status === 'tutor_missed') { line.tutorMissed++; line.days.push({ date: r.session_date, status: r.status, counted: false }); continue }
 
     const n = used.get(sub.id) || 0
@@ -102,7 +110,14 @@ export function computePay(att: AttRow[], subs: SubRow[], extras: Record<string,
   }
 
   const out = Array.from(lines.values())
-  out.forEach(l => { l.pay = Math.round((l.paid * l.rate + l.extraPaid * EXTRA_TUTOR_PAY) * 100) / 100 })
+  // A one-on-one student who moved a session and never took the new time is the student's loss, not the tutor's:
+  // once the plan has ended, those sessions are paid, up to the sessions the plan includes.
+  const subById = new Map(subs.map(s => [s.id, s]))
+  out.forEach(l => {
+    const end = subById.get(l.subId)?.end_date
+    l.reschedPaid = end && end < today ? Math.max(0, Math.min(l.rescheduled || 0, l.included - l.paid)) : 0
+  })
+  out.forEach(l => { l.pay = Math.round((l.paid * l.rate + (l.reschedPaid || 0) * l.rate + l.extraPaid * EXTRA_TUTOR_PAY) * 100) / 100 })
   return { lines: out, unmatched }
 }
 

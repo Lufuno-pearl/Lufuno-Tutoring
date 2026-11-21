@@ -5,7 +5,11 @@ export type SessionType = 'group' | 'one_on_one'
 export type Plan = 'one' | 'both'
 
 // The most students in any one group, online or physical
-export const GROUP_MAX = 10
+export const GROUP_MAX = 5
+
+// How many students one tutor can be given: 20 in total, and no more than 5 of them one-on-one
+export const TUTOR_MAX_STUDENTS = 20
+export const TUTOR_MAX_ONE_ON_ONE = 5
 
 // High school, rand per month
 export const HS_PRICE: Record<SessionType, Record<Plan, number>> = {

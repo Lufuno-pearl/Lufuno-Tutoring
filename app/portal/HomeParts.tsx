@@ -234,7 +234,7 @@ export function GetStarted({ hasRequested, hasTutor, onRequest }: { hasRequested
 export function WhatYouGet({ tier }: { tier: string }) {
   const cards = tier === 'highschool'
     ? [
-        ['👥', 'Group or one-on-one', 'Learn with up to 10 students, or get a tutor all to yourself.'],
+        ['👥', 'Group or one-on-one', 'Learn with up to 5 students, or get a tutor all to yourself.'],
         ['💻', 'Online or in person', 'Join from home, or meet a tutor in your area.'],
         ['🎬', 'Video lessons', 'Watch lessons for your subjects any time.'],
         ['📝', 'Homework help', 'Send your homework and get it solved.'],
@@ -274,7 +274,7 @@ export function PriceStrip({ tier, onRequest }: { tier: string; onRequest: () =>
         </>
       ) : (
         <>
-          <div className="pay-line"><span>Group (up to 10)</span><span>R{UNI_PRICE.group} a month (5 sessions of 1h30)</span></div>
+          <div className="pay-line"><span>Group (up to 5)</span><span>R{UNI_PRICE.group} a month (5 sessions of 1h30)</span></div>
           <div className="pay-line"><span>One-on-one</span><span>R{UNI_PRICE.one_on_one} a month (5 sessions of 1h30)</span></div>
         </>
       )}
