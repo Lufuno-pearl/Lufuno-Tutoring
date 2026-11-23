@@ -71,6 +71,18 @@ export default function LoginForm() {
     await afterAuth(data.user, supabase)
   }
 
+  async function handleForgot() {
+    setError('')
+    setSuccess('')
+    if (!email.trim()) { setError('Type your email above first, then tap "Forgot password?".'); return }
+    setLoading(true)
+    const supabase = createClient()
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: `${window.location.origin}/auth/callback?next=/reset-password` })
+    setLoading(false)
+    if (error) { setError(/rate|seconds|too many/i.test(error.message) ? 'Please wait a minute and try again.' : 'We could not send the email. WhatsApp Lufuno on 067 381 2727 and we will help.'); return }
+    setSuccess('If that email has an account, we have sent a link to choose a new password. Check your inbox and spam folder.')
+  }
+
   const signup = mode === 'signup'
   return (
     <div className="wl">
@@ -122,7 +134,12 @@ export default function LoginForm() {
           </label>
         )}
         {error && <p className="wl-err">{error}</p>}
-        {!signup && <p className="wl-forgot">Forgot your password? WhatsApp Lufuno on <strong>067 381 2727</strong> to have it reset.</p>}
+        {!signup && (
+          <p className="wl-forgot">
+            <span onClick={handleForgot} style={{ textDecoration: 'underline', cursor: 'pointer', fontWeight: 700 }}>Forgot password?</span>
+            {' '}We email you a link. No email? WhatsApp Lufuno on <strong>067 381 2727</strong>.
+          </p>
+        )}
         {signup ? (
           <button className="wl-btn" onClick={handleSignUp} disabled={loading}>{loading ? 'Creating account...' : 'Create account'}</button>
         ) : (

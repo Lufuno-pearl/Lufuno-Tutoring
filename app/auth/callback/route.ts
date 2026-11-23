@@ -10,5 +10,8 @@ export async function GET(request: Request) {
     await supabase.auth.exchangeCodeForSession(code)
   }
 
-  return NextResponse.redirect(`${origin}/portal`)
+  // only ever go to a page on this site
+  const next = searchParams.get('next') || ''
+  const safe = next.startsWith('/') && !next.startsWith('//') ? next : '/portal'
+  return NextResponse.redirect(`${origin}${safe}`)
 }
