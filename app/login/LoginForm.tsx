@@ -76,11 +76,16 @@ export default function LoginForm() {
     setSuccess('')
     if (!email.trim()) { setError('Type your email above first, then tap "Forgot password?".'); return }
     setLoading(true)
-    const supabase = createClient()
-    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: `${window.location.origin}/auth/callback?next=/reset-password` })
-    setLoading(false)
-    if (error) { setError(/rate|seconds|too many/i.test(error.message) ? 'Please wait a minute and try again.' : `We could not send the email (${error.message}). WhatsApp us on 067 381 2727 and we will help.`); return }
-    setSuccess('If that email has an account, we have sent a link to choose a new password. Check your inbox, and also your spam or junk folder: it can land there. If it does, tap "Not spam".')
+    try {
+      const res = await fetch('/api/forgot-password', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: email.trim() }) })
+      const j = await res.json().catch(() => ({}))
+      setLoading(false)
+      if (!res.ok || !j.ok) { setError(`We could not send the email (${j.error || 'try again'}). WhatsApp us on 067 381 2727 and we will help.`); return }
+      setSuccess('If that email has an account, we have sent a link to choose a new password. Check your inbox, and also your spam or junk folder: it can land there. If it does, tap "Not spam".')
+    } catch {
+      setLoading(false)
+      setError('We could not send the email. Check your internet and try again.')
+    }
   }
 
   const signup = mode === 'signup'
