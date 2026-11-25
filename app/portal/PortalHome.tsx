@@ -197,6 +197,16 @@ function PayBlock({ kind, id, label, price, reference, markAwaiting }: { kind: '
   const [online, setOnline] = useState(false)
   useEffect(() => { payfastAvailable().then(setOnline).catch(() => {}) }, [])
   const [payErr, setPayErr] = useState('')
+  // Straight after a new booking or subscription, go directly to the payment page.
+  useEffect(() => {
+    if (!online || !reference) return
+    let flag = ''
+    try { flag = sessionStorage.getItem('aa_autopay') || '' } catch {}
+    if (flag !== `${kind}:${reference}`) return
+    try { sessionStorage.removeItem('aa_autopay') } catch {}
+    payOnline()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [online])
   async function payOnline() {
     setSubmitting(true); setPayErr('')
     const r = await startPayfast(kind, id)
@@ -909,6 +919,7 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
         form.reset()
         setUniType('group')
         setUniArea('')
+        if (!result.duplicate && result.reference) { try { sessionStorage.setItem('aa_autopay', `bookings:${result.reference}`) } catch {} }
         setThankYou(result.duplicate
           ? `You already have a request for ${result.subject} on that day — check below for payment details.`
           : `Thank you for requesting ${result.subject} on Aid & Ace!`)
@@ -935,6 +946,7 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
         setHsChoice('both')
         setHsFormat('online')
         setHsArea('')
+        if (!result.duplicate && result.reference) { try { sessionStorage.setItem('aa_autopay', `hs_subscriptions:${result.reference}`) } catch {} }
         setThankYou(result.duplicate
           ? `You already have an active or pending subscription — check below for payment details.`
           : `Thank you for subscribing on Aid & Ace!`)
