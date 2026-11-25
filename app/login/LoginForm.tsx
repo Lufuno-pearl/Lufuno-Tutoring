@@ -80,7 +80,7 @@ export default function LoginForm() {
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: `${window.location.origin}/auth/callback?next=/reset-password` })
     setLoading(false)
     if (error) { setError(/rate|seconds|too many/i.test(error.message) ? 'Please wait a minute and try again.' : 'We could not send the email. WhatsApp Lufuno on 067 381 2727 and we will help.'); return }
-    setSuccess('If that email has an account, we have sent a link to choose a new password. Check your inbox and spam folder.')
+    setSuccess('If that email has an account, we have sent a link to choose a new password. Check your inbox, and also your spam or junk folder: it can land there. If it does, tap "Not spam".')
   }
 
   const signup = mode === 'signup'
