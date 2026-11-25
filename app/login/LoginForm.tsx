@@ -137,7 +137,7 @@ export default function LoginForm() {
         {!signup && (
           <p className="wl-forgot">
             <span onClick={handleForgot} style={{ textDecoration: 'underline', cursor: 'pointer', fontWeight: 700 }}>Forgot password?</span>
-            {' '}We email you a link. No email? WhatsApp Lufuno on <strong>067 381 2727</strong>.
+            {' '}We will email you a link to choose a new one.
           </p>
         )}
         {signup ? (
