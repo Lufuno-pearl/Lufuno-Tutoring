@@ -120,7 +120,7 @@ function PaySteps({ status }: { status: string }) {
   )
 }
 
-const LUFUNO_WHATSAPP = '27673812727'
+const LUFUNO_WHATSAPP = '27661793649'
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false)

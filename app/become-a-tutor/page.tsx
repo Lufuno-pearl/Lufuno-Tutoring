@@ -49,7 +49,7 @@ export default function BecomeATutor() {
       </div>
 
       <Link href="/apply" className="btn btn-primary" style={{ width: '100%', boxSizing: 'border-box', fontSize: '1.05rem' }}>Apply now</Link>
-      <p className="meta" style={{ marginTop: 14 }}>Questions? aidandace27@gmail.com · 067 381 2727</p>
+      <p className="meta" style={{ marginTop: 14 }}>Questions? aidandace27@gmail.com · 066 179 3649</p>
     </div>
   )
 }

@@ -9,7 +9,7 @@ import { daysUntil } from '../TestList'
 import Avatar from '../Avatar'
 import { FuniArt } from '../avatarArt'
 
-const WHATSAPP = '27673812727'
+const WHATSAPP = '27661793649'
 
 export function saToday() {
   return new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString().slice(0, 10)

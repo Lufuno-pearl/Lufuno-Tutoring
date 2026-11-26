@@ -30,8 +30,8 @@ export default function HelpPage() {
       ))}
       <div className="panel">
         <h4 style={{ marginTop: 0 }}>Contact us</h4>
-        <p style={{ margin: '0 0 8px' }}>WhatsApp or call 067 381 2727 · aidandace27@gmail.com</p>
-        <a className="btn btn-primary" href="https://wa.me/27673812727?text=Hi%20Aid%20%26%20Ace%2C%20I%20need%20help" target="_blank" rel="noreferrer">Chat on WhatsApp</a>
+        <p style={{ margin: '0 0 8px' }}>WhatsApp or call 066 179 3649 · aidandace27@gmail.com</p>
+        <a className="btn btn-primary" href="https://wa.me/27661793649?text=Hi%20Aid%20%26%20Ace%2C%20I%20need%20help" target="_blank" rel="noreferrer">Chat on WhatsApp</a>
       </div>
       <p className="meta"><Link href="/terms" style={{ color: 'var(--purple-dark)', fontWeight: 600 }}>Terms</Link> · <Link href="/privacy" style={{ color: 'var(--purple-dark)', fontWeight: 600 }}>Privacy</Link></p>
     </div>

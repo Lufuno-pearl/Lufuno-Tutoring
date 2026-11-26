@@ -10,7 +10,7 @@ export default function ErrorPage({ error, reset }: { error: Error & { digest?: 
   return (
     <div className="panel" style={{ maxWidth: 560, margin: '24px auto' }}>
       <h3 style={{ marginTop: 0 }}>Oops, something went wrong</h3>
-      <p className="meta">Please take a screenshot of this and send it to Aid &amp; Ace on WhatsApp (067 381 2727). It helps us fix it fast.</p>
+      <p className="meta">Please take a screenshot of this and send it to Aid &amp; Ace on WhatsApp (066 179 3649). It helps us fix it fast.</p>
       <pre style={{ whiteSpace: 'pre-wrap', fontSize: '0.8rem', background: '#F6F1FF', padding: 10, borderRadius: 10 }}>{String(error?.message || error)}{error?.digest ? `\nCode: ${error.digest}` : ''}</pre>
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
         <button className="btn btn-primary" onClick={() => reset()}>Try again</button>
