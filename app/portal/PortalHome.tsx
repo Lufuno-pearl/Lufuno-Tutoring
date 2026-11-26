@@ -39,6 +39,7 @@ import StudentChat from './StudentChat'
 import PrizesView, { PrizeCard } from './PrizesView'
 import ParentLink from './ParentLink'
 import WelcomeTour from './WelcomeTour'
+import SetupSteps from './SetupSteps'
 import { payfastAvailable, startPayfast } from './payActions'
 import { BADGES, earnedBadges } from '../../lib/xp'
 import { Check, Flame, Star, TrendingUp as TrendIcon, Award, Trophy } from 'lucide-react'
@@ -867,7 +868,7 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
           <RateTutor due={ratingDue || []} submit={actions.submitRating} />
           <SessionConfirm rows={toConfirm} respondToSession={respondToSession} onAnswered={(id: string) => setAnswered(a => [...a, id])} />
           {((awards || []).length > 0 || (winners || []).length > 0) && <PrizeCard term={(winners || [])[0]?.term || (awards || [])[0]?.term || ''} mine={(awards || []).length} onOpen={() => { setSection('prizes'); scrollPageToTop() }} />}
-          <GetStarted hasRequested={hasRequested} hasTutor={false} onRequest={() => setSection('book')} />
+          <SetupSteps userId={actions.userId} hasRequested={hasRequested} onRequest={() => setSection('book')} />
           <WhatYouGet tier={tier} />
           <PriceStrip tier={tier} onRequest={() => setSection('book')} />
           <ReferBanner subscribed={!!canTestPrep} onOpen={() => setSection('referral')} me={me} name={name || ''} />
@@ -891,6 +892,7 @@ function PortalInner({ section, setSection, tab, setTab, name, tier, uniSubjects
         <SessionConfirm rows={toConfirm} respondToSession={respondToSession} onAnswered={(id: string) => setAnswered(a => [...a, id])} />
         <CountdownCard tests={testPreps || []} onOpen={() => setSection('testprep')} />
         <StreakCard attendance={attendance || []} />
+        <SetupSteps mode="phone" userId={actions.userId} hasRequested onRequest={() => {}} />
         <PlanCard subs={subs || []} attendance={attendance || []} />
         <ExtraSessions subs={subs || []} attendance={attendance || []} extras={extras || []} buy={buyExtraSessions} markAwaiting={markAwaiting} />
         <ReferBanner subscribed={!!canTestPrep} onOpen={() => setSection('referral')} me={me} name={name || ''} />
