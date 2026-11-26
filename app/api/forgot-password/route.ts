@@ -14,7 +14,7 @@ export async function POST(req: Request) {
     // No account with this email: say nothing different, so nobody can test which emails exist.
     if (error || !data?.properties?.hashed_token) return NextResponse.json({ ok: true })
     const link = `${origin}/auth/confirm?token_hash=${encodeURIComponent(data.properties.hashed_token)}&type=recovery`
-    const sent = await sendEmailDetailed(to, 'Choose a new Aid & Ace password', `Hi,\n\nSomeone asked to reset the password for your Aid & Ace account. Tap this link to choose a new password:\n\n${link}\n\nIf this was not you, ignore this email and nothing changes. The link works once and expires soon.\n\nAid & Ace Tutoring\naidandace27@gmail.com | 067 381 2727`)
+    const sent = await sendEmailDetailed(to, 'Choose a new Aid & Ace password', `Hi,\n\nSomeone asked to reset the password for your Aid & Ace account. Tap this link to choose a new password:\n\n${link}\n\nIf this was not you, ignore this email and nothing changes. The link works once and expires soon.\n\nAid & Ace Tutoring\naidandace27@gmail.com | 066 179 3649`)
     if (!sent.ok) return NextResponse.json({ ok: false, error: sent.error || 'send failed' }, { status: 502 })
     return NextResponse.json({ ok: true })
   } catch (e: any) {

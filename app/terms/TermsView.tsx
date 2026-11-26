@@ -24,7 +24,7 @@ export default function TermsView({ heading, intro, sections, other, backHref, e
           </ul>
         </div>
       ))}
-      <p className="meta">Questions? Email aidandace27@gmail.com or call 067 381 2727.</p>
+      <p className="meta">Questions? Email aidandace27@gmail.com or call 066 179 3649.</p>
       {other && <p className="meta"><Link href={other.href} style={{ color: 'var(--purple-dark)', fontWeight: 600 }}>{other.label}</Link></p>}
     </div>
   )

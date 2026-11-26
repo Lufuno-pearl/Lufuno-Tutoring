@@ -80,7 +80,7 @@ export default function LoginForm() {
       const res = await fetch('/api/forgot-password', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: email.trim() }) })
       const j = await res.json().catch(() => ({}))
       setLoading(false)
-      if (!res.ok || !j.ok) { setError(`We could not send the email (${j.error || 'try again'}). WhatsApp us on 067 381 2727 and we will help.`); return }
+      if (!res.ok || !j.ok) { setError(`We could not send the email (${j.error || 'try again'}). WhatsApp us on 066 179 3649 and we will help.`); return }
       setSuccess('If that email has an account, we have sent a link to choose a new password. Check your inbox, and also your spam or junk folder: it can land there. If it does, tap "Not spam".')
     } catch {
       setLoading(false)

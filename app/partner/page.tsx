@@ -241,7 +241,7 @@ export default async function PartnerDashboard() {
     return (
       <div className="panel" style={{ maxWidth: 560, margin: '24px auto' }}>
         <h3 style={{ marginTop: 0 }}>Something went wrong loading your dashboard</h3>
-        <p className="meta">Please take a screenshot of this and send it to Aid &amp; Ace on WhatsApp (067 381 2727).</p>
+        <p className="meta">Please take a screenshot of this and send it to Aid &amp; Ace on WhatsApp (066 179 3649).</p>
         <pre style={{ whiteSpace: 'pre-wrap', fontSize: '0.8rem', background: '#F6F1FF', padding: 10, borderRadius: 10 }}>{String(e?.message || e)}{'\n'}{String(e?.stack || '').split('\n').slice(1, 4).join('\n')}</pre>
       </div>
     )
