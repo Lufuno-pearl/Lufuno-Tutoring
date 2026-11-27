@@ -68,6 +68,9 @@ export default function PrizeGiving() {
   const [f, setF] = useState({ studentId: '', kind: 'improved', level: 'hs', subject: '', grade: '', term: 'Term 1, 2027', markPct: '', fromPct: '', note: '' })
   const [busy, setBusy] = useState(false)
   const [note, setNote] = useState('')
+  const [range, setRange] = useState(() => { const d = new Date(); const to = d.toISOString().slice(0, 10); d.setDate(d.getDate() - 90); return { from: d.toISOString().slice(0, 10), to } })
+  const [sug, setSug] = useState<any>(null)
+  const [picked, setPicked] = useState<string[]>([])
   const load = () => getPrizeAdmin().then(d => setData(d)).catch(() => setData({ missing: true }))
   useEffect(() => { load() }, [])
   if (data === null) return <p className="meta">Loading…</p>
@@ -85,9 +88,6 @@ export default function PrizeGiving() {
     if (!r.ok) { setNote(r.message || 'Could not save.'); return }
     setF({ ...f, studentId: '', markPct: '', fromPct: '', note: '' }); load()
   }
-  const [range, setRange] = useState(() => { const d = new Date(); const to = d.toISOString().slice(0, 10); d.setDate(d.getDate() - 90); return { from: d.toISOString().slice(0, 10), to } })
-  const [sug, setSug] = useState<any>(null)
-  const [picked, setPicked] = useState<string[]>([])
   async function findWinners() {
     setBusy(true); setNote('')
     const r: any = await suggestAwards(range.from, range.to, f.term)
