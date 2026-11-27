@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { PROVINCES } from './AreaSelect'
+import { PROVINCES, AreaSearch } from './AreaSelect'
+import { AREAS_BY_PROVINCE } from '../lib/saAreas'
 import { getMyAreas, addArea, removeArea, getOneOnOne, setOneOnOne, getMySubjects, setMySubjects } from './areaActions'
 
 const COMMON = ['Mathematics', 'Physical Sciences', 'Life Sciences', 'Mathematical Literacy', 'Accounting', 'Business Studies', 'Economics', 'Geography', 'History', 'English', 'Afrikaans']
@@ -59,16 +60,14 @@ export default function TutorAreas() {
     setBusy(false)
   }
 
-  async function handleAdd(e: React.FormEvent) {
-    e.preventDefault()
+  async function pickArea(name: string) {
     if (busy) return
     setBusy(true)
     setMsg('')
-    const r = await addArea(text, province)
+    const r = await addArea(name, province)
     setMsg(r.message)
     setMsgOk(r.ok)
     if (r.ok) {
-      setText('')
       await load()
     }
     setBusy(false)
@@ -107,20 +106,20 @@ export default function TutorAreas() {
       </label>
       <p className="meta">Add the areas where you can meet students in person. Students will only see these areas when they book a physical session.</p>
 
-      <form onSubmit={handleAdd} style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
-        <select value={province} onChange={e => setProvince(e.target.value)} required style={{ flex: '1 1 100%' }}>
+      <div style={{ marginTop: 12 }}>
+        <select value={province} onChange={e => setProvince(e.target.value)} style={{ width: '100%' }}>
           <option value="">Choose your province</option>
           {PROVINCES.map(p => <option key={p} value={p}>{p}</option>)}
         </select>
-        <input
-          value={text}
-          onChange={e => setText(e.target.value)}
-          placeholder="e.g. Braamfontein, Soweto, Randburg"
-          maxLength={60}
-          style={{ flex: 1 }}
-        />
-        <button className="btn btn-primary" disabled={busy || !text.trim() || !province} style={{ opacity: busy || !text.trim() || !province ? 0.6 : 1 }}>Add</button>
-      </form>
+        {province && (
+          <AreaSearch
+            options={(AREAS_BY_PROVINCE[province] || []).filter(n => !areas.some(a => a.name.toLowerCase() === n.toLowerCase())).map(name => ({ name }))}
+            onPick={n => pickArea(n)}
+            allowCustom
+            hint="Tap an area to add it. You can add as many as you like. Not in the list? Type it and tap Add."
+          />
+        )}
+      </div>
 
       {msg && <p className="meta" style={{ marginTop: 8, color: msgOk ? 'var(--purple-dark)' : '#A6443A' }}>{msg}</p>}
 
