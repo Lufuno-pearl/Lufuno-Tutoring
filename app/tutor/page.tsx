@@ -108,19 +108,19 @@ export default async function TutorDashboard() {
   const recentCut = Date.now() - 14 * 86400000
   activeBookings.forEach((b: any) => {
     const sid = b.student_id
-    if (!threadsByStudent[sid]) threadsByStudent[sid] = { name: b.profiles?.full_name || 'Student', email: b.profiles?.email || '', tier: b.profiles?.tier || 'university', msgs: [] }
+    if (!threadsByStudent[sid]) threadsByStudent[sid] = { name: b.profiles?.full_name || String(b.profiles?.email || '').split('@')[0] || 'Student', email: b.profiles?.email || '', tier: b.profiles?.tier || 'university', msgs: [] }
   })
   activeSubs.forEach((s: any) => {
     const sid = s.student_id
-    if (!threadsByStudent[sid]) threadsByStudent[sid] = { name: s.profiles?.full_name || 'Student', email: s.profiles?.email || '', tier: s.profiles?.tier || 'highschool', msgs: [] }
+    if (!threadsByStudent[sid]) threadsByStudent[sid] = { name: s.profiles?.full_name || String(s.profiles?.email || '').split('@')[0] || 'Student', email: s.profiles?.email || '', tier: s.profiles?.tier || 'highschool', msgs: [] }
   })
   ;(orders || []).filter((o: any) => ['pending', 'awaiting'].includes(o.status) || new Date(o.created_at).getTime() >= recentCut).forEach((o: any) => {
     const sid = o.student_id
-    if (!threadsByStudent[sid]) threadsByStudent[sid] = { name: o.profiles?.full_name || 'Student', email: o.profiles?.email || '', tier: o.profiles?.tier || 'university', msgs: [] }
+    if (!threadsByStudent[sid]) threadsByStudent[sid] = { name: o.profiles?.full_name || String(o.profiles?.email || '').split('@')[0] || 'Student', email: o.profiles?.email || '', tier: o.profiles?.tier || 'university', msgs: [] }
   })
   ;(messages || []).forEach((m: any) => {
     const sid = m.student_id
-    if (!threadsByStudent[sid] && new Date(m.created_at).getTime() >= recentCut) threadsByStudent[sid] = { name: m.profiles?.full_name || 'Student', email: m.profiles?.email || '', tier: m.profiles?.tier || 'university', msgs: [] }
+    if (!threadsByStudent[sid] && new Date(m.created_at).getTime() >= recentCut) threadsByStudent[sid] = { name: m.profiles?.full_name || String(m.profiles?.email || '').split('@')[0] || 'Student', email: m.profiles?.email || '', tier: m.profiles?.tier || 'university', msgs: [] }
     if (threadsByStudent[sid]) threadsByStudent[sid].msgs.push(m)
   })
 

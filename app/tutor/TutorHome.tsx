@@ -19,6 +19,7 @@ import FilesManager from './FilesManager'
 import OwnerOverview, { AttentionItem } from './OwnerOverview'
 import DataDraw from './DataDraw'
 import PrizeGiving from './PrizeGiving'
+import { stillActiveSub, stillActiveBooking } from '../../lib/activeStudent'
 import { useRouter } from 'next/navigation'
 import ScopeFiles from './ScopeFiles'
 import VideoManager from './VideoManager'
@@ -777,7 +778,9 @@ function TutorInner({ goTab, openReports, owedThisMonth, videoOnly, section, set
       )
     }
 
-    const myStudentIds = Array.from(new Set([...(myClaimedBookings || []).map((b: any) => b.student_id), ...(myClaimedSubs || []).map((s: any) => s.student_id)]))
+    // only students whose plan is still running; ended plans drop off (their marks and chats are kept)
+    const todayKeep = new Date().toISOString().slice(0, 10)
+    const myStudentIds = Array.from(new Set([...(myClaimedBookings || []).filter((b: any) => stillActiveBooking(b)).map((b: any) => b.student_id), ...(myClaimedSubs || []).filter((s: any) => stillActiveSub(s, todayKeep)).map((s: any) => s.student_id)]))
     const openCount = (openBookings || []).length + (openSubs || []).length
 
     const row = (label: string, sub: string, onClick: () => void, badge = 0) => (
